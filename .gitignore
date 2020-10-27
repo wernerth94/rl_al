@@ -2,7 +2,10 @@ venv/
 .idea/
 memoryBacklog
 out*/
+
 __pycache__
 core/__pycache__
+
 *.log
 *.err
+*.sh
