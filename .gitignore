@@ -2,3 +2,5 @@ venv/
 .idea/
 memoryBacklog
 out*/
+__pycache__
+core/__pycache__
