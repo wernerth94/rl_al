@@ -95,7 +95,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ##########################################
     # Bottom Right
 
-    totalSteps = tS['totalSteps']
+    totalSteps = trainState['totalSteps']
     gl = c.GL[np.clip(totalSteps, 0, len(c.GL))]
     lr = c.LR[np.clip(totalSteps, 0, len(c.LR))]
     greed = c.GREED[np.clip(totalSteps, 0, len(c.GREED))]
