@@ -21,7 +21,7 @@ def gameLengthToEpochCurve(ts, c):
     currentStep = 0
     for s in steps:
         currentStep += s
-        length.append(c.GL[np.clip(currentStep, 0, len(c.GL)-1)])
+        length.append(int(c.GL[np.clip(currentStep, 0, len(c.GL)-1)]))
     return length
 
 
@@ -35,12 +35,20 @@ def plot(trainState, config, outDir=None, showPlots=False):
     fig, axes = plt.subplots(2, 2, figsize=(15, 7))
     ax1 = axes[0,0]; ax2 = axes[0,1]; ax3 = axes[1,0]; ax4 = axes[1,1]
 
+    gameLengthCurve = gameLengthToEpochCurve(trainState, config)
+    vertLines = []
+    for i in range(len(gameLengthCurve)-1):
+        if gameLengthCurve[i] != gameLengthCurve[i+1]:
+            vertLines.append(i)
+
     ##########################################
     # Top Left
+    for l in vertLines:
+        ax1.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
     # loss
     avrgCurve = avrg(trainState['lossCurve'], lossWindow)
     mean = max(1e-7, np.average(avrgCurve))
-    ax1.axhline(y=0, color='k')
+    #ax1.axhline(y=0, color='k')
     ax1.set_ylim(0, 2 * mean)
     ax1.plot(np.arange(len(avrgCurve)), avrgCurve, label='loss')
     ax1.set_ylabel('loss')
@@ -51,7 +59,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
     avrgCurve = avrg(trainState['rewardCurve'], rewardWindow)
     ax12 = ax1.twinx()
     ax12.plot(np.arange(len(avrgCurve)), avrgCurve, c='red', label='reward')
-    ax12.axhline(y=0, color='k', linestyle='--', linewidth=1)
+    #ax12.axhline(y=0, color='k', linestyle='--', linewidth=1)
     ax12.set_ylabel('reward')
 
     loss_patch = mpatches.Patch(color='blue', label='loss')
@@ -60,11 +68,13 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Top Right
+    for l in vertLines:
+        ax2.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
     # Q values
     avrgCurve = avrg(trainState['qCurve'], qWindow)
     ax2.plot(np.arange(len(avrgCurve)), avrgCurve, c='purple', label='Q')
     ax2.set_ylabel('Q')
-    ax2.axhline(y=0, color='k', linestyle='--', linewidth=1)
+    #ax2.axhline(y=0, color='k', linestyle='--', linewidth=1)
     ax2.set_title('average Q value')
 
     q_patch = mpatches.Patch(color='purple', label='avrg Q')
@@ -72,21 +82,11 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Bottom Left
+    for l in vertLines:
+        ax3.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
     # game length
-    ax3.plot(np.arange(len(trainState['stepCurve'])), gameLengthToEpochCurve(trainState, config), c='green', label='game length')
-    #ax3.set_ylabel('game length')
-    avrgCurve = avrg(trainState['stepCurve'], stepWindow)
-    ax3.plot(np.arange(len(avrgCurve)), avrgCurve, c='yellow', label='steps')
-
-    # step curve
-    #avrgCurve = avrg(trainState['stepCurve'], stepWindow)
-    #mx = max(1e-7, np.max(avrgCurve))
-    #ax32 = ax3.twinx()
-    #ax32.plot(np.arange(len(avrgCurve)), avrgCurve, c='yellow', label='steps')
-    #ax32.set_ylim(0, mx)
-    #ax32.set_ylabel('steps')
-    #ax32.axhline(y=0, color='k', linestyle='--', linewidth=1)
-    #ax3.set_title('game length and steps per epoch')
+    ax3.plot(np.arange(len(gameLengthCurve)), gameLengthCurve, c='green', label='game length')
+    #ax3.plot(np.arange(len(trainState['stepCurve'])), trainState['stepCurve'], c='yellow', label='steps')
 
     steps_patch = mpatches.Patch(color='yellow', label='steps')
     gl_patch = mpatches.Patch(color='green', label='game length')
@@ -96,9 +96,9 @@ def plot(trainState, config, outDir=None, showPlots=False):
     # Bottom Right
 
     totalSteps = trainState['totalSteps']
-    gl = c.GL[np.clip(totalSteps, 0, len(c.GL))]
-    lr = c.LR[np.clip(totalSteps, 0, len(c.LR))]
-    greed = c.GREED[np.clip(totalSteps, 0, len(c.GREED))]
+    gl = config.GL[np.clip(totalSteps, 0, len(config.GL))]
+    lr = config.LR[np.clip(totalSteps, 0, len(config.LR))]
+    greed = config.GREED[np.clip(totalSteps, 0, len(config.GREED))]
     fig.suptitle('Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     if showPlots:

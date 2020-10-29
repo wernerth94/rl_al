@@ -2,6 +2,7 @@ venv/
 .idea/
 memoryBacklog
 out*/
+stopSwitch
 
 __pycache__
 core/__pycache__
