@@ -95,6 +95,11 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ##########################################
     # Bottom Right
 
+    totalSteps = tS['totalSteps']
+    gl = c.GL[np.clip(totalSteps, 0, len(c.GL))]
+    lr = c.LR[np.clip(totalSteps, 0, len(c.LR))]
+    greed = c.GREED[np.clip(totalSteps, 0, len(c.GREED))]
+    fig.suptitle('Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     if showPlots:
         plt.show()
@@ -106,6 +111,6 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
 
 if __name__ == "__main__":
-    import config as c
+    import convConfig as c
     tS = Misc.loadTrainState(c, path_prefix='..')
-    plot(tS, c, outDir='../output', showPlots=False)
+    plot(tS, c, outDir=c.OUTPUT_FOLDER, showPlots=False)

@@ -113,7 +113,7 @@ class ALGameBase:
 
 
     def _budgetExhausted(self):
-        return len(self.xLabeled) + self.y_train.shape[1] * self.pointsPerClass >= self.budget
+        return len(self.xLabeled) - (self.y_train.shape[1] * self.pointsPerClass) >= self.budget
 
 
 
