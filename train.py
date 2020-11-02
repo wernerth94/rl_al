@@ -31,9 +31,16 @@ if setup not in all_setups: raise ValueError('setup not in all_setups;  given: '
 
 if setup == 'dense':
     import config as c
+    envFunc = Environment.ImageClassificationGame
+    agentFunc = Agent.DenseAgent
 elif setup == 'conv':
     import convConfig as c
-print('########### loaded config', c.MODEL_NAME)
+    envFunc = Environment.ConvALGame
+    agentFunc = Agent.ConvAgent
+
+print('#########################################################')
+print('loaded config', c.MODEL_NAME, 'loaded dataset', dataset)
+print('#########################################################')
 
 if dataset == 'iris':
     dataset = Data.loadIRIS()
@@ -45,10 +52,6 @@ elif dataset == 'mnist':
 print('planned interactions', c.MIN_INTERACTIONS)
 print(c.N_EXPLORE, 'exploration', c.N_CONVERSION, 'conversion')
 
-if setup == 'dense':
-    envFunc = Environment.ImageClassificationGame
-elif setup == 'conv':
-    envFunc = Environment.ConvALGame
 env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
 memory = Memory(env, maxLength=c.MEMORY_CAP, dataAugmentors=[DataAugmentation.GaussianNoise(0, 0.01)])
@@ -57,10 +60,6 @@ memory.loadFromDisk(c.memDir)
 
 cp_callback = keras.callbacks.ModelCheckpoint(c.ckptDir, verbose=0, save_freq=c.C,
                                               save_weights_only=True)
-if setup == 'dense':
-    agentFunc = Agent.DenseAgent
-elif setup == 'conv':
-    agentFunc = Agent.ConvAgent
 agent = agentFunc(env, fromCheckpoints=c.ckptDir, callbacks=[cp_callback])
 
 if c.USE_STOPSWITCH:

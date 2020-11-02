@@ -88,17 +88,17 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ax3.plot(np.arange(len(gameLengthCurve)), gameLengthCurve, c='green', label='game length')
     #ax3.plot(np.arange(len(trainState['stepCurve'])), trainState['stepCurve'], c='yellow', label='steps')
 
-    steps_patch = mpatches.Patch(color='yellow', label='steps')
+    #steps_patch = mpatches.Patch(color='yellow', label='steps')
     gl_patch = mpatches.Patch(color='green', label='game length')
-    ax3.legend(fontsize='small', handles=[gl_patch, steps_patch])
+    ax3.legend(fontsize='small', handles=[gl_patch])
 
     ##########################################
     # Bottom Right
 
     totalSteps = trainState['totalSteps']
-    gl = config.GL[np.clip(totalSteps, 0, len(config.GL))]
-    lr = config.LR[np.clip(totalSteps, 0, len(config.LR))]
-    greed = config.GREED[np.clip(totalSteps, 0, len(config.GREED))]
+    gl = config.GL[np.clip(totalSteps, 0, len(config.GL)-1)]
+    lr = config.LR[np.clip(totalSteps, 0, len(config.LR)-1)]
+    greed = config.GREED[np.clip(totalSteps, 0, len(config.GREED)-1)]
     fig.suptitle('Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     if showPlots:

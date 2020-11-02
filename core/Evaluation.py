@@ -9,7 +9,7 @@ def scoreAgent(agent, env, numImgs, printInterval=10):
         a = a[0]
         state, reward, done, _ = env.step(a)
 
-        if a < Q.shape[1] - 1:
+        if env.sampleSize == env.actionSpace or a < Q.shape[1] - 1:
             for _ in range(env.imgsToAvrg):
                 f1Prog.append(env.currentTestF1)
                 lossProg.append(env.currentTestLoss)
@@ -21,4 +21,5 @@ def scoreAgent(agent, env, numImgs, printInterval=10):
     print('stopping with', len(f1Prog))
     if env.addedImages >= numImgs:
         return f1Prog, lossProg
-    raise AssertionError('not converged')
+    else:
+        raise AssertionError('not converged')
