@@ -1,3 +1,5 @@
+import numpy as np
+
 def scoreAgent(agent, env, numImgs, printInterval=10):
     state = env.reset()
     lossProg = []

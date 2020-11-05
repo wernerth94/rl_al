@@ -7,9 +7,18 @@ def saveFile(name, file):
         os.remove(name + '.npy')
     np.save(name + '.npy', file)
 
+
 def parameterPlan(val1, val2, warmup, conversion):
     plan1 = np.full(warmup, val1)
     plan2 = np.linspace(val1, val2, conversion)
+    return np.concatenate([plan1, plan2])
+
+def asympParameterPlan(val1, val2, warmup, conversion):
+    plan1 = np.full(warmup, val1)
+    def f(x):
+        return -np.square(x-1) + 1
+    space = np.linspace(0, 1, conversion)
+    plan2 = (1-f(space)) * val1  +  f(space) * val2
     return np.concatenate([plan1, plan2])
 
 

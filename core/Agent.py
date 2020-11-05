@@ -139,15 +139,13 @@ class DenseAgent(DDQN):
 
 class Baseline_Entropy:
     def predict(self, state, greedParameter=0):
-        # env v3 cifar10 1000samplesize entropy scores
-        scores = state[:, 1037:2037]
+        scores = state[:, :, 3]
         return scores, np.argmax(scores, axis=1)
 
 
 class Baseline_BvsSB:
     def predict(self, state, greedParameter=0):
-        # env v3 cifar10 1000samplesize BvsSB scores
-        scores = state[:, 37:1037]
+        scores = state[:, :, 2]
         return scores, np.argmax(scores, axis=1)
 
 

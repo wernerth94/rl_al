@@ -17,9 +17,9 @@ from core.Misc import saveFile
 
 all_datasets = ['mnist', 'iris']
 all_setups = ['conv', 'dense']
-dataset = str(sys.argv[-1])
+datasetName = str(sys.argv[-1])
 setup = str(sys.argv[-2])
-if dataset not in all_datasets: raise ValueError('dataset not in all_datasets;  given: ' + dataset)
+if datasetName not in all_datasets: raise ValueError('dataset not in all_datasets;  given: ' + datasetName)
 if setup not in all_setups: raise ValueError('setup not in all_setups;  given: ' + setup)
 
 if setup == 'dense':
@@ -32,37 +32,39 @@ elif setup == 'conv':
     agentFunc = Agent.ConvAgent
 
 print('#########################################################')
-print('loaded config', c.MODEL_NAME, 'loaded dataset', dataset)
+print('loaded config', c.MODEL_NAME, 'loaded dataset', datasetName)
 print('#########################################################')
 
-if dataset == 'iris':
+if datasetName == 'iris':
     dataset = Data.loadIRIS()
     classifier = Classifier.SimpleClassifier
-elif dataset == 'mnist':
+elif datasetName == 'mnist':
     dataset = Data.loadMNIST()
     classifier = Classifier.DenseClassifierMNIST
 
 env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
-agent = agentFunc(env, fromCheckpoints=c.ckptDir)
-#agent = Agent.Baseline_Random(env)
-#c.MODEL_NAME = 'random'
+#agent = agentFunc(env, fromCheckpoints=c.ckptDir)
+agent = Agent.Baseline_Random(env)
+c.MODEL_NAME = 'random_'+datasetName
+c.EVAL_ITERATIONS = 10
 
 lossCurves = []
 f1Curves = []
 
 for i in range(c.EVAL_ITERATIONS):
-    print('%d ########################' % (i))
-    f1, loss = scoreAgent(agent, env, c.BUDGET, printInterval=20)
+    print('%d ########################'%(i))
+    f1, loss = scoreAgent(agent, env, c.BUDGET, printInterval=100)
     if len(f1) == c.BUDGET:
         lossCurves.append(loss)
         f1Curves.append(f1)
 
-lossCurves = np.array(lossCurves)
-lossCurves = np.mean(lossCurves, axis=0)
+#lossCurves = np.array(lossCurves)
 f1Curves = np.array(f1Curves)
-f1Curves = np.mean(f1Curves, axis=0)
+f1Mean = np.mean(f1Curves, axis=0)
+f1Std = np.std(f1Curves, axis=0)
+f1 = np.stack([f1Mean, f1Std])
 
 file = os.path.join(c.OUTPUT_FOLDER, c.MODEL_NAME)
-saveFile(file + '_f1', f1Curves)
-saveFile(file + '_loss', lossCurves)
+saveFile(file + '_f1', f1)
+#saveFile(file + '_loss', lossCurves)

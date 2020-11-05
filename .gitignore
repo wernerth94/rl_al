@@ -4,6 +4,7 @@ memoryBacklog
 out*/
 stopSwitch
 baselines/*
+*.npy
 
 __pycache__
 core/__pycache__

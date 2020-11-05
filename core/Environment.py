@@ -79,7 +79,6 @@ class ALGameBase:
         return np.mean(self.perClassF1), np.min(train_history.history['val_loss'])
 
 
-
     def reset(self):
         self.addedImages = 0
         self.initialF1 = self.currentTestF1
@@ -113,7 +112,7 @@ class ALGameBase:
 
 
     def _budgetExhausted(self):
-        return len(self.xLabeled) - (self.y_train.shape[1] * self.pointsPerClass) >= self.budget
+        return len(self.xLabeled) - (self.nClasses * self.pointsPerClass) >= self.budget
 
 
 
@@ -302,33 +301,18 @@ class ConvALGame(ALGameBase):
     def step(self, action):
         self.numInteractions += 1
 
-        if int(action) >= self.sampleSize:
-            # replace random image
-            self.currentStateIds[np.random.randint(0, self.sampleSize)] = np.random.choice(len(self.xUnlabeled),
-                                                                                           self.imgsToAvrg)
-        else:
-            indices = self.currentStateIds[int(action)]
-            for a in range(len(indices)):
-                idx = indices[a]
-                self.xLabeled = np.append(self.xLabeled, self.xUnlabeled[idx:idx + 1], axis=0)
-                self.yLabeled = np.append(self.yLabeled, self.yUnlabeled[idx:idx + 1], axis=0)
-                self.xUnlabeled = np.delete(self.xUnlabeled, idx, axis=0)
-                self.yUnlabeled = np.delete(self.yUnlabeled, idx, axis=0)
-                self.addedImages += 1
-                # adjust indices of current state
-                for i in range(self.currentStateIds.shape[0]):
-                    if i != int(action):
-                        for j in range(self.currentStateIds.shape[1]):
-                            if idx < self.currentStateIds[i, j]:
-                                self.currentStateIds[i, j] -= 1
-                            elif idx == self.currentStateIds[i, j]:
-                                self.currentStateIds[i, j] = np.random.randint(len(self.xUnlabeled))
-                    else:
-                        for j in range(a+1, self.currentStateIds.shape[1]):
-                            if idx < self.currentStateIds[i, j]:
-                                self.currentStateIds[i, j] -= 1
-            # replace missing image
-            self.currentStateIds[int(action)] = np.random.choice(len(self.xUnlabeled), self.imgsToAvrg)
+        # add images
+        indices = self.currentStateIds[int(action)]
+        for a in range(len(indices)):
+            idx = indices[a]
+            self.xLabeled = np.append(self.xLabeled, self.xUnlabeled[idx:idx + 1], axis=0)
+            self.yLabeled = np.append(self.yLabeled, self.yUnlabeled[idx:idx + 1], axis=0)
+            self.xUnlabeled = np.delete(self.xUnlabeled, idx, axis=0)
+            self.yUnlabeled = np.delete(self.yUnlabeled, idx, axis=0)
+            self.addedImages += 1
+
+        # sample a new batch
+        self.currentStateIds = np.random.choice(self.xUnlabeled.shape[0], (self.sampleSize, self.imgsToAvrg))
 
         reward = 0
         if int(action) < self.sampleSize:
