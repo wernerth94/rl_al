@@ -3,6 +3,7 @@ venv/
 memoryBacklog
 out*/
 stopSwitch
+baselines/*
 
 __pycache__
 core/__pycache__
