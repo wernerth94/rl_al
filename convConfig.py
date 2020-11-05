@@ -2,7 +2,7 @@ import os
 import Misc, Data
 
 # general
-MODEL_NAME = 'DDQN_IRIS_CONV'
+MODEL_NAME = 'DDQN_MNIST_CONV'
 USE_STOPSWITCH = True
 PRINT_FREQ = 500
 
