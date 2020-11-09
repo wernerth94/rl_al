@@ -83,8 +83,9 @@ class ConvAgent(DDQN):
     def createModel(self, fromCheckpoint, lr=0.001, l2Reg=0.0):
         model = keras.models.Sequential([
             keras.layers.Input(self.env.stateSpace),
-            keras.layers.Conv1D(12, 1, activation=keras.layers.LeakyReLU(), padding='same'),
+            keras.layers.Conv1D(24, 1, activation='tanh', padding='same'),
             keras.layers.Dropout(0.1),
+            keras.layers.Conv1D(12, 1, activation='tanh', padding='same'),
             keras.layers.Conv1D(1, 1, activation='linear', padding='same'),
         ])
         opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)

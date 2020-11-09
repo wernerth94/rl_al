@@ -3,8 +3,9 @@ venv/
 memoryBacklog
 out*/
 stopSwitch
-baselines/*
+baselines/
 *.npy
+plotting/*.png
 
 __pycache__
 core/__pycache__

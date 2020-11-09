@@ -39,7 +39,11 @@ elif setup == 'conv':
     agentFunc = Agent.ConvAgent
 
 print('#########################################################')
-print('loaded config', c.MODEL_NAME, 'loaded dataset', dataset)
+print('loaded config', c.MODEL_NAME, '\t DATASET', dataset)
+
+print('planned interactions', c.MIN_INTERACTIONS)
+print(c.N_EXPLORE, 'exploration', c.N_CONVERSION, 'conversion')
+print('#########################################################')
 print('#########################################################')
 
 if dataset == 'iris':
@@ -48,9 +52,6 @@ if dataset == 'iris':
 elif dataset == 'mnist':
     dataset = Data.loadMNIST()
     classifier = Classifier.DenseClassifierMNIST
-
-print('planned interactions', c.MIN_INTERACTIONS)
-print(c.N_EXPLORE, 'exploration', c.N_CONVERSION, 'conversion')
 
 env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
@@ -69,6 +70,7 @@ if c.USE_STOPSWITCH:
 tS = Misc.loadTrainState(c)
 if tS is None:
     tS = {
+        'eta':0,
         'totalSteps': 0,
         'lossCurve': [],
         'stepCurve': [],
@@ -130,11 +132,13 @@ try:
             printCounter = 0
             timePerStep = (time()-startTime) / float(sessionSteps)
             etaSec = timePerStep * (c.MIN_INTERACTIONS - tS['totalSteps'] - 1)
+            etaH = etaSec / 60 / 60
             print('ETA %1.2f h | game length %1.0f \t steps %d \t total steps %d \t loss/step %1.6f \t '
                   'epoch reward %1.3f \t greed %1.3f \t lr %1.5f'%(
-                  etaSec / 60 / 60, gl, steps, tS['totalSteps'],
+                  etaH, gl, steps, tS['totalSteps'],
                   lossPerStep, epochRewards, g, lr))
 
+            tS['eta'] = etaH
             plot(tS, c, c.OUTPUT_FOLDER)
             memory.writeToDisk(c.memDir)
             Misc.saveTrainState(c, tS)
