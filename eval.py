@@ -10,7 +10,11 @@ print(F"updated path is {sys.path}")
 
 from core.Evaluation import scoreAgent
 import numpy as np
-import os
+import matplotlib.pyplot as plt
+import os, time, gc
+import tensorflow
+from multiprocessing import Process, Pipe
+import threading
 
 import Data, Classifier, Agent, Environment
 from core.Misc import saveFile
@@ -44,27 +48,56 @@ elif datasetName == 'mnist':
 
 env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
-#agent = agentFunc(env, fromCheckpoints=c.ckptDir)
-agent = Agent.Baseline_Random(env)
-c.MODEL_NAME = 'random_'+datasetName
-c.EVAL_ITERATIONS = 10
+agent = agentFunc(env, fromCheckpoints=c.ckptDir)
+# agent.model1._make_predict_function()
+# agent.model2._make_predict_function()
+# agent = Agent.Baseline_Random(env)
+# c.MODEL_NAME = 'random_'+datasetName
+# c.EVAL_ITERATIONS = 10
 
-lossCurves = []
+def  doEval(agent, envFunc, dataset, classifier, config, seed):
+    try:
+        print('################### \t seed %d'%(seed))
+        tensorflow.random.set_seed(seed)
+        np.random.seed(seed)
+        env = envFunc(dataset=dataset, modelFunction=classifier, config=config, verbose=0)
+        f1, loss = scoreAgent(agent, env, c.BUDGET, seed, printInterval=100)
+        del env
+        gc.collect()
+        return f1
+    except KeyboardInterrupt:
+        print('stopped by user')
+
+    exit(0)
+
+startTime = time.time()
+# endPoints = []
+# processes = []
+seed = int(time.time())
+# THREADING DOESNT WORK - TURN BACK
+##########################################
+# for run in range(c.EVAL_ITERATIONS):
+#     parentConn, childConn = Pipe()
+#     p = threading.Thread(target=doEval, args=(childConn, agent, envFunc, dataset, classifier, c, seed+run,))
+#     endPoints.append(parentConn)
+#     processes.append(p)
+#     p.start()
+#
+# f1Curves = []
+# for pro, pipe in zip(processes, endPoints):
+#     pro.join()
+#     f1Curves.append(pipe.recv())
 f1Curves = []
-
-for i in range(c.EVAL_ITERATIONS):
-    print('%d ########################'%(i))
-    f1, loss = scoreAgent(agent, env, c.BUDGET, printInterval=100)
-    if len(f1) == c.BUDGET:
-        lossCurves.append(loss)
-        f1Curves.append(f1)
-
-#lossCurves = np.array(lossCurves)
+for run in range(c.EVAL_ITERATIONS):
+    f1Curves.append(doEval(agent, envFunc, dataset, classifier, c, seed+run))
 f1Curves = np.array(f1Curves)
-f1Mean = np.mean(f1Curves, axis=0)
-f1Std = np.std(f1Curves, axis=0)
-f1 = np.stack([f1Mean, f1Std])
 
-file = os.path.join(c.OUTPUT_FOLDER, c.MODEL_NAME)
-saveFile(file + '_f1', f1)
+folder = os.path.join(c.OUTPUT_FOLDER, 'curves')
+os.makedirs(folder, exist_ok=True)
+file = os.path.join(folder, str(c.BUDGET) + '_' + str(seed))
+saveFile(file, f1Curves)
 #saveFile(file + '_loss', lossCurves)
+
+print('time needed', time.time() - startTime, 'seconds')
+#10 - 546
+#30 - 1877

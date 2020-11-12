@@ -53,15 +53,16 @@ class DDQN:
         rewards = memoryBatch[2]
         nextState = memoryBatch[3]
         dones = memoryBatch[4]
+        _all = range(len(nextState))
 
         Q1 = self.model1.predict(state)
         qPrime1 = self.model1.predict(nextState)
         qPrime2 = self.model2.predict(nextState)
 
         nextAction = np.argmax(qPrime1, axis=1).squeeze()
-        target = np.minimum(qPrime1[range(len(nextState)), nextAction],
-                            qPrime2[range(len(nextState)), nextAction])
-        Q1[range(len(state)), np.squeeze(actions)] = rewards + (1-dones) * self.gamma * target
+        target = np.minimum(qPrime1[_all, nextAction],
+                            qPrime2[_all, nextAction])
+        Q1[_all, np.squeeze(actions)] = rewards + (1-dones) * self.gamma * target
 
         if lr is not None:
             self.model1.optimizer.lr = lr

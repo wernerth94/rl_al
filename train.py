@@ -12,6 +12,7 @@ import numpy as np
 import os
 from time import time
 import tensorflow.keras as keras
+import tensorflow as tf
 
 import Data
 import Classifier
@@ -82,8 +83,11 @@ if tS is None:
 sessionSteps = 0
 startTime = time()
 printCounter = 0
+seed = int(str(startTime)[-5:])
 try:
     while tS['totalSteps'] < c.MIN_INTERACTIONS:
+        np.random.seed(seed+len(tS['rewardCurve']))
+        tf.random.set_seed(seed+len(tS['rewardCurve']))
         state = env.reset()
         epochLoss, epochRewards = 0, 0
         steps, done = 0, False
