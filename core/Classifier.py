@@ -2,6 +2,13 @@ import tensorflow
 import tensorflow.keras as keras
 import tensorflow_addons as tfa
 
+def metrics(numClasses):
+    return [keras.metrics.categorical_accuracy,
+            tfa.metrics.F1Score(numClasses)]
+            #keras.metrics.Precision(),
+            #keras.metrics.Recall()]
+
+
 def ImageClassifier(inputShape=[28,28,1], numClasses=10, l2_reg=0.02):
     model = keras.models.Sequential([
         keras.layers.Input(inputShape),
@@ -14,7 +21,7 @@ def ImageClassifier(inputShape=[28,28,1], numClasses=10, l2_reg=0.02):
     opt = tfa.optimizers.RectifiedAdam()
     model.compile(optimizer=tfa.optimizers.Lookahead(opt),
                   loss=keras.losses.categorical_crossentropy,
-                  metrics=[keras.metrics.categorical_accuracy])
+                  metrics=metrics(numClasses))
     return model
 
 
@@ -32,7 +39,7 @@ def ImageClassifierCifar(inputShape=[32,32,3], numClasses=10):
     ])
     model.compile(optimizer=tensorflow.keras.optimizers.Adam(),
                   loss=keras.losses.categorical_crossentropy,
-                  metrics=[keras.metrics.categorical_accuracy])
+                  metrics=metrics(numClasses))
     return model
 
 
@@ -45,7 +52,7 @@ def SimpleClassifier(inputShape, numClasses):
     opt = tfa.optimizers.RectifiedAdam()
     model.compile(optimizer=opt,
                   loss=keras.losses.categorical_crossentropy,
-                  metrics=[keras.metrics.categorical_accuracy])
+                  metrics=metrics(numClasses))
     return model
 
 
@@ -60,5 +67,5 @@ def DenseClassifierMNIST(inputShape=[28,28,1], numClasses=10):
     opt = tfa.optimizers.RectifiedAdam()
     model.compile(optimizer=tfa.optimizers.Lookahead(opt),
                   loss=keras.losses.categorical_crossentropy,
-                  metrics=[keras.metrics.categorical_accuracy])
+                  metrics=metrics(numClasses))
     return model

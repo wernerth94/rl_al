@@ -130,12 +130,66 @@ class DenseAgent(DDQN):
 
         return model
 
-    def predict(self, inputs, greedParameter=1):
+    def predict(self, inputs, greedParameter=0.1):
         q = self.model1.predict(inputs)
         if greedParameter <= 0:
             return q, np.argmax(q, axis=1)
         a = self.actionStrategy(q, greedParameter, self.env.actionSpace)
         return q, a
+
+
+
+class BatchAgent(DDQN):
+    def __init__(self, env, gamma=0.99, callbacks=[], fromCheckpoints=None, lr=0.01):
+        super(BatchAgent, self).__init__(env, gamma=gamma, callbacks=callbacks, fromCheckpoints=fromCheckpoints, lr=lr)
+
+
+    def createModel(self, fromCheckpoint, lr=0.001, l2Reg=0.0):
+        model = keras.models.Sequential([
+                keras.layers.Input(self.env.stateSpace),
+                keras.layers.Dense(10, activation='tanh'),
+                keras.layers.Dense(1) ])
+        opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
+        model.compile(optimizer=tfa.optimizers.Lookahead(opt),
+                      loss=keras.losses.Huber())
+
+        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
+            model.load_weights(fromCheckpoint)
+            print('loaded model from ', fromCheckpoint)
+
+        return model
+
+
+    def predict(self, inputs, greedParameter=0.1):
+        q = self.model1.predict(inputs)
+        if greedParameter <= 0 or np.random.rand() > greedParameter:
+            a = np.argmax(q, axis=0)
+            return q[a[0]], a
+        else:
+            i = np.random.randint(self.env.actionSpace)
+            return q[i], np.array(i).reshape(-1)
+
+
+    def fit(self, memoryBatch, lr=None):
+        state = memoryBatch[0]
+        _ = memoryBatch[1]
+        rewards = memoryBatch[2]
+        nextState = memoryBatch[3]
+        dones = memoryBatch[4]
+        _all = range(len(nextState))
+
+        Q1 = self.model1.predict(state)
+        qPrime1 = self.model1.predict(nextState)
+        qPrime2 = self.model2.predict(nextState)
+
+        target = np.minimum(qPrime1[_all], qPrime2[_all])
+        Q1[_all] = rewards + (1-dones) * self.gamma * target
+
+        if lr is not None:
+            self.model1.optimizer.lr = lr
+        hist = self.model1.fit(x=state, y=Q1, epochs=1, verbose=0, callbacks=self.callbacks)
+
+        return hist.history['loss'][0]
 
 
 

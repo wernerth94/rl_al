@@ -1,7 +1,6 @@
 import tensorflow.keras as keras
 import gc
 import numpy as np
-from sklearn.metrics import classification_report
 import bottleneck as bn
 
 
@@ -22,7 +21,6 @@ class ALGameBase:
         self.verbose = verbose
 
         self.es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=1)
-
         self.classifier = modelFunction(inputShape=self.x_train.shape[1:],
                                         numClasses=self.y_train.shape[1])
         self.initialWeights = self.classifier.get_weights()
@@ -39,16 +37,16 @@ class ALGameBase:
 
         ids = np.arange(self.x_train.shape[0], dtype=int)
         np.random.shuffle(ids)
-        addedDataPerClass = np.zeros(self.y_train.shape[1])
+        self.perClassIntances = [0 for _ in range(self.nClasses)]
         usedIds = []
         for i in ids:
             label = np.argmax(self.y_train[i])
-            if addedDataPerClass[label] < self.pointsPerClass:
+            if self.perClassIntances[label] < self.pointsPerClass:
                 self.xLabeled.append(self.x_train[i])
                 self.yLabeled.append(self.y_train[i])
                 usedIds.append(i)
-                addedDataPerClass[label] += 1
-            if sum(addedDataPerClass) >= self.pointsPerClass * len(addedDataPerClass):
+                self.perClassIntances[label] += 1
+            if sum(self.perClassIntances) >= self.pointsPerClass * self.nClasses:
                 break
         unusedIds = [i for i in np.arange(self.x_train.shape[0]) if i not in usedIds]
         self.xLabeled = np.array(self.xLabeled)
@@ -62,20 +60,7 @@ class ALGameBase:
         train_history = self.classifier.fit(self.xLabeled, self.yLabeled, batch_size=batch_size, epochs=epochs, verbose=0,
                                             callbacks=[self.es], validation_data=(self.x_test, self.y_test))
 
-        yHat = self.classifier.predict(self.x_test)
-        yHat = np.argmax(yHat, axis=1)
-
-        self.report = classification_report(np.argmax(self.y_test, axis=1), yHat, output_dict=True)
-        self.perClassPrec = [self.report[str(c)]['precision'] for c in range(self.nClasses)]
-        self.perClassRec = [self.report[str(c)]['recall'] for c in range(self.nClasses)]
-        self.perClassF1 = [self.report[str(c)]['f1-score'] for c in range(self.nClasses)]
-
-        unique, counts = np.unique(np.argmax(self.yLabeled, axis=1), return_counts=True)
-        d = dict(zip(unique, counts))
-        self.perClassIntances = [0 for _ in range(self.nClasses)]
-        for cls, count in d.items():
-            self.perClassIntances[int(cls)] = count
-
+        self.perClassF1 = train_history.history['val_f1_score'][-1]
         return np.mean(self.perClassF1), np.min(train_history.history['val_loss'])
 
 
@@ -199,6 +184,7 @@ class ImageClassificationGame(ALGameBase):
             indices = self.currentStateIds[int(action)]
             for a in range(len(indices)):
                 idx = indices[a]
+                self.perClassIntances[int(np.argmax(self.yUnlabeled[idx]))] += 1 # keep track of the added images
                 self.xLabeled = np.append(self.xLabeled, self.xUnlabeled[idx:idx + 1], axis=0)
                 self.yLabeled = np.append(self.yLabeled, self.yUnlabeled[idx:idx + 1], axis=0)
                 self.xUnlabeled = np.delete(self.xUnlabeled, idx, axis=0)
@@ -306,6 +292,7 @@ class ConvALGame(ALGameBase):
         indices = self.currentStateIds[int(action)]
         for a in range(len(indices)):
             idx = indices[a]
+            self.perClassIntances[int(np.argmax(self.yUnlabeled[idx]))] += 1 # keep track of the added images
             self.xLabeled = np.append(self.xLabeled, self.xUnlabeled[idx:idx + 1], axis=0)
             self.yLabeled = np.append(self.yLabeled, self.yUnlabeled[idx:idx + 1], axis=0)
             self.xUnlabeled = np.delete(self.xUnlabeled, idx, axis=0)
@@ -328,3 +315,52 @@ class ConvALGame(ALGameBase):
             reward = (self.currentTestF1 - self.initialF1 - self.labelCost * self.addedImages) * self.rewardScaling
 
         return self._createState(), reward, done, {}
+
+
+
+class BatchALGame(ConvALGame):
+
+    def __init__(self, dataset, modelFunction, config, verbose=True):
+        super(BatchALGame, self).__init__(dataset, modelFunction, config, verbose)
+        self.firstReset = True
+
+
+    def _calcSateSpace(self):
+        space = 0
+        modelMetrics = 0
+        space += len(self.classifier.get_weights()) * modelMetrics
+        predMetrics = 4
+        space += predMetrics
+        otherMetrics = 2
+        space += otherMetrics
+
+        return space
+
+
+    def _createState(self):
+        eps = 1e-5
+        # prediction metrics
+        bVsSB, entropy, topProb, weightedF1 = [], [], [], []
+        for i in range(self.currentStateIds.shape[1]):
+            x = self.xUnlabeled[self.currentStateIds[:, i]]
+            pred = self.classifier.predict(x)
+            part = (-bn.partition(-pred, 2, axis=1))[:,:2] # collects the two highest entries
+            struct = np.sort(part, axis=1)
+
+            weightedF1.append(np.average(pred * self.perClassF1))
+            topProb.append(struct[:,-1])
+            entropy.append(-np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1))
+            bVsSB.append(1 - (struct[:, -1] - struct[:, -2]))
+
+        meanWeightedF1 = np.mean(np.stack(topProb), axis=0)
+        meanTop = np.mean(np.stack(topProb), axis=0)
+        meanBVsSB = np.mean(np.stack(bVsSB), axis=0)
+        meanEntropy = np.mean(np.stack(entropy), axis=0)
+
+        meanF1 = np.full_like(meanTop, np.mean(self.perClassF1))
+        imgProgress = np.array(len(self.xLabeled)-(self.y_train.shape[1]*self.pointsPerClass)).reshape([1, -1]) / float(self.budget)
+
+        imgProgress = np.full_like(meanTop, imgProgress)
+        state = np.stack([meanF1, imgProgress,
+                          meanBVsSB, meanEntropy, meanTop, meanWeightedF1], axis=-1)
+        return state

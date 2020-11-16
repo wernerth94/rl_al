@@ -24,7 +24,7 @@ import Misc
 import DataAugmentation
 
 all_datasets = ['mnist', 'iris']
-all_setups = ['conv', 'dense']
+all_setups = ['conv', 'dense', 'batch']
 dataset = str(sys.argv[-1])
 setup = str(sys.argv[-2])
 if dataset not in all_datasets: raise ValueError('dataset not in all_datasets;  given: ' + dataset)
@@ -38,6 +38,10 @@ elif setup == 'conv':
     import convConfig as c
     envFunc = Environment.ConvALGame
     agentFunc = Agent.ConvAgent
+elif setup == 'batch':
+    import batchConfig as c
+    envFunc = Environment.BatchALGame
+    agentFunc = Agent.BatchAgent
 
 print('#########################################################')
 print('loaded config', c.MODEL_NAME, '\t DATASET', dataset)
@@ -56,7 +60,7 @@ elif dataset == 'mnist':
 
 env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
-memory = Memory(env, maxLength=c.MEMORY_CAP, dataAugmentors=[DataAugmentation.GaussianNoise(0, 0.01)])
+memory = Memory(env, maxLength=c.MEMORY_CAP, dataAugmentors=[DataAugmentation.GaussianNoise(0, 0.002)])
 memory.loadFromDisk(c.memDir)
 #memory = Memory(env, buildFromBacklog=True)
 
@@ -99,12 +103,13 @@ try:
             g = c.GREED[np.clip(tS['totalSteps'], 0, len(c.GREED)-1)]
             Q, a = agent.predict(state, greedParameter=g)
             a = a[0]
-            qAvrg += Q[0, a]
+            qAvrg += Q[0]
 
             statePrime, reward, done, _ = env.step(a)
             epochRewards += reward
 
-            memory.addMemory(state, a, reward, statePrime, done)
+            memory.addMemory(state[a], 0, reward, np.mean(statePrime, axis=0), done)
+            #memory.addMemory(state, a, reward, statePrime, done)
 
             # agent training
             lr = c.LR[np.clip(tS['totalSteps'], 0, len(c.LR)-1)]
@@ -156,3 +161,6 @@ except KeyboardInterrupt:
 # Finalization
 memory.writeToDisk(c.memDir)
 Misc.saveTrainState(c, tS)
+
+print('took', time()-startTime, 'seconds')
+#1000 -  452, 426, 459, 454
