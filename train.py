@@ -5,7 +5,7 @@ print(F"The virtualenv is: {sys.prefix}")
 
 # path additions for the cluster
 sys.path.append("core")
-sys.path.append("plotting")
+sys.path.append("evaluation")
 print(F"updated path is {sys.path}")
 
 import numpy as np

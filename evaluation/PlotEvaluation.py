@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 import os
 
-import convConfig as c
+import batchConfig as c
 
 LINE_WIDTH = 2
 plt.figure(dpi=200)
@@ -39,18 +40,18 @@ def collect(folder):
             curves = np.concatenate([curves, curve], axis=0)
     curves = np.array(curves)
     result = [np.mean(curves, axis=0), np.std(curves, axis=0)]
-    # plt.hist(result[1])
-    # plt.show()
     return np.array(result)
 
 folder = '..'
+sns.set()
 
 plot(np.load(os.path.join(folder, 'baselines/random_mnist_f1.npy')), 'black', displayName='random', window=1)
 plot(np.load(os.path.join(folder, 'baselines/BvsSB_mnist_f1.npy')), 'blue', displayName='BvsSB', window=1)
-plot(collect(os.path.join(folder, 'outDDQN_MNIST_CONV')), 'red', displayName='ddqn', window=1)
+plot(collect(os.path.join(folder, 'outDDQN_MNIST_BATCH')), 'red', displayName='ddqn', window=1)
+plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_1')), 'orange', displayName='ddqn', window=1)
 #plot('output/DDQN_Iris', 'red', displayName='DDQN')
 
-suffix = input("suffix?")
+suffix = '' #input("suffix?")
 if suffix != '' and not suffix.startswith('_'):
     suffix = '_'+suffix
 

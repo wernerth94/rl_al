@@ -5,7 +5,7 @@ print(F"The virtualenv is: {sys.prefix}")
 
 # path additions for the cluster
 sys.path.append("core")
-sys.path.append("plotting")
+sys.path.append("evaluation")
 print(F"updated path is {sys.path}")
 
 from core.Evaluation import scoreAgent
@@ -13,14 +13,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os, time, gc
 import tensorflow
-from multiprocessing import Process, Pipe
-import threading
 
 import Data, Classifier, Agent, Environment
 from core.Misc import saveFile
 
 all_datasets = ['mnist', 'iris']
-all_setups = ['conv', 'dense']
+all_setups = ['conv', 'dense', 'batch']
 datasetName = str(sys.argv[-1])
 setup = str(sys.argv[-2])
 if datasetName not in all_datasets: raise ValueError('dataset not in all_datasets;  given: ' + datasetName)
@@ -34,6 +32,10 @@ elif setup == 'conv':
     import convConfig as c
     envFunc = Environment.ConvALGame
     agentFunc = Agent.ConvAgent
+elif setup == 'batch':
+    import batchConfig as c
+    envFunc = Environment.BatchALGame
+    agentFunc = Agent.BatchAgent
 
 print('#########################################################')
 print('loaded config', c.MODEL_NAME, 'loaded dataset', datasetName)
@@ -71,22 +73,7 @@ def  doEval(agent, envFunc, dataset, classifier, config, seed):
     exit(0)
 
 startTime = time.time()
-# endPoints = []
-# processes = []
 seed = int(time.time())
-# THREADING DOESNT WORK - TURN BACK
-##########################################
-# for run in range(c.EVAL_ITERATIONS):
-#     parentConn, childConn = Pipe()
-#     p = threading.Thread(target=doEval, args=(childConn, agent, envFunc, dataset, classifier, c, seed+run,))
-#     endPoints.append(parentConn)
-#     processes.append(p)
-#     p.start()
-#
-# f1Curves = []
-# for pro, pipe in zip(processes, endPoints):
-#     pro.join()
-#     f1Curves.append(pipe.recv())
 f1Curves = []
 for run in range(c.EVAL_ITERATIONS):
     f1Curves.append(doEval(agent, envFunc, dataset, classifier, c, seed+run))
@@ -96,8 +83,5 @@ folder = os.path.join(c.OUTPUT_FOLDER, 'curves')
 os.makedirs(folder, exist_ok=True)
 file = os.path.join(folder, str(c.BUDGET) + '_' + str(seed))
 saveFile(file, f1Curves)
-#saveFile(file + '_loss', lossCurves)
 
 print('time needed', time.time() - startTime, 'seconds')
-#10 - 546
-#30 - 1877

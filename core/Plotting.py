@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import seaborn as sns
 import numpy as np
 import os
 import Misc
@@ -32,10 +33,11 @@ stepWindow = 10
 
 def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
     plt.clf()
+    sns.set()
     fig, axes = plt.subplots(2, 2, figsize=(15, 7))
     ax1 = axes[0,0]; ax2 = axes[0,1]; ax3 = axes[1,0]; ax4 = axes[1,1]
 
-    gameLengthCurve = gameLengthToEpochCurve(trainState, config)
+    gameLengthCurve = trainState['stepCurve'] #gameLengthToEpochCurve(trainState, config)
     vertLines = []
     for i in range(len(gameLengthCurve)-1):
         if gameLengthCurve[i] != gameLengthCurve[i+1]:
@@ -70,6 +72,7 @@ def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
     # Q values
     avrgCurve = avrg(trainState['qCurve'], qWindow)
     ax2.plot(np.arange(len(avrgCurve)), avrgCurve, c='purple', label='Q')
+    ax2.axhline(y=0, color='k')
     ax2.set_ylabel('Q')
     ax2.set_title('average Q value')
 
@@ -122,6 +125,7 @@ def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
     fig.suptitle('Eta %3.1f h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(etaH, totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     os.makedirs(outDir, exist_ok=True)
+
     if showPlots:
         plt.show()
     plt.savefig(os.path.join(outDir, 'prog.png'), dpi=200)
@@ -129,8 +133,8 @@ def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
 
 
 if __name__ == "__main__":
-    import convConfig as c
+    import batchConfig as c
     tS = Misc.loadTrainState(c, path_prefix='..')
     rndm = np.load(os.path.join('../baselines', 'random_mnist_f1.npy'))
     BvsSB = np.load(os.path.join('../baselines', 'BvsSB_mnist_f1.npy'))
-    plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), compCurves=[rndm, BvsSB], showPlots=True)
+    plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), compCurves=[], showPlots=True)
