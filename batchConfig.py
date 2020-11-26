@@ -30,8 +30,7 @@ N_EXPLORE, N_CONVERSION = WARMUP + int(0.2*MIN_INTERACTIONS), int(0.4*MIN_INTERA
 EVAL_ITERATIONS = 20
 
 GREED = Misc.parameterPlan(0.9, 0.1, warmup=N_EXPLORE, conversion=N_CONVERSION)
-LR = Misc.parameterPlan(0.02, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
-
+LR = Misc.parameterPlan(0.01, 0.0001, warmup=N_EXPLORE, conversion=N_CONVERSION)
 # Game Length
 GL = Misc.asympParameterPlan(BUDGET, BUDGET, warmup=WARMUP + int(0.1*MIN_INTERACTIONS), conversion=int(0.6*MIN_INTERACTIONS))
 
