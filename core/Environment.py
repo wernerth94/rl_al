@@ -331,7 +331,7 @@ class BatchALGame(ConvALGame):
         space += len(self.classifier.get_weights()) * modelMetrics
         predMetrics = 4
         space += predMetrics
-        otherMetrics = 2
+        otherMetrics = 1
         space += otherMetrics
 
         return space
@@ -359,8 +359,7 @@ class BatchALGame(ConvALGame):
 
         meanF1 = np.full_like(meanTop, np.mean(self.perClassF1))
         imgProgress = np.array(len(self.xLabeled)-(self.y_train.shape[1]*self.pointsPerClass)).reshape([1, -1]) / float(self.budget)
-
         imgProgress = np.full_like(meanTop, imgProgress)
-        state = np.stack([meanF1, imgProgress,
+        state = np.stack([meanF1, #imgProgress,
                           meanBVsSB, meanEntropy, meanTop, meanWeightedF1], axis=-1)
         return state

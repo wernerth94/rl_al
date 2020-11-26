@@ -6,6 +6,7 @@ stopSwitch
 baselines/
 *.npy
 plotting/*.png
+goodRuns
 
 __pycache__
 core/__pycache__
