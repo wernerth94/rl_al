@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
 import numpy as np
+import pandas as pd
 import os
 import Misc
 
@@ -31,16 +32,16 @@ rewardWindow = 30
 qWindow = 30
 stepWindow = 10
 
-def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
+def plot(trainState, config, outDir=None, showPlots=False):
     plt.clf()
     sns.set()
     fig, axes = plt.subplots(2, 2, figsize=(15, 7))
     ax1 = axes[0,0]; ax2 = axes[0,1]; ax3 = axes[1,0]; ax4 = axes[1,1]
 
-    gameLengthCurve = trainState['stepCurve'] #gameLengthToEpochCurve(trainState, config)
+    #gameLengthCurve = trainState['stepCurve'] #gameLengthToEpochCurve(trainState, config)
     vertLines = []
-    for i in range(len(gameLengthCurve)-1):
-        if gameLengthCurve[i] != gameLengthCurve[i+1]:
+    for i in range(len(trainState['glCurve'])-1):
+        if trainState['glCurve'][i] != trainState['glCurve'][i+1]:
             vertLines.append(i)
 
     ##########################################
@@ -81,40 +82,44 @@ def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
 
     ##########################################
     # Bottom Left
-    for l in vertLines:
-        ax3.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
+    # for l in vertLines:
+    #     ax3.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
     # game length
-    ax3.plot(np.arange(len(gameLengthCurve)), gameLengthCurve, c='green', label='game length')
+    #ax3.plot(np.arange(len(trainState['glCurve'])), trainState['glCurve'], c='green', label='game length')
+    ax3.plot(trainState['lrCurve'], c='green', label='learning rate')
+    ax3.set_ylabel('learning rate')
+    ax3.set_ylim(bottom=0)
 
-    gl_patch = mpatches.Patch(color='green', label='game length')
-    ax3.legend(fontsize='small', handles=[gl_patch])
+    ax32 = ax3.twinx()
+    ax32.plot(trainState['greedCurve'], c='red', label='greed')
+    ax32.set_ylabel('greed')
+    ax32.set_ylim(bottom=0.1, top=0.9)
+
+    lr_patch = mpatches.Patch(color='green', label='learning rate')
+    greed_patch = mpatches.Patch(color='red', label='greed')
+    ax3.legend(fontsize='small', handles=[lr_patch, greed_patch])
 
     ##########################################
     # Bottom Right
-    if len(compCurves) > 0:
-        for curve in compCurves:
-            mean, std = curve
-            baseValue = np.full_like(mean, mean[0])
-            mean -= baseValue
-            x = np.arange(len(mean))
-            #adjustedMean = mean - c.LABEL_COST * x
-            ax4.fill_between(x, mean-std, mean+std, alpha=0.15)
-            ax4.plot(x, mean, linewidth=1)
+    window = 100
+    offset = 20
+    plots = 5
+    cm = plt.get_cmap('OrRd')
+    alphas = np.linspace(0.0, 0.99, num=plots)
+    colorIndices = np.linspace(0, 1, num=plots)
+    #data = sns.load_dataset("penguins")
 
-        compX = np.arange(1, 11)*100
-        MnS = []
-        for i in compX:
-            points = []
-            for j in range(len(trainState['stepCurve'])):
-                if i == trainState['stepCurve'][j]:
-                    points.append(trainState['rewardCurve'][j] + i * c.LABEL_COST)
-                if j > i: break
-            if len(points) > 0:
-                MnS.append([np.mean(points), np.std(points)])
-
-        MnS = np.array(MnS)
-        ax4.errorbar(compX[:len(MnS)], MnS[:,0], MnS[:,1], linestyle=None)
-
+    data = []
+    for i in range(plots):
+        high = len(trainState['rewardCurve']) - (offset * i)
+        low = max(high - window, -len(trainState['rewardCurve']))
+        data.append(trainState['rewardCurve'][low:high])
+    data.reverse()
+    #df = pd.DataFrame(data=np.array(data).T)
+    for d, a, cId in zip(data, alphas, colorIndices):
+        c = cm(cId)
+        c = tuple(list(c[:3]) + [a])
+        sns.kdeplot(d, ax=ax4, c=c)
 
 
     totalSteps = trainState.get('totalSteps', 0)
@@ -135,6 +140,4 @@ def plot(trainState, config, outDir=None, compCurves=[], showPlots=False):
 if __name__ == "__main__":
     import batchConfig as c
     tS = Misc.loadTrainState(c, path_prefix='..')
-    rndm = np.load(os.path.join('../baselines', 'random_mnist_f1.npy'))
-    BvsSB = np.load(os.path.join('../baselines', 'BvsSB_mnist_f1.npy'))
-    plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), compCurves=[], showPlots=True)
+    plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), showPlots=True)

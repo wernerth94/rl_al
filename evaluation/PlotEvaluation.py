@@ -29,11 +29,13 @@ def plot(curve, color, displayName, window=5):
     plt.plot(x, avrgCurve, label=displayName, linewidth=LINE_WIDTH, c=color)
 
 
-def collect(folder):
+def collect(folder, maskingThreshold=0.0):
     folder = os.path.join(folder, 'curves')
     curves = None
     for file in os.listdir(folder):
         curve = np.load(os.path.join(folder, file))
+        mask = list(np.mean(curve[:, -100:], axis=1) > maskingThreshold)
+        curve = curve[mask]
         if not curves:
             curves = curve
         else:
@@ -47,15 +49,10 @@ sns.set()
 
 plot(np.load(os.path.join(folder, 'baselines/random_mnist_f1.npy')), 'black', displayName='random', window=1)
 plot(np.load(os.path.join(folder, 'baselines/BvsSB_mnist_f1.npy')), 'blue', displayName='BvsSB', window=1)
-plot(collect(os.path.join(folder, 'outDDQN_MNIST_BATCH')), 'red', displayName='ddqn', window=1)
-plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_1')), 'orange', displayName='ddqn_1', window=1)
-plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_2')), 'green', displayName='ddqn_2', window=1)
-#plot('output/DDQN_Iris', 'red', displayName='DDQN')
 
-suffix = '' #input("suffix?")
-if suffix != '' and not suffix.startswith('_'):
-    suffix = '_'+suffix
+plot(collect(os.path.join(folder, 'outDDQN_MNIST_BATCH'), maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
+plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_2')), 'green', displayName='ddqn_2', window=1)
 
 plt.legend(fontsize='x-small')
-plt.savefig('plot'+suffix+'.png')
+plt.savefig('plot_'+c.MODEL_NAME+'.png')
 plt.show()

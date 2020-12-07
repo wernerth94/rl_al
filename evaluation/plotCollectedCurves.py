@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import seaborn as sns
+import time
 
 import convConfig as c
 
@@ -17,38 +19,45 @@ def avrg(curve, window):
     return np.array(avrgCurve)
 
 
-def plot(collection, window=5):
+def plot(collection, labels, window=5, thresh=0.0):
     means = list()
-    for curves in collection:
+    sns.set()  # plt.grid()
+    plt.clf()
+    fig, axes = plt.subplots(1, len(collection), figsize=(6*len(collections), 4))
+    if len(collection) < 2: axes = [axes]
+    for curves, ax, label in zip(collection, axes, labels):
+        mask = list(np.mean(curves[:, -100:], axis=1) > thresh)
+        curves = curves[mask]
         means.append(np.mean(curves, axis=0))
-        plt.clf()
         for curve in curves:
             avrgCurve = avrg(curve, window)
             x = np.arange(len(avrgCurve))
-            plt.plot(x, avrgCurve, linewidth=LINE_WIDTH)
-        plt.grid()
-        plt.show()
+            ax.plot(x, avrgCurve, linewidth=LINE_WIDTH)
+        ax.set_xlabel(label)
+    plt.show()
 
+    print('means')
     plt.clf()
-    for m in means:
-        plt.plot(m)
-    plt.grid()
+    sns.set() #plt.grid()
+    for m, l in zip(means, labels):
+        plt.plot(m, label=l)
+    plt.legend()
     plt.show()
 
 
 def collect(folder):
     folder = os.path.join(folder, 'curves')
     collections = list()
+    labels = list()
     for file in os.listdir(folder):
         curves = np.load(os.path.join(folder, file))
         collections.append(curves)
+        labels.append(file)
 
-    return collections
+    return collections, labels
 
 folder = '..'
 
-plot(collect(os.path.join(folder, 'outDDQN_MNIST_BATCH')), window=1)
+collections, labels = collect(os.path.join(folder, 'outDDQN_MNIST_BATCH'))
+plot(collections, labels, window=1)
 #plot('output/DDQN_Iris', 'red', displayName='DDQN')
-
-plt.legend(fontsize='x-small')
-plt.show()

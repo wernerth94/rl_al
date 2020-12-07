@@ -16,11 +16,11 @@ def scoreAgent(agent, env, numImgs, seed, printInterval=10):
                 f1Prog.append(env.currentTestF1)
                 lossProg.append(env.currentTestLoss)
 
-        if i % printInterval == 0 and len(f1Prog) > 0:
-            print('%d | %d : %1.3f'%(seed, env.addedImages, f1Prog[-1]))
+        # if i % printInterval == 0 and len(f1Prog) > 0:
+        #     print('%d | %d : %1.3f'%(seed, env.addedImages, f1Prog[-1]))
         i += 1
 
-    print('stopping with', len(f1Prog), 'f1', f1Prog[-1])
+    print('stopping with f1', f1Prog[-1])
     if env.addedImages >= numImgs:
         return f1Prog, lossProg
     else:

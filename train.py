@@ -60,7 +60,7 @@ elif dataset == 'mnist':
 
 env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
-memory = Memory(env, maxLength=c.MEMORY_CAP, dataAugmentors=[DataAugmentation.GaussianNoise(0, 0.002)])
+memory = Memory(env, maxLength=c.MEMORY_CAP, dataAugmentors=[]) #[DataAugmentation.GaussianNoise(0, 0.002)])
 memory.loadFromDisk(c.memDir)
 #memory = Memory(env, buildFromBacklog=True)
 
@@ -81,7 +81,10 @@ if tS is None:
         'stepCurve': [],
         'rewardCurve': [],
         'imgCurve': [],
-        'qCurve': []
+        'qCurve': [],
+        'lrCurve': [],
+        'greedCurve': [],
+        'glCurve': []
     }
 
 sessionSteps = 0
@@ -100,8 +103,8 @@ try:
             gl = c.GL[np.clip(tS['totalSteps'], 0, len(c.GL)-1)]
             env.gameLength = int(gl)
 
-            g = c.GREED[np.clip(tS['totalSteps'], 0, len(c.GREED)-1)]
-            Q, a = agent.predict(state, greedParameter=g)
+            greed = c.GREED[np.clip(tS['totalSteps'], 0, len(c.GREED) - 1)]
+            Q, a = agent.predict(state, greedParameter=greed)
             a = a[0]
             qAvrg += Q[0]
 
@@ -136,6 +139,9 @@ try:
         tS['imgCurve'].append(env.xLabeled.shape[0])
         tS['stepCurve'].append(steps)
         tS['qCurve'].append(qAvrg / steps)
+        tS['lrCurve'].append(lr)
+        tS['greedCurve'].append(greed)
+        tS['glCurve'].append(gl)
 
         if printCounter >= c.PRINT_FREQ:
             printCounter = 0
@@ -143,10 +149,8 @@ try:
             etaSec = timePerStep * (c.MIN_INTERACTIONS - tS['totalSteps'] - 1)
             etaH = etaSec / 60 / 60
             print('ETA %1.2f h | game length %1.0f \t steps %d \t total steps %d \t loss/step %1.6f \t '
-                  'epoch reward %1.3f \t greed %1.3f \t lr %1.5f'%(
-                  etaH, gl, steps, tS['totalSteps'],
-                  lossPerStep, epochRewards, g, lr))
-
+                  'epoch reward %1.3f \t greed %1.3f \t lr %1.5f' % (
+                   etaH, gl, steps, tS['totalSteps'], lossPerStep, epochRewards, greed, lr))
             tS['eta'] = etaH
             plot(tS, c, c.OUTPUT_FOLDER)
             memory.writeToDisk(c.memDir)
