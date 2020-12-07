@@ -73,19 +73,25 @@ def plot(trainState, config, outDir=None, showPlots=False):
     # Q values
     avrgCurve = avrg(trainState['qCurve'], qWindow)
     ax2.plot(np.arange(len(avrgCurve)), avrgCurve, c='purple', label='Q')
-    ax2.axhline(y=0, color='k')
+    #ax2.axhline(y=0, color='k')
     ax2.set_ylabel('Q')
     ax2.set_title('average Q value')
 
+    # game length
+    ax22 = ax2.twinx()
+    ax22.plot(trainState['glCurve'], c='green', label='game length')
+    ax22.set_ylabel('game length')
+    ax22.set_ylim(bottom=0)
+
     q_patch = mpatches.Patch(color='purple', label='avrg Q')
-    ax2.legend(fontsize='small', handles=[q_patch])
+    gl_patch = mpatches.Patch(color='green', label='game length')
+    ax2.legend(fontsize='small', handles=[q_patch, gl_patch])
 
     ##########################################
     # Bottom Left
     # for l in vertLines:
     #     ax3.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
-    # game length
-    #ax3.plot(np.arange(len(trainState['glCurve'])), trainState['glCurve'], c='green', label='game length')
+
     ax3.plot(trainState['lrCurve'], c='green', label='learning rate')
     ax3.set_ylabel('learning rate')
     ax3.set_ylim(bottom=0)
@@ -105,21 +111,25 @@ def plot(trainState, config, outDir=None, showPlots=False):
     offset = 20
     plots = 5
     cm = plt.get_cmap('OrRd')
-    alphas = np.linspace(0.0, 0.99, num=plots)
+    alphas = np.linspace(0.45, 0.99, num=plots)
+    alphas[:-1] = alphas[:-1] - 0.3
     colorIndices = np.linspace(0, 1, num=plots)
-    #data = sns.load_dataset("penguins")
 
+    ax4.axvline(x=0.858, color='k', linestyle='--', linewidth=1) # random baseline
+    ax4.axvline(x=0.902, color='b', linestyle='--', linewidth=1) # BvsSB baseline
     data = []
     for i in range(plots):
         high = len(trainState['rewardCurve']) - (offset * i)
         low = max(high - window, -len(trainState['rewardCurve']))
         data.append(trainState['rewardCurve'][low:high])
     data.reverse()
-    #df = pd.DataFrame(data=np.array(data).T)
-    for d, a, cId in zip(data, alphas, colorIndices):
+
+    for i, d, a, cId in zip(np.arange(len(data)), data, alphas, colorIndices):
         c = cm(cId)
         c = tuple(list(c[:3]) + [a])
-        sns.kdeplot(d, ax=ax4, c=c)
+        sns.kdeplot(d, ax=ax4, c=c, label=str(-i*offset))
+
+    ax4.legend(fontsize='small')
 
 
     totalSteps = trainState.get('totalSteps', 0)
