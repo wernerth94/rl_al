@@ -195,19 +195,16 @@ class BatchAgent(DDQN):
 
 class Baseline_Entropy:
     def predict(self, state, greedParameter=0):
-        scores = state[:, :, 3]
-        return scores, np.argmax(scores, axis=1)
+        scores = state[:, 2]
+        return scores, np.expand_dims(np.argmax(scores), axis=-1)
 
 
 class Baseline_BvsSB:
     def predict(self, state, greedParameter=0):
-        scores = state[:, :, 2]
-        return scores, np.argmax(scores, axis=1)
+        scores = state[:, 1]
+        return scores, np.expand_dims(np.argmax(scores), axis=-1)
 
 
 class Baseline_Random:
-    def __init__(self, env):
-        self.actionSpace = env.actionSpace
-
     def predict(self, state, greedParameter=0):
-        return np.random.rand(len(state), self.actionSpace), np.array([0])
+        return None, np.expand_dims(np.random.randint(len(state)), axis=-1)

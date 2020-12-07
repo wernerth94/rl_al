@@ -1,0 +1,75 @@
+import sys
+import getpass
+print(F"The user is: {getpass.getuser()}")
+print(F"The virtualenv is: {sys.prefix}")
+
+# path additions for the cluster
+sys.path.append("core")
+sys.path.append("evaluation")
+print(F"updated path is {sys.path}")
+
+import matplotlib.pyplot as plt
+from core.Evaluation import scoreAgent
+from core.Misc import saveFile
+import numpy as np
+import os, time, gc
+import tensorflow
+import Classifier, Agent, Environment
+
+
+##################################
+### MAIN
+all_baselines = ['random', 'bvssb', 'entropy']
+baselineName = str(sys.argv[1])
+sampleSize = int(sys.argv[2])
+if baselineName not in all_baselines: raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
+
+import batchConfig as c
+envFunc = Environment.BatchALGame
+from Data import loadMNIST
+dataset = loadMNIST()
+classifier = Classifier.DenseClassifierMNIST
+
+
+if baselineName == 'bvssb':
+    agent = Agent.Baseline_BvsSB()
+elif baselineName == 'entropy':
+    agent = Agent.Baseline_Entropy()
+elif baselineName == 'random':
+    agent = Agent.Baseline_Random()
+# agent = Agent.Baseline_Random(env)
+# c.MODEL_NAME = 'random_'+datasetName
+# c.EVAL_ITERATIONS = 10
+
+print('#########################################################')
+print('testing', baselineName, 'with samplesize', sampleSize)
+print('#########################################################')
+
+c.BUDGET = 100
+c.EVAL_ITERATIONS = 2
+c.SAMPLE_SIZE = sampleSize
+startTime = time.time()
+
+result = list()
+for run in range(c.EVAL_ITERATIONS):
+    seed = int(startTime / 10000) + run
+    print('%d/%d seed %d \t start' % (run, c.EVAL_ITERATIONS, seed))
+    tensorflow.random.set_seed(int(seed))
+    np.random.seed(int(seed))
+
+    env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+    #agent = agentFunc(env, fromCheckpoints=c.ckptDir)
+
+    f1, loss = scoreAgent(agent, env, c.BUDGET)
+    result.append(f1)
+
+result = np.array(result)
+f1 = np.array([np.mean(result, axis=0),
+               np.std(result, axis=0)])
+
+folder = 'baselines'
+os.makedirs(folder, exist_ok=True)
+file = os.path.join(folder, baselineName + '_' + str(sampleSize))
+saveFile(file, f1)
+
+print('time needed', int(time.time() - startTime), 'seconds')
