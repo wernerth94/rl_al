@@ -8,11 +8,10 @@ sys.path.append("core")
 sys.path.append("evaluation")
 print(F"updated path is {sys.path}")
 
-import matplotlib.pyplot as plt
 from core.Evaluation import scoreAgent
 from core.Misc import saveFile
 import numpy as np
-import os, time, gc
+import os, time
 import tensorflow
 import Classifier, Agent, Environment
 
@@ -24,11 +23,12 @@ baselineName = str(sys.argv[1])
 sampleSize = int(sys.argv[2])
 if baselineName not in all_baselines: raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
 
-import batchConfig as c
+from config import batchConfig as c
+
 envFunc = Environment.BatchALGame
-from Data import loadMNIST
-dataset = loadMNIST()
-classifier = Classifier.DenseClassifierMNIST
+from Data import load_mnist_mobilenet
+dataset = load_mnist_mobilenet()
+classifier = Classifier.EmbeddingClassifier(embeddingSize=1280)
 
 
 if baselineName == 'bvssb':
@@ -37,22 +37,19 @@ elif baselineName == 'entropy':
     agent = Agent.Baseline_Entropy()
 elif baselineName == 'random':
     agent = Agent.Baseline_Random()
-# agent = Agent.Baseline_Random(env)
-# c.MODEL_NAME = 'random_'+datasetName
-# c.EVAL_ITERATIONS = 10
 
 print('#########################################################')
 print('testing', baselineName, 'with samplesize', sampleSize)
 print('#########################################################')
 
-c.BUDGET = 100
-c.EVAL_ITERATIONS = 2
+c.BUDGET = 2000
+c.EVAL_ITERATIONS = 20
 c.SAMPLE_SIZE = sampleSize
 startTime = time.time()
 
 result = list()
 for run in range(c.EVAL_ITERATIONS):
-    seed = int(startTime / 10000) + run
+    seed = int(startTime / 100) + run
     print('%d/%d seed %d \t start' % (run, c.EVAL_ITERATIONS, seed))
     tensorflow.random.set_seed(int(seed))
     np.random.seed(int(seed))
@@ -69,7 +66,7 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, baselineName + '_' + str(sampleSize))
+file = os.path.join(folder, 'emb_' + baselineName + '_' + str(sampleSize))
 saveFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')

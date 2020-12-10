@@ -69,3 +69,20 @@ def DenseClassifierMNIST(inputShape=[28,28,1], numClasses=10):
                   loss=keras.losses.categorical_crossentropy,
                   metrics=metrics(numClasses))
     return model
+
+
+class EmbeddingClassifier:
+    def __init__(self, embeddingSize):
+        self.embeddingSize = embeddingSize
+
+    def __call__(self, numClasses=10, *args, **kwargs):
+        model = keras.models.Sequential([
+            keras.Input(shape=[self.embeddingSize]),
+            keras.layers.Dense(numClasses, activation='softmax')
+        ])
+        opt = tfa.optimizers.RectifiedAdam()
+        model.compile(optimizer=tfa.optimizers.Lookahead(opt),
+                      loss=keras.losses.categorical_crossentropy,
+                      metrics=metrics(numClasses))
+        return model
+

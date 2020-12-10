@@ -21,7 +21,6 @@ import Agent
 from core.Memory import Memory
 from core.Plotting import plot
 import Misc
-import DataAugmentation
 
 all_datasets = ['mnist', 'iris']
 all_setups = ['conv', 'dense', 'batch']
@@ -31,15 +30,16 @@ if dataset not in all_datasets: raise ValueError('dataset not in all_datasets;  
 if setup not in all_setups: raise ValueError('setup not in all_setups;  given: ' + setup)
 
 if setup == 'dense':
-    import config as c
+    import config.config as c
     envFunc = Environment.ImageClassificationGame
     agentFunc = Agent.DenseAgent
 elif setup == 'conv':
-    import convConfig as c
+    import config.convConfig as c
     envFunc = Environment.ConvALGame
     agentFunc = Agent.ConvAgent
 elif setup == 'batch':
-    import batchConfig as c
+    import config.batchConfig as c
+
     envFunc = Environment.BatchALGame
     agentFunc = Agent.BatchAgent
 

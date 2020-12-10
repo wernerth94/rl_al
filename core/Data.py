@@ -1,5 +1,5 @@
 import numpy as np
-import sys
+import sys, os
 import tensorflow.keras as keras
 from tensorflow.keras.utils import to_categorical
 
@@ -46,18 +46,30 @@ def loadIRIS():
     return (x[trainIdx], y[trainIdx], x[testIdx], y[testIdx])
 
 
+def load_mnist_mobilenet(numTest=2000, prefix=''):
+    with np.load(os.path.join(prefix, '../datasets/mnist_mobileNetV2.npz'), allow_pickle=True) as f:
+        x_train, y_train = f['x_train'], f['y_train']
+        x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
 
-def loadMNIST(numTest=2000):
-    with np.load('../datasets/mnist.npz', allow_pickle=True) as f:
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    return (x_train, y_train, x_test, y_test)
+
+
+def loadMNIST(color=False, numTest=2000, prefix=''):
+    with np.load(os.path.join(prefix, '../datasets/mnist.npz'), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
 
     x_train = x_train.reshape(len(x_train), 28, 28, 1)
     x_train = np.array(x_train, dtype=float) / 255
+    if color:
+        x_train = np.repeat(x_train, 3, axis=3)
     y_train = to_categorical(y_train, num_classes=10)
 
     x_test = x_test.reshape(len(x_test), 28, 28, 1)
     x_test = np.array(x_test, dtype=float)[:numTest] / 255
+    if color:
+        x_test = np.repeat(x_test, 3, axis=3)
     y_test = to_categorical(y_test[:numTest], num_classes=10)
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     return (x_train, y_train, x_test, y_test)

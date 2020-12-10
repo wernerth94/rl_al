@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
 import numpy as np
-import pandas as pd
 import os
 import Misc
 
@@ -94,12 +93,12 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ax3.plot(trainState['lrCurve'], c='green', label='learning rate')
     ax3.set_ylabel('learning rate')
-    ax3.set_ylim(bottom=0)
+    ax3.set_ylim(bottom=0, top=np.max(trainState['lrCurve'])+0.01)
 
     ax32 = ax3.twinx()
     ax32.plot(trainState['greedCurve'], c='red', label='greed')
     ax32.set_ylabel('greed')
-    ax32.set_ylim(bottom=0.1, top=0.9)
+    ax32.set_ylim(bottom=0.0, top=np.max(trainState['greedCurve'])+0.1)
 
     lr_patch = mpatches.Patch(color='green', label='learning rate')
     greed_patch = mpatches.Patch(color='red', label='greed')
@@ -115,8 +114,8 @@ def plot(trainState, config, outDir=None, showPlots=False):
     alphas[:-1] = alphas[:-1] - 0.3
     colorIndices = np.linspace(0, 1, num=plots)
 
-    ax4.axvline(x=0.858, color='k', linestyle='--', linewidth=1) # random baseline
-    ax4.axvline(x=0.902, color='b', linestyle='--', linewidth=1) # BvsSB baseline
+    ax4.axvline(x=0.808, color='k', linestyle='--', linewidth=1) # random baseline - 0.05
+    ax4.axvline(x=0.852, color='b', linestyle='--', linewidth=1) # BvsSB baseline -0.05
     data = []
     for i in range(plots):
         high = len(trainState['rewardCurve']) - (offset * i)
@@ -124,7 +123,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
         data.append(trainState['rewardCurve'][low:high])
     data.reverse()
 
-    for i, d, a, cId in zip(np.arange(len(data)), data, alphas, colorIndices):
+    for i, d, a, cId in zip(np.flip(np.arange(len(data))), data, alphas, colorIndices):
         c = cm(cId)
         c = tuple(list(c[:3]) + [a])
         sns.kdeplot(d, ax=ax4, c=c, label=str(-i*offset))
@@ -141,13 +140,14 @@ def plot(trainState, config, outDir=None, showPlots=False):
     fig.tight_layout()
     os.makedirs(outDir, exist_ok=True)
 
+    plt.savefig(os.path.join(outDir, 'prog.png'), dpi=200)
     if showPlots:
         plt.show()
-    plt.savefig(os.path.join(outDir, 'prog.png'), dpi=200)
     plt.close('all')
 
 
 if __name__ == "__main__":
-    import batchConfig as c
+    from config import batchConfig as c
+
     tS = Misc.loadTrainState(c, path_prefix='..')
     plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), showPlots=True)

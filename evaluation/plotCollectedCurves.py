@@ -2,9 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import seaborn as sns
-import time
-
-import convConfig as c
 
 LINE_WIDTH = 2
 plt.figure(dpi=200)
@@ -22,7 +19,6 @@ def avrg(curve, window):
 def plot(collection, labels, window=5, thresh=0.0):
     means = list()
     sns.set()  # plt.grid()
-    plt.clf()
     fig, axes = plt.subplots(1, len(collection), figsize=(6*len(collections), 4))
     if len(collection) < 2: axes = [axes]
     for curves, ax, label in zip(collection, axes, labels):
@@ -34,6 +30,7 @@ def plot(collection, labels, window=5, thresh=0.0):
             x = np.arange(len(avrgCurve))
             ax.plot(x, avrgCurve, linewidth=LINE_WIDTH)
         ax.set_xlabel(label)
+    plt.ylim(0, 1)
     plt.show()
 
     print('means')
