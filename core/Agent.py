@@ -140,8 +140,9 @@ class DenseAgent(DDQN):
 
 
 class BatchAgent(DDQN):
-    def __init__(self, env, gamma=0.99, callbacks=[], fromCheckpoints=None, lr=0.01):
+    def __init__(self, env, clipped=True, gamma=0.99, callbacks=[], fromCheckpoints=None, lr=0.01):
         super(BatchAgent, self).__init__(env, gamma=gamma, callbacks=callbacks, fromCheckpoints=fromCheckpoints, lr=lr)
+        self.clipped = clipped
 
 
     def createModel(self, fromCheckpoint, lr=0.001, l2Reg=0.0):
@@ -182,7 +183,13 @@ class BatchAgent(DDQN):
         qPrime1 = self.model1.predict(nextState)
         qPrime2 = self.model2.predict(nextState)
 
-        target = np.minimum(qPrime1[_all], qPrime2[_all])
+        nextAction = np.argmax(qPrime1, axis=1)  # .squeeze()
+        if self.clipped:
+            target = np.minimum(qPrime1[_all, nextAction],
+                                qPrime2[_all, nextAction])
+        else:
+            target = qPrime2[_all, nextAction]
+
         Q1[_all] = rewards + (1-dones) * self.gamma * target
 
         if lr is not None:
@@ -190,6 +197,71 @@ class BatchAgent(DDQN):
         hist = self.model1.fit(x=state, y=Q1, epochs=1, verbose=0, callbacks=self.callbacks)
 
         return hist.history['loss'][0]
+
+
+
+class NStepBatchAgent(DDQN):
+    def __init__(self, env, nSteps, gamma=0.99, clipped=False, callbacks=[], fromCheckpoints=None, lr=0.01):
+        super(NStepBatchAgent, self).__init__(env, gamma=gamma, callbacks=callbacks, fromCheckpoints=fromCheckpoints, lr=lr)
+        self.nSteps = nSteps
+        self.clipped = clipped
+
+
+    def createModel(self, fromCheckpoint, lr=0.001, l2Reg=0.0):
+        model = keras.models.Sequential([
+                keras.layers.Input(self.env.stateSpace),
+                keras.layers.Dense(10, activation='tanh'),
+                keras.layers.Dense(1) ])
+        opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
+        model.compile(optimizer=tfa.optimizers.Lookahead(opt),
+                      loss=keras.losses.Huber())
+
+        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
+            model.load_weights(fromCheckpoint)
+            print('loaded model from ', fromCheckpoint)
+
+        return model
+
+
+    def predict(self, inputs, greedParameter=0.1):
+        q = self.model1.predict(inputs)
+        if greedParameter <= 0 or np.random.rand() > greedParameter:
+            a = np.argmax(q, axis=0)
+            return q[a[0]], a
+        else:
+            i = np.random.randint(self.env.actionSpace)
+            return q[i], np.array(i).reshape(-1)
+
+
+    def fit(self, memoryBatch, lr=None):
+        state = memoryBatch[0]
+        rewards = memoryBatch[1]
+        nextStates = memoryBatch[2]
+        dones = memoryBatch[3]
+        _all = range(len(state))
+
+        Q1 = self.model1.predict(state)
+        qPrime1 = self.model1.predict(nextStates)
+        qPrime2 = self.model2.predict(nextStates)
+
+        nextAction = np.argmax(qPrime1, axis=1)  # .squeeze()
+        if self.clipped:
+            target = np.minimum(qPrime1[_all, nextAction],
+                                qPrime2[_all, nextAction])
+        else:
+            target = qPrime2[_all, nextAction]
+
+        R = np.zeros(len(state))
+        for i in range(len(rewards)):
+            R += (self.gamma ** i) * rewards[i]
+        Q1[_all, nextAction] = R + (1-dones) * self.gamma * target
+
+        if lr is not None:
+            self.model1.optimizer.lr = lr
+        hist = self.model1.fit(x=state, y=Q1, epochs=1, verbose=0, callbacks=self.callbacks)
+
+        return hist.history['loss'][0]
+
 
 
 

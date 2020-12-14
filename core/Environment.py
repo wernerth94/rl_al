@@ -323,6 +323,7 @@ class BatchALGame(ConvALGame):
     def __init__(self, dataset, modelFunction, config, verbose=True):
         super(BatchALGame, self).__init__(dataset, modelFunction, config, verbose)
         self.firstReset = True
+        self.actionSpace = 1
 
 
     def _calcSateSpace(self):

@@ -43,6 +43,7 @@ print('testing', baselineName, 'with samplesize', sampleSize)
 print('#########################################################')
 
 c.BUDGET = 2000
+c.GAME_LENGTH = c.BUDGET
 c.EVAL_ITERATIONS = 20
 c.SAMPLE_SIZE = sampleSize
 startTime = time.time()

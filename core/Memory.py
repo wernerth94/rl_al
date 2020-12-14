@@ -8,6 +8,91 @@ def toList(l):
     except TypeError:
         return [l]
 
+
+class NStepMemory:
+
+    def __init__(self, env, nSteps, maxLength=np.inf, dataAugmentors=[]):
+        self.env = env
+        self.nSteps = nSteps
+        self.stateSpace = env.stateSpace
+        #self.actionSpace = env.actionSpace
+        self.dataAugmentors = dataAugmentors
+        self.maxLength = maxLength
+
+        self.nColumns  = 2 * self.stateSpace # state + newState
+        self.nColumns += self.nSteps # rewards
+        self.nColumns += 1 # done
+
+        self.memory = np.zeros((0, self.nColumns))
+
+
+    def argsToRow(self, state:np.array, rewardList:list, newState:np.array, done:int):
+        row = np.expand_dims(np.copy(state), axis=0)
+        for r in rewardList:
+            row = np.concatenate([row, np.array(r).reshape(1, -1)], axis=1)
+        row = np.concatenate([row, np.expand_dims(newState, axis=0)], axis=1)
+        row = np.concatenate([row, np.array(done).reshape(1, -1)], axis=1)
+        return row
+
+
+    def rowsToArgs(self, chunk):
+        state = chunk[:, :self.stateSpace]
+
+        rewardList = []
+        for i in range(self.nSteps):
+            offset = self.stateSpace + i
+            reward = chunk[:, offset]
+            rewardList.append(reward)
+
+        offset = self.stateSpace + self.nSteps
+        newState = chunk[:, offset : offset+self.stateSpace ]
+
+        done = chunk[:, -1]
+        return state, rewardList, newState, done
+
+
+    def _append(self, state:np.array, rewardList:list, newState:np.array, done:int):
+        row = self.argsToRow(state, rewardList, newState, done)
+        self.memory = np.append(self.memory, row, axis=0)
+
+        if len(self.memory) > self.maxLength:
+            offset = len(self.memory) - self.maxLength
+            self.memory = self.memory[offset:]
+
+
+    def addMemory(self, state:np.array, rewardList:list, newState:np.array, done:int):
+        self._append(state, rewardList, newState, done)
+        # for da in self.dataAugmentors:
+        #     s, sP = da.apply([state, newState])
+        #     self._append(s, action, reward, sP, done)
+
+
+    def sampleMemory(self, size):
+        idx = np.random.choice(len(self.memory), min(len(self.memory), size))
+        return self.rowsToArgs(self.memory[idx])
+
+
+    def writeToDisk(self, saveFolder='memory'):
+        if os.path.exists(saveFolder):
+            shutil.rmtree(saveFolder)
+        os.mkdir(saveFolder)
+        np.save(os.path.join(saveFolder, 'memory.npy'), self.memory)
+
+
+    def loadFromDisk(self, saveFolder='memory'):
+        if os.path.exists(saveFolder):
+            memFile = os.path.join(saveFolder, 'memory.npy')
+            if os.path.exists(memFile):
+                self.memory = np.load(memFile)
+                print('loaded memory from', memFile)
+                return True
+        return False
+
+    def __len__(self):
+        return len(self.memory)
+
+
+
 class Memory:
 
     def __init__(self, env, maxLength=np.inf, buildFromBacklog=False, dataAugmentors=[]):
