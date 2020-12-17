@@ -27,9 +27,10 @@ if baselineName not in all_baselines: raise ValueError('baseline not in all_base
 from config import batchConfig as c
 
 envFunc = Environment.BatchALGame
-from Data import load_mnist_mobilenet
-dataset = load_mnist_mobilenet()
-classifier = Classifier.EmbeddingClassifier(embeddingSize=1280)
+from Data import loadMNIST
+dataset = loadMNIST()
+classifier = Classifier.DenseClassifierMNIST()
+#classifier = Classifier.EmbeddingClassifier(embeddingSize=1280)
 
 
 if baselineName == 'bvssb':
@@ -68,7 +69,7 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, 'emb_' + baselineName + '_' + str(sampleSize))
+file = os.path.join(folder, baselineName + '_' + str(sampleSize))
 saveFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')
