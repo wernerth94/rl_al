@@ -29,7 +29,7 @@ from config import batchConfig as c
 envFunc = Environment.BatchALGame
 from Data import loadMNIST
 dataset = loadMNIST()
-classifier = Classifier.DenseClassifierMNIST()
+classifier = Classifier.DenseClassifierMNIST
 #classifier = Classifier.EmbeddingClassifier(embeddingSize=1280)
 
 
