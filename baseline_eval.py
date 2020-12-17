@@ -21,6 +21,7 @@ import Classifier, Agent, Environment
 all_baselines = ['random', 'bvssb', 'entropy']
 baselineName = str(sys.argv[1])
 sampleSize = int(sys.argv[2])
+budget = int(sys.argv[3])
 if baselineName not in all_baselines: raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
 
 from config import batchConfig as c
@@ -42,9 +43,9 @@ print('#########################################################')
 print('testing', baselineName, 'with samplesize', sampleSize)
 print('#########################################################')
 
-c.BUDGET = 2000
+c.BUDGET = budget
 c.GAME_LENGTH = c.BUDGET
-c.EVAL_ITERATIONS = 20
+c.EVAL_ITERATIONS = 15
 c.SAMPLE_SIZE = sampleSize
 startTime = time.time()
 

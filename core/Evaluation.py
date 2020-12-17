@@ -11,10 +11,9 @@ def scoreAgent(agent, env, numImgs, printInterval=10):
         a = a[0]
         state, reward, done, _ = env.step(a)
 
-        if env.sampleSize == env.actionSpace or a < Q.shape[1] - 1:
-            for _ in range(env.imgsToAvrg):
-                f1Prog.append(env.currentTestF1)
-                lossProg.append(env.currentTestLoss)
+        for _ in range(env.imgsToAvrg):
+            f1Prog.append(env.currentTestF1)
+            lossProg.append(env.currentTestLoss)
 
         # if i % printInterval == 0 and len(f1Prog) > 0:
         #     print('%d | %d : %1.3f'%(seed, env.addedImages, f1Prog[-1]))

@@ -64,7 +64,7 @@ memory = Memory.NStepMemory(env, nSteps, maxLength=c.MEMORY_CAP)
 memory.loadFromDisk(c.memDir)
 
 cp_callback = keras.callbacks.ModelCheckpoint(c.ckptDir, verbose=0, save_freq=c.C,
-                                              save_weights_only=True)
+                                              save_weights_only=False)
 agent = agentFunc(env, nSteps, fromCheckpoints=c.ckptDir, callbacks=[cp_callback])
 
 if c.USE_STOPSWITCH:
@@ -88,7 +88,7 @@ nextUpdate = c.C + c.WARMUP
 try:
     while trainState['totalSteps'] < c.MIN_INTERACTIONS:
         np.random.seed(seed + len(trainState['rewardCurve']))
-        tf.random.set_seed(seed + len(trainState['rewardCurve']))
+        tf.random.set_seed(int(seed/2) + len(trainState['rewardCurve']))
         state = env.reset()
         epochLoss, epochRewards = 0, 0
         steps, done = 0, False
@@ -172,4 +172,4 @@ except KeyboardInterrupt:
 memory.writeToDisk(c.memDir)
 Misc.saveTrainState(c, trainState)
 
-print('took', time()-startTime, 'seconds')
+print('took', (time()-startTime)/60.0/60.0, 'hours')

@@ -106,7 +106,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Bottom Right
-    window = 100
+    window = 50
     offset = 20
     plots = 5
     cm = plt.get_cmap('OrRd')
@@ -133,9 +133,9 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     totalSteps = trainState.get('totalSteps', 0)
     etaH = trainState.get('eta', 0)
-    gl = config.GL[np.clip(totalSteps, 0, len(config.GL)-1)]
-    lr = config.LR[np.clip(totalSteps, 0, len(config.LR)-1)]
-    greed = config.GREED[np.clip(totalSteps, 0, len(config.GREED)-1)]
+    gl = trainState['glCurve'][-1]
+    lr = trainState['lrCurve'][-1]
+    greed = trainState['greedCurve'][-1]
     fig.suptitle('Eta %3.1f h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(etaH, totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     os.makedirs(outDir, exist_ok=True)
@@ -149,5 +149,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
 if __name__ == "__main__":
     from config import batchConfig as c
 
+    c.OUTPUT_FOLDER = 'outDDQN_MNIST_BATCH'
+    c.MODEL_NAME = 'DDQN_MNIST_BATCH'
     tS = Misc.loadTrainState(c, path_prefix='..')
     plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), showPlots=True)
