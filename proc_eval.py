@@ -47,7 +47,7 @@ def doEval(args):
         np.random.seed(int(seed+run))
 
         env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-        agent = agentFunc(env, fromCheckpoints=c.ckptDir)
+        agent = agentFunc(env, fromCheckpoints=c.stateValueDir)
 
         f1, loss = scoreAgent(agent, env, c.BUDGET, printInterval=100)
         scores.append(f1)

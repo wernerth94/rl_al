@@ -11,11 +11,9 @@ def toList(l):
 
 class NStepMemory:
 
-    def __init__(self, env, nSteps, maxLength=np.inf, dataAugmentors=[]):
-        self.env = env
+    def __init__(self, stateSpace, nSteps, maxLength=np.inf, dataAugmentors=[]):
         self.nSteps = nSteps
-        self.stateSpace = env.stateSpace
-        #self.actionSpace = env.actionSpace
+        self.stateSpace = stateSpace
         self.dataAugmentors = dataAugmentors
         self.maxLength = maxLength
 
@@ -69,7 +67,8 @@ class NStepMemory:
 
     def sampleMemory(self, size):
         idx = np.random.choice(len(self.memory), min(len(self.memory), size))
-        return self.rowsToArgs(self.memory[idx])
+        state, rewardList, newState, done = self.rowsToArgs(self.memory[idx])
+        return state, rewardList, newState, done
 
 
     def writeToDisk(self, saveFolder='memory'):

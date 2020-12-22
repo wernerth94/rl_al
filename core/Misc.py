@@ -1,6 +1,8 @@
-import os
+import os, gc
 import numpy as np
 import json
+
+
 
 def saveFile(name, file):
     if os.path.exists(name + '.npy'):

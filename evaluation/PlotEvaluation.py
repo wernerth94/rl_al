@@ -14,7 +14,7 @@ plt.xlabel('Datapoints')
 plt.grid()
 
 def avrg(curve, window):
-    end = min(c.BUDGET, curve.shape[1])
+    end = curve.shape[1] # min(c.BUDGET, curve.shape[1])
     stdCurve = curve[1, :end]; curve = curve[0, :end]
     avrgCurve = []
     for i in range(1, len(curve)):
@@ -47,20 +47,14 @@ def collect(folder, maskingThreshold=0.0):
 folder = '..'
 sns.set()
 
-plot(np.load(os.path.join(folder, 'baselines/random_mnist_f1.npy')), 'black', displayName='random', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/bvssb_500.npy')), 'blue', displayName='500', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'red', displayName='1000', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/bvssb_2000.npy')), 'yellow', displayName='2000', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/bvssb_4000.npy')), 'green', displayName='4000', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/entropy_500.npy')), 'blue', displayName='500', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/entropy_1000.npy')), 'red', displayName='1000', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/entropy_2000.npy')), 'yellow', displayName='2000', window=1)
-# plot(np.load(os.path.join(folder, 'baselines/entropy_4000.npy')), 'green', displayName='4000', window=1)
 
-# plot(np.load(os.path.join(folder, 'baselines/random_mnist_f1.npy')), 'black', displayName='random', window=1)
-plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'blue', displayName='BvsSB', window=1)
+plot(np.load(os.path.join(folder, 'baselines/emb_bvssb_1000.npy')), 'navy', displayName='emb_BvsSB', window=1)
+plot(np.load(os.path.join(folder, 'baselines/emb_entropy_1000.npy')), 'darkgreen', displayName='emb_Entropy', window=1)
+plot(np.load(os.path.join(folder, 'baselines/emb_random_1000.npy')), 'gray', displayName='emb_random', window=1)
 
-plot(collect(os.path.join(folder, 'outDDQN_MNIST_BATCH'), maskingThreshold=0.7), 'red', displayName='ddqn', window=1)
+plot(np.load(os.path.join(folder, 'baselines/random_1000.npy')), 'black', displayName='random', window=1)
+
+plot(collect(os.path.join(folder, 'out_MNIST_BATCH_RS'), maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
 # plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_2')), 'green', displayName='ddqn_2', window=1)
 
 plt.ylim(0, 1)

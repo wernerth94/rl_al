@@ -133,7 +133,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     totalSteps = trainState.get('totalSteps', 0)
     etaH = trainState.get('eta', 0)
-    gl = trainState['glCurve'][-1]
+    gl = 0 #trainState['glCurve'][-1]
     lr = trainState['lrCurve'][-1]
     greed = trainState['greedCurve'][-1]
     fig.suptitle('Eta %3.1f h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(etaH, totalSteps, gl, lr, greed), fontsize=16)

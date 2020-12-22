@@ -55,6 +55,6 @@ def collect(folder):
 
 folder = '..'
 
-collections, labels = collect(os.path.join(folder, 'outDDQN_MNIST_BATCH'))
+collections, labels = collect(os.path.join(folder, 'out_MNIST_BATCH_RS'))
 plot(collections, labels, window=1)
 #plot('output/DDQN_Iris', 'red', displayName='DDQN')

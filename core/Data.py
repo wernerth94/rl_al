@@ -85,3 +85,12 @@ def loadCifar(numTest=1000, numLabels=10):
     x_test = np.array(x_test, dtype=float)[:numTest] / 255
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     return (x_train, y_train, x_test, y_test)
+
+
+def load_cifar10_mobilenet(numTest=1000, prefix=''):
+    with np.load(os.path.join(prefix, '../datasets/cifar10_mobileNetV2.npz'), allow_pickle=True) as f:
+        x_train, y_train = f['x_train'], f['y_train']
+        x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
+
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    return (x_train, y_train, x_test, y_test)
