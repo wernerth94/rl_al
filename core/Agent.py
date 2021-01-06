@@ -1,5 +1,6 @@
 import tensorflow.keras as keras
 import tensorflow_addons as tfa
+import tensorflow as tf
 import numpy as np
 import os
 
@@ -146,6 +147,11 @@ class BatchAgent(DDQN):
 
 
     def createModel(self, fromCheckpoint, lr=0.001, l2Reg=0.0):
+        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
+            model = keras.models.load_model(fromCheckpoint)
+            print('loaded model from ', fromCheckpoint)
+            return model
+
         model = keras.models.Sequential([
                 keras.layers.Input(self.env.stateSpace),
                 keras.layers.Dense(10, activation='tanh'),
@@ -153,11 +159,6 @@ class BatchAgent(DDQN):
         opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
         model.compile(optimizer=tfa.optimizers.Lookahead(opt),
                       loss=keras.losses.Huber())
-
-        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
-            model.load_weights(fromCheckpoint)
-            print('loaded model from ', fromCheckpoint)
-
         return model
 
 
@@ -208,17 +209,20 @@ class NStepBatchAgent(DDQN):
 
 
     def createModel(self, fromCheckpoint, lr=0.001, l2Reg=0.0):
-        model = keras.models.Sequential([
-                keras.layers.Input(self.env.stateSpace),
-                keras.layers.Dense(10, activation='tanh'),
-                keras.layers.Dense(1) ])
-        opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
-        model.compile(optimizer=tfa.optimizers.Lookahead(opt),
-                      loss=keras.losses.Huber())
+        if fromCheckpoint is not None:
+            return keras.models.load_model(fromCheckpoint)
+        else:
+            model = keras.models.Sequential([
+                    keras.layers.Input(self.env.stateSpace),
+                    keras.layers.Dense(10, activation='tanh'),
+                    keras.layers.Dense(1) ])
+            opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
+            model.compile(optimizer=tfa.optimizers.Lookahead(opt),
+                          loss=keras.losses.Huber())
 
-        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
-            model.load_weights(fromCheckpoint)
-            print('loaded model from ', fromCheckpoint)
+            if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
+                model.load_weights(fromCheckpoint)
+                print('loaded model from ', fromCheckpoint)
 
         return model
 

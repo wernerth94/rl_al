@@ -1,13 +1,13 @@
 import numpy as np
 
-def scoreAgent(agent, env, numImgs, printInterval=10):
+def scoreAgent(agent, env, numImgs, greed=-1, printInterval=0):
     state = env.reset()
     lossProg = []
     f1Prog = []
     i = 0
     done = False
     while not done:
-        Q, a = agent.predict(state, greedParameter=-1)
+        Q, a = agent.predict(state, greedParameter=greed)
         a = a[0]
         state, reward, done, _ = env.step(a)
 
@@ -15,8 +15,8 @@ def scoreAgent(agent, env, numImgs, printInterval=10):
             f1Prog.append(env.currentTestF1)
             lossProg.append(env.currentTestLoss)
 
-        # if i % printInterval == 0 and len(f1Prog) > 0:
-        #     print('%d | %d : %1.3f'%(seed, env.addedImages, f1Prog[-1]))
+        if printInterval > 0 and len(f1Prog) > 0 and i % printInterval == 0 :
+            print('%d : %1.3f'%(env.addedImages, f1Prog[-1]))
         i += 1
 
     print('stopping with f1', f1Prog[-1])

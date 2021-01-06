@@ -6,6 +6,7 @@ print(F"The virtualenv is: {sys.prefix}")
 # path additions for the cluster
 sys.path.append("core")
 sys.path.append("evaluation")
+sys.path.append("config")
 print(F"updated path is {sys.path}")
 
 import numpy as np
@@ -58,8 +59,8 @@ elif dataset == 'mnist':
     dataset = Data.loadMNIST()
     classifier = Classifier.DenseClassifierMNIST
 
-env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 
+env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 memory = Memory.NStepMemory(env, nSteps, maxLength=c.MEMORY_CAP)
 memory.loadFromDisk(c.memDir)
 
@@ -80,11 +81,10 @@ if trainState is None:
         'lrCurve': [], 'greedCurve': [], 'glCurve': []
     }
 
-sessionSteps = 0
+sessionSteps = 0; printCounter = 0
 startTime = time()
-printCounter = 0
 seed = int(str(startTime)[-5:])
-nextUpdate = c.C + c.WARMUP
+stateBuffer = []; rewardBuffer = []
 try:
     while trainState['totalSteps'] < c.MIN_INTERACTIONS:
         np.random.seed(seed + len(trainState['rewardCurve']))
@@ -94,8 +94,6 @@ try:
         steps, done = 0, False
         qAvrg = 0
         while not done:
-            startingState = None
-            rewards = list()
             for n in range(nSteps):
                 gl = c.GL[np.clip(trainState['totalSteps'], 0, len(c.GL) - 1)]
                 env.gameLength = int(gl)
@@ -103,13 +101,26 @@ try:
                 greed = c.GREED[np.clip(trainState['totalSteps'], 0, len(c.GREED) - 1)]
                 Q, a = agent.predict(state, greedParameter=greed)
                 a = a[0]
-                qAvrg += Q[0]
-                if startingState is None:
-                    startingState = state[a]
+                if steps == 0:
+                    qAvrg = Q[0]
 
                 statePrime, reward, done, _ = env.step(a)
                 epochRewards += reward
-                rewards.append(reward)
+                stateBuffer.append(state[a])
+                rewardBuffer.append(reward)
+
+                if len(stateBuffer) >= nSteps:
+                    memory.addMemory(stateBuffer.pop(0), rewardBuffer, np.mean(statePrime, axis=0), done)
+                    rewardBuffer.pop(0)
+                    # agent training
+                    lr = c.LR[np.clip(trainState['totalSteps'], 0, len(c.LR) - 1)]
+                    if trainState['totalSteps'] > c.WARMUP:
+                        for _ in range(c.RL_UPDATES_PER_ENV_UPDATE):
+                            memSample = memory.sampleMemory(c.BATCH_SIZE)
+                            epochLoss += agent.fit(memSample, lr=lr)
+                        # Update target network
+                        if trainState['totalSteps'] % c.C == 0:
+                            agent.copyWeights()
 
                 state = statePrime
                 trainState['totalSteps'] += 1
@@ -117,23 +128,6 @@ try:
 
                 if done:
                     break
-
-            memory.addMemory(startingState, rewards, np.mean(statePrime, axis=0), done)
-            #memory.addMemory(state, a, reward, statePrime, done)
-
-            # agent training
-            lr = c.LR[np.clip(trainState['totalSteps'], 0, len(c.LR) - 1)]
-            if trainState['totalSteps'] > c.WARMUP:
-                for _ in range(c.RL_UPDATES_PER_ENV_UPDATE):
-                    memSample = memory.sampleMemory(c.BATCH_SIZE)
-                    epochLoss += agent.fit(memSample, lr=lr)
-
-            # Update target network
-            if trainState['totalSteps'] >= nextUpdate:
-                agent.copyWeights()
-                nextUpdate += c.C
-
-
         sessionSteps += steps
         printCounter += steps
 

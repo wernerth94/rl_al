@@ -49,7 +49,7 @@ def doEval(args):
         env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
         agent = agentFunc(env, fromCheckpoints=c.ckptDir)
 
-        f1, loss = scoreAgent(agent, env, c.BUDGET, printInterval=100)
+        f1, loss = scoreAgent(agent, env, c.BUDGET, greed=0.1, printInterval=200)
         scores.append(f1)
         del env
         gc.collect()
