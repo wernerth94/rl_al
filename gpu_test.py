@@ -4,9 +4,9 @@ print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
 
 # path additions for the cluster
-sys.path.append("../core")
-sys.path.append("../evaluation")
-sys.path.append("../config")
+sys.path.append("core")
+sys.path.append("evaluation")
+sys.path.append("config")
 print(F"updated path is {sys.path}")
 
 import tensorflow as tf
@@ -21,7 +21,7 @@ import Memory
 import config.batchConfig as c
 
 nSteps = 5
-dataset = Data.loadMNIST(prefix='..')
+dataset = Data.loadMNIST()
 
 def printTime(totalSec):
     minutes = int(totalSec / 60)
