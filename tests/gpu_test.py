@@ -1,3 +1,14 @@
+import sys
+import getpass
+print(F"The user is: {getpass.getuser()}")
+print(F"The virtualenv is: {sys.prefix}")
+
+# path additions for the cluster
+sys.path.append("../core")
+sys.path.append("../evaluation")
+sys.path.append("../config")
+print(F"updated path is {sys.path}")
+
 import tensorflow as tf
 import tensorflow.keras as keras
 import numpy as np
