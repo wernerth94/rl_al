@@ -85,7 +85,7 @@ with tf.device('/device:CPU:0'):
     for _ in range(reps):
         t += test()
     print('average')
-    print(printTime(t/reps))
+    printTime(t/reps)
 
 
 print('\n\n', 'trying with gpu')
@@ -94,7 +94,7 @@ with tf.device('/device:GPU:0'):
     for _ in range(reps):
         t += test()
     print('average')
-    print(printTime(t/reps))
+    printTime(t/reps)
 
 
 print('\n\n', 'trying without device')
@@ -102,4 +102,4 @@ t = 0
 for _ in range(reps):
     t += test()
 print('average')
-print(printTime(t/reps))
+printTime(t/reps)
