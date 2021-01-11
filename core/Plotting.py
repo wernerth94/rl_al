@@ -106,8 +106,8 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Bottom Right
-    window = 30
-    offset = 20
+    window = 50
+    offset = 30
     plots = 5
     cm = plt.get_cmap('OrRd')
     alphas = np.linspace(0.45, 0.99, num=plots)
