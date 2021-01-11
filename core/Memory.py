@@ -49,8 +49,7 @@ class NStepMemory:
         return state, rewardList, newState, done
 
 
-    def _append(self, state:np.array, rewardList:list, newState:np.array, done:int):
-        row = self.argsToRow(state, rewardList, newState, done)
+    def _append(self, row:np.array):
         self.memory = np.append(self.memory, row, axis=0)
 
         if len(self.memory) > self.maxLength:
@@ -59,7 +58,8 @@ class NStepMemory:
 
 
     def addMemory(self, state:np.array, rewardList:list, newState:np.array, done:int):
-        self._append(state, rewardList, newState, done)
+        row = self.argsToRow(state, rewardList, newState, done)
+        self._append(row)
         # for da in self.dataAugmentors:
         #     s, sP = da.apply([state, newState])
         #     self._append(s, action, reward, sP, done)
@@ -89,6 +89,10 @@ class NStepMemory:
 
     def __len__(self):
         return len(self.memory)
+
+    def clear(self):
+        del self.memory
+        self.memory = np.zeros((0, self.nColumns))
 
 
 

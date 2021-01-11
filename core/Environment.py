@@ -50,7 +50,7 @@ class ALGame:
 
         reward = 0
         if self.rewardShaping:
-            reward = (newTestF1 - self.currentTestF1 - self.labelCost * 1) * self.rewardScaling
+            reward = (newTestF1 - self.currentTestF1 - self.labelCost) * self.rewardScaling
         self.currentTestF1 = newTestF1
         return reward
 

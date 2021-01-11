@@ -26,9 +26,9 @@ def gameLengthToEpochCurve(ts, c):
     return length
 
 
-lossWindow = 30
+lossWindow = 20
 rewardWindow = 30
-qWindow = 30
+qWindow = 20
 stepWindow = 10
 
 def plot(trainState, config, outDir=None, showPlots=False):
@@ -106,12 +106,12 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Bottom Right
-    window = 50
+    window = 30
     offset = 20
     plots = 5
     cm = plt.get_cmap('OrRd')
     alphas = np.linspace(0.45, 0.99, num=plots)
-    alphas[:-1] = alphas[:-1] - 0.3
+    alphas[:-1] = alphas[:-1]
     colorIndices = np.linspace(0, 1, num=plots)
 
     ax4.axvline(x=0.808, color='k', linestyle='--', linewidth=1) # random baseline - 0.05
@@ -149,7 +149,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
 if __name__ == "__main__":
     from config import batchConfig as c
 
-    c.OUTPUT_FOLDER = 'outDDQN_MNIST_BATCH'
-    c.MODEL_NAME = 'DDQN_MNIST_BATCH'
+    # c.OUTPUT_FOLDER = 'outDDQN_MNIST_BATCH'
+    # c.MODEL_NAME = 'DDQN_MNIST_BATCH'
     tS = Misc.loadTrainState(c, path_prefix='..')
     plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), showPlots=True)

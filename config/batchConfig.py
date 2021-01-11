@@ -2,7 +2,7 @@ import os
 import Misc
 
 # general
-MODEL_NAME = '_MNIST_BATCH_RS'
+MODEL_NAME = '_PROC_MNIST_BATCH_RS'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 
@@ -10,7 +10,7 @@ PRINT_FREQ = 1
 BATCH_SIZE = 16
 C = 2000
 RL_UPDATES_PER_ENV_UPDATE = 1
-MEMORY_CAP = 100000 # 20k
+MEMORY_CAP = 70000 # 20k
 
 # Env config
 SAMPLE_SIZE = 2000
@@ -23,16 +23,22 @@ LABEL_COST = 0 # 0.001
 INIT_POINTS_PER_CLASS = 5
 
 # training loop
-MIN_INTERACTIONS = 200000 # 150k
+MIN_INTERACTIONS = 300000 # 150k
 WARMUP = 1000
 N_EXPLORE = WARMUP + int(0.02*MIN_INTERACTIONS)
 N_CONVERSION = int(0.7*MIN_INTERACTIONS)
 EVAL_ITERATIONS = 15
-
-GREED = Misc.parameterPlan(0.9, 0.1, warmup=N_EXPLORE, conversion=N_CONVERSION)
-LR = Misc.parameterPlan(0.01, 0.0001, warmup=N_EXPLORE, conversion=N_CONVERSION)
 # GREED = Misc.parameterPlan(0.9, 0.1, warmup=N_EXPLORE, conversion=N_CONVERSION)
 # LR = Misc.parameterPlan(0.01, 0.0001, warmup=N_EXPLORE, conversion=N_CONVERSION)
+
+# HANDCRAFTED
+##################################################################
+N_EXPLORE = 220000
+N_CONVERSION = 70000
+GREED = Misc.parameterPlan(0.16, 0.10, warmup=N_EXPLORE, conversion=N_CONVERSION)
+LR = Misc.parameterPlan(0.002, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
+##################################################################
+
 # Game Length
 GL = Misc.asympParameterPlan(BUDGET, BUDGET, warmup=WARMUP + int(0.1*MIN_INTERACTIONS), conversion=int(0.6*MIN_INTERACTIONS))
 

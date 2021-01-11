@@ -28,7 +28,8 @@ class DDVN:
         else:
             model = keras.models.Sequential([
                 keras.layers.Input(self.stateSpace),
-                keras.layers.Dense(10, activation='tanh'),
+                keras.layers.Dense(24, activation='relu'),
+                keras.layers.Dense(48, activation='tanh'),
                 keras.layers.Dense(1)])
             opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
             model.compile(optimizer=tfa.optimizers.Lookahead(opt),
@@ -47,14 +48,14 @@ class DDVN:
             return v[:,0], np.array(i).reshape(-1)
 
 
-    def fit(self, memoryBatch, lr=None):
+    def fit(self, memoryBatch, lr=None, batchSize=16):
         state = memoryBatch[0]
         rewards = memoryBatch[1]
         nextStates = memoryBatch[2]
         dones = memoryBatch[3]
         _all = range(len(state))
 
-        V1 = self.model1.predict(state)[:,0]
+        #V1 = self.model1.predict(state)[:,0]
         vPrime1 = self.model1.predict(nextStates)[:,0]
         vPrime2 = self.model2.predict(nextStates)[:,0]
 
@@ -71,13 +72,22 @@ class DDVN:
 
         if lr is not None:
             self.model1.optimizer.lr = lr
-        hist = self.model1.fit(x=state, y=V1, epochs=1, verbose=0, callbacks=self.callbacks)
+        hist = self.model1.fit(x=state, y=V1, epochs=1, batch_size=batchSize, verbose=0, callbacks=self.callbacks)
 
-        return hist.history['loss'][0]
+        return sum(hist.history['loss'])
 
 
     def copyWeights(self):
             self.model2.set_weights(self.model1.get_weights())
+
+
+    def getAgentWeights(self):
+        return [self.model1.get_weights(), self.model2.get_weights()]
+
+
+    def setAgentWeights(self, weights:list):
+        self.model1.set_weights(weights[0])
+        self.model2.set_weights(weights[1])
 
 
 
@@ -121,6 +131,14 @@ class DynaV(DDVN):
 
         return direktRLLoss, transitionLoss, simulatedRLLoss
 
+
+    def getAgentWeights(self):
+        stateValueWeights = super(DynaV, self).getAgentWeights()
+        return [stateValueWeights, self.stateTransModel.get_weights()]
+
+    def setAgentWeights(self, weights: list):
+        super(DynaV, self).setAgentWeights(weights[0])
+        self.stateTransModel.set_weights(weights[1])
 
 
 

@@ -48,16 +48,20 @@ folder = '..'
 sns.set()
 
 
+plot(np.load(os.path.join(folder, 'baselines/emb_random_1000.npy')), 'gray', displayName='emb_random', window=1)
 plot(np.load(os.path.join(folder, 'baselines/emb_bvssb_1000.npy')), 'navy', displayName='emb_BvsSB', window=1)
 plot(np.load(os.path.join(folder, 'baselines/emb_entropy_1000.npy')), 'darkgreen', displayName='emb_Entropy', window=1)
-plot(np.load(os.path.join(folder, 'baselines/emb_random_1000.npy')), 'gray', displayName='emb_random', window=1)
 
 plot(np.load(os.path.join(folder, 'baselines/random_1000.npy')), 'black', displayName='random', window=1)
+plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'blue', displayName='BvsSB', window=1)
+plot(np.load(os.path.join(folder, 'baselines/entropy_1000.npy')), 'green', displayName='Entropy', window=1)
 
-plot(collect(os.path.join(folder, 'out_MNIST_BATCH_RS'), maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
+#plot(collect(os.path.join(folder, 'out_MNIST_BATCH_RS'), maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
 # plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_2')), 'green', displayName='ddqn_2', window=1)
 
-plt.ylim(0, 1)
+plt.ylim(0.5, 1)
+plt.yticks(np.arange(0.5, 1, 0.1))
+plt.axhline(y=0.965, label='upper bound', c='black', linestyle='dashed')
 plt.legend(fontsize='x-small')
 plt.savefig('plot_'+c.MODEL_NAME+'.png')
 plt.show()
