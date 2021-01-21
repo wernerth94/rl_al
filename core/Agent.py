@@ -56,11 +56,11 @@ class DDVN:
         _all = range(len(state))
 
         #V1 = self.model1.predict(state)[:,0]
-        vPrime1 = self.model1.predict(nextStates)[:,0]
         vPrime2 = self.model2.predict(nextStates)[:,0]
 
         #nextAction = np.argmax(vPrime1, axis=1)  # .squeeze()
         if self.clipped:
+            vPrime1 = self.model1.predict(nextStates)[:,0]
             target = np.minimum(vPrime1, vPrime2)
         else:
             target = vPrime2
@@ -68,7 +68,8 @@ class DDVN:
         R = np.zeros(len(state))
         for i in range(len(rewards)):
             R += (self.gamma ** i) * rewards[i]
-        V1 = R + (1 - dones) * self.gamma * target
+        # V1 = R + (1 - dones) * self.gamma * target # OLD and wrong
+        V1 = R + (1 - dones) * (self.gamma**len(rewards)) * target
 
         if lr is not None:
             self.model1.optimizer.lr = lr

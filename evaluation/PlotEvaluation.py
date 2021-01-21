@@ -29,17 +29,18 @@ def plot(curve, color, displayName, window=5):
     plt.plot(x, avrgCurve, label=displayName, linewidth=LINE_WIDTH, c=color)
 
 
-def collect(folder, maskingThreshold=0.0):
-    folder = os.path.join(folder, 'curves')
+def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
+    folder = os.path.join(folder, curvesFolder)
     curves = None
     for file in os.listdir(folder):
-        curve = np.load(os.path.join(folder, file))
-        mask = list(np.mean(curve[:, -100:], axis=1) > maskingThreshold)
-        curve = curve[mask]
-        if not curves:
-            curves = curve
-        else:
-            curves = np.concatenate([curves, curve], axis=0)
+        if not os.path.isdir(os.path.join(folder, file)):
+            curve = np.load(os.path.join(folder, file))
+            mask = list(np.mean(curve[:, -100:], axis=1) > maskingThreshold)
+            curve = curve[mask]
+            if curves is None:
+                curves = curve
+            else:
+                curves = np.concatenate([curves, curve], axis=0)
     curves = np.array(curves)
     result = [np.mean(curves, axis=0), np.std(curves, axis=0)]
     return np.array(result)
@@ -56,7 +57,9 @@ plot(np.load(os.path.join(folder, 'baselines/random_1000.npy')), 'black', displa
 plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'blue', displayName='BvsSB', window=1)
 plot(np.load(os.path.join(folder, 'baselines/entropy_1000.npy')), 'green', displayName='Entropy', window=1)
 
-#plot(collect(os.path.join(folder, 'out_MNIST_BATCH_RS'), maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
+plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
+plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.1', maskingThreshold=0.0), 'orange', displayName='ddqn', window=1)
+plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.01', maskingThreshold=0.0), 'pink', displayName='ddqn', window=1)
 # plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_2')), 'green', displayName='ddqn_2', window=1)
 
 plt.ylim(0.5, 1)

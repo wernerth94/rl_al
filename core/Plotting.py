@@ -11,8 +11,9 @@ def avrg(curve, window):
     if len(curve) < 2:
         return [curve[0]]
     avrgCurve = []
-    for i in range(1, len(curve)):
-        avrgCurve.append(np.mean(curve[max(0, i - window):i]))
+    w = min(len(curve), window)
+    for i in range(len(curve)):
+        avrgCurve.append(np.mean( curve[max(0, i - int(window/2)) : min(len(curve), i + int(window/2))] ))
     return avrgCurve
 
 
@@ -27,7 +28,7 @@ def gameLengthToEpochCurve(ts, c):
 
 
 lossWindow = 20
-rewardWindow = 30
+rewardWindow = 140
 qWindow = 20
 stepWindow = 10
 
@@ -37,16 +38,8 @@ def plot(trainState, config, outDir=None, showPlots=False):
     fig, axes = plt.subplots(2, 2, figsize=(15, 7))
     ax1 = axes[0,0]; ax2 = axes[0,1]; ax3 = axes[1,0]; ax4 = axes[1,1]
 
-    #gameLengthCurve = trainState['stepCurve'] #gameLengthToEpochCurve(trainState, config)
-    vertLines = []
-    for i in range(len(trainState['glCurve'])-1):
-        if trainState['glCurve'][i] != trainState['glCurve'][i+1]:
-            vertLines.append(i)
-
     ##########################################
     # Top Left
-    for l in vertLines:
-        ax1.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
     # loss
     avrgCurve = avrg(trainState['lossCurve'], lossWindow)
     mean = max(1e-7, np.average(avrgCurve))
@@ -67,8 +60,6 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Top Right
-    for l in vertLines:
-        ax2.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
     # Q values
     avrgCurve = avrg(trainState['qCurve'], qWindow)
     ax2.plot(np.arange(len(avrgCurve)), avrgCurve, c='purple', label='Q')
@@ -77,10 +68,10 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ax2.set_title('average Q value')
 
     # game length
-    ax22 = ax2.twinx()
-    ax22.plot(trainState['glCurve'], c='green', label='game length')
-    ax22.set_ylabel('game length')
-    ax22.set_ylim(bottom=0)
+    # ax22 = ax2.twinx()
+    # ax22.plot(trainState['glCurve'], c='green', label='game length')
+    # ax22.set_ylabel('game length')
+    # ax22.set_ylim(bottom=0)
 
     q_patch = mpatches.Patch(color='purple', label='avrg Q')
     gl_patch = mpatches.Patch(color='green', label='game length')
@@ -88,9 +79,6 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Bottom Left
-    # for l in vertLines:
-    #     ax3.axvline(x=l, color='k', linestyle='--', linewidth=0.3)
-
     ax3.plot(trainState['lrCurve'], c='green', label='learning rate')
     ax3.set_ylabel('learning rate')
     ax3.set_ylim(bottom=0, top=np.max(trainState['lrCurve'])+0.01)
@@ -106,21 +94,21 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     ##########################################
     # Bottom Right
-    window = 50
-    offset = 30
+    window = 100
+    offset = 100
     plots = 5
     cm = plt.get_cmap('OrRd')
     alphas = np.linspace(0.45, 0.99, num=plots)
     alphas[:-1] = alphas[:-1]
     colorIndices = np.linspace(0, 1, num=plots)
 
-    ax4.axvline(x=0.808, color='k', linestyle='--', linewidth=1) # random baseline - 0.05
-    ax4.axvline(x=0.852, color='b', linestyle='--', linewidth=1) # BvsSB baseline -0.05
+    ax4.axvline(x=0.8462, color='k', linestyle='--', linewidth=1)
+    ax4.axvline(x=0.8904, color='b', linestyle='--', linewidth=1)
     data = []
     for i in range(plots):
-        high = len(trainState['rewardCurve']) - (offset * i)
-        low = max(high - window, -len(trainState['rewardCurve']))
-        data.append(trainState['rewardCurve'][low:high])
+        high = len(trainState['f1Curve']) - (offset * i)
+        low = max(high - window, -len(trainState['f1Curve']))
+        data.append(trainState['f1Curve'][low:high])
     data.reverse()
 
     for i, d, a, cId in zip(np.flip(np.arange(len(data))), data, alphas, colorIndices):
@@ -129,7 +117,6 @@ def plot(trainState, config, outDir=None, showPlots=False):
         sns.kdeplot(d, ax=ax4, c=c, label=str(-i*offset))
 
     ax4.legend(fontsize='small')
-
 
     totalSteps = trainState.get('totalSteps', 0)
     etaH = trainState.get('eta', 0)

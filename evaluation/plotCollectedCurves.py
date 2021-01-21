@@ -30,7 +30,7 @@ def plot(collection, labels, window=5, thresh=0.0):
             x = np.arange(len(avrgCurve))
             ax.plot(x, avrgCurve, linewidth=LINE_WIDTH)
         ax.set_xlabel(label)
-    plt.ylim(0, 1)
+        ax.set_ylim(0.6, 1)
     plt.show()
 
     print('means')
@@ -38,23 +38,25 @@ def plot(collection, labels, window=5, thresh=0.0):
     sns.set() #plt.grid()
     for m, l in zip(means, labels):
         plt.plot(m, label=l)
+    plt.ylim(0.6, 1)
     plt.legend()
     plt.show()
 
 
-def collect(folder):
-    folder = os.path.join(folder, 'curves')
+def collect(folder, curvesFolder='curves'):
+    folder = os.path.join(folder, curvesFolder)
     collections = list()
     labels = list()
     for file in os.listdir(folder):
-        curves = np.load(os.path.join(folder, file))
-        collections.append(curves)
-        labels.append(file)
+        if not os.path.isdir(os.path.join(folder, file)):
+            curves = np.load(os.path.join(folder, file))
+            collections.append(curves)
+            labels.append(file)
 
     return collections, labels
 
 folder = '..'
 
-collections, labels = collect(os.path.join(folder, 'out_MNIST_BATCH_RS'))
+collections, labels = collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves')
 plot(collections, labels, window=1)
 #plot('output/DDQN_Iris', 'red', displayName='DDQN')

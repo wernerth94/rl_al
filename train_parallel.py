@@ -24,105 +24,34 @@ from core.Plotting import plot
 import Misc
 
 
-
-all_datasets = ['mnist', 'iris']
-all_setups = ['conv', 'dense', 'batch']
-setup = str(sys.argv[1])
-dataset = str(sys.argv[2])
-nSteps = int(sys.argv[3])
-if dataset not in all_datasets: raise ValueError('dataset not in all_datasets;  given: ' + dataset)
-if setup not in all_setups: raise ValueError('setup not in all_setups;  given: ' + setup)
-
-
 import config.batchConfig as c
 print('#########################################################')
-print('loaded config', c.MODEL_NAME, '\t DATASET', dataset)
+print('loaded config', c.MODEL_NAME)
 
 print('planned interactions', c.MIN_INTERACTIONS)
 print(c.N_EXPLORE, 'exploration', c.N_CONVERSION, 'conversion')
 print('#########################################################')
 print('#########################################################')
 
-if dataset == 'cifar':
-    from Data import load_cifar10_mobilenet
-    dataset = load_cifar10_mobilenet()
-elif dataset == 'mnist':
-    from Data import load_mnist_mobilenet
-    dataset = load_mnist_mobilenet()
+if c.DATASET == 'mnist_embedSmall':
+    from Data import load_mnist_embedded
+    dataset = load_mnist_embedded(c.DATASET)
 
 
 def runAL(args):
     outConnection, STATE_SPACE, dataset = args
 
+    from PoolManagement import resetALPool, sampleNewBatch, createState, checkDone, addDatapointToPool
     import config.batchConfig as c
-    classifier = Classifier.EmbeddingClassifier(1280)
-
-    def resetALPool(dataset):
-        x_train, y_train, x_test, y_test = dataset
-        nClasses = y_train.shape[1]
-        xLabeled, yLabeled = [], []
-
-        ids = np.arange(x_train.shape[0], dtype=int)
-        np.random.shuffle(ids)
-        perClassIntances = [0 for _ in range(nClasses)]
-        usedIds = []
-        for i in ids:
-            label = np.argmax(y_train[i])
-            if perClassIntances[label] < c.INIT_POINTS_PER_CLASS:
-                xLabeled.append(x_train[i])
-                yLabeled.append(y_train[i])
-                usedIds.append(i)
-                perClassIntances[label] += 1
-            if sum(perClassIntances) >= c.INIT_POINTS_PER_CLASS * nClasses:
-                break
-        unusedIds = [i for i in np.arange(x_train.shape[0]) if i not in usedIds]
-        xLabeled = np.array(xLabeled)
-        yLabeled = np.array(yLabeled)
-        xUnlabeled = np.array(x_train[unusedIds])
-        yUnlabeled = np.array(y_train[unusedIds])
-        gc.collect()
-        return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
-
-
-    def addDatapointToPool(xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances, dpId:int):
-        # add images
-        perClassIntances[int(np.argmax(yUnlabeled[dpId]))] += 1 # keep track of the added images
-        xLabeled = np.append(xLabeled, xUnlabeled[dpId:dpId + 1], axis=0)
-        yLabeled = np.append(yLabeled, yUnlabeled[dpId:dpId + 1], axis=0)
-        xUnlabeled = np.delete(xUnlabeled, dpId, axis=0)
-        yUnlabeled = np.delete(yUnlabeled, dpId, axis=0)
-        return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
-
-
-    def addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures):
-        presentedImg = xUnlabeled[stateIds]
-        labeledPool = np.mean(xLabeled, axis=0)
-        poolFeat = np.tile(labeledPool, (len(alFeatures),1))
-        return np.concatenate([alFeatures, presentedImg, poolFeat], axis=1)
-
-
-    def createState(env, xUnlabeled, xLabeled, stateIds):
-        alFeatures = env.createState(xUnlabeled[stateIds])
-        state = addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures)
-        return state
-
-
-    def sampleNewBatch(xUnlabeled):
-        return np.random.choice(xUnlabeled.shape[0], c.SAMPLE_SIZE)
-
-
-    def checkDone(xLabeled, yUnlabeled):
-        return len(xLabeled) - (c.INIT_POINTS_PER_CLASS * yUnlabeled.shape[1]) >= c.BUDGET
-
+    classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-    memory = Memory.NStepMemory(STATE_SPACE, nSteps, maxLength=c.MEMORY_CAP)
-    agent = Agent.DDVN(STATE_SPACE, nSteps)
+    memory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
+    agent = Agent.DDVN(STATE_SPACE, c.N_STEPS)
 
     stop = False
     while not stop:
         stateBuffer = []; rewardBuffer = []
-
         # receive seeds
         npSeed, tfSeed = outConnection.recv()
         np.random.seed(npSeed)
@@ -139,13 +68,17 @@ def runAL(args):
         epochLoss, epochRewards = 0, 0
         steps, done, vStart = 0, False, 0
         while not done:
-            for n in range(nSteps):
+            for n in range(c.N_STEPS):
                 V, a = agent.predict(state, greedParameter=greed)
                 a = a[0]
                 if steps == 0:
                     vStart = V[a]
 
-                xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances = addDatapointToPool(xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances, a)
+                xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances = addDatapointToPool(xLabeled,
+                                                                                                  yLabeled,
+                                                                                                  xUnlabeled,
+                                                                                                  yUnlabeled,
+                                                                                                  perClassIntances, a)
                 reward = env.fitClassifier(xLabeled, yLabeled)
                 stateIds = sampleNewBatch(xUnlabeled)
                 statePrime = createState(env, xUnlabeled, xLabeled, stateIds)
@@ -155,14 +88,13 @@ def runAL(args):
                 stateBuffer.append(state[a])
                 rewardBuffer.append(reward)
 
-                if len(stateBuffer) >= nSteps:
+                if len(stateBuffer) >= c.N_STEPS:
                     memory.addMemory(stateBuffer.pop(0), rewardBuffer, np.mean(statePrime, axis=0), done)
                     rewardBuffer.pop(0)
 
                 if done:
                     break
                 state = statePrime
-
         # send back memories
         outConnection.send(memory.memory)
         # send reward and V(s0)
@@ -179,7 +111,7 @@ def trainAgent(args):
     conn, STATE_SPACE, BATCH_STATE = args
 
     cp_callback = keras.callbacks.ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
-    mainAgent = Agent.DDVN(STATE_SPACE, nSteps, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
+    mainAgent = Agent.DDVN(STATE_SPACE, c.N_STEPS, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
 
     stop = False
     while not stop:
@@ -202,7 +134,7 @@ def trainAgent(args):
 STATE_SPACE = 3 + 2*dataset[0].shape[1]
 NUM_PROCESSES = 4
 
-mainMemory = Memory.NStepMemory(STATE_SPACE, nSteps, maxLength=c.MEMORY_CAP)
+mainMemory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
 
 if c.USE_STOPSWITCH:
@@ -213,9 +145,9 @@ trainState = Misc.loadTrainState(c)
 if trainState is None:
     trainState = {
         'eta':0, 'totalSteps': 0,
-        'lossCurve': [], 'stepCurve': [], 'rewardCurve': [],
-        'imgCurve': [], 'qCurve': [],
-        'lrCurve': [], 'greedCurve': [], 'glCurve': []
+        'lossCurve': [], 'rewardCurve': [],
+        'f1Curve': [], 'qCurve': [],
+        'lrCurve': [], 'greedCurve': []
     }
 
 sessionSteps = 0; printCounter = 0
@@ -270,6 +202,7 @@ try:
         meanV /= NUM_PROCESSES
         meanF1 /= NUM_PROCESSES
         trainState['rewardCurve'].append(meanReward)
+        trainState['f1Curve'].append(meanF1)
         trainState['qCurve'].append(meanV)
 
         # agent training
@@ -297,11 +230,8 @@ try:
         # logging ##################
         lossPerStep = epochLoss / c.BUDGET
         trainState['lossCurve'].append(lossPerStep)
-        trainState['imgCurve'].append(c.BUDGET + (10 * c.INIT_POINTS_PER_CLASS))
-        trainState['stepCurve'].append(c.BUDGET)
         trainState['lrCurve'].append(lr)
         trainState['greedCurve'].append(greed)
-        #trainState['glCurve'].append(gl)
 
         if printCounter >= c.PRINT_FREQ:
             printCounter = 0

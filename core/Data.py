@@ -46,8 +46,12 @@ def loadIRIS():
     return (x[trainIdx], y[trainIdx], x[testIdx], y[testIdx])
 
 
-def load_mnist_mobilenet(numTest=2000, prefix=''):
-    with np.load(os.path.join(prefix, '../datasets/mnist_mobileNetV2.npz'), allow_pickle=True) as f:
+def load_mnist_embedded(embedding, numTest=2000, prefix=''):
+    if embedding == 'mnist_mobileNet':
+        file = 'mnist_mobileNetV2.npz'
+    elif embedding == 'mnist_embedSmall':
+        file = 'mnist_embedSmall.npz'
+    with np.load(os.path.join(prefix, '../datasets', file), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
 
