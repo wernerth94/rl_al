@@ -40,8 +40,9 @@ class ALGame:
         return state
 
 
-    def fitClassifier(self, x_labeled, y_labeled, epochs=50, batch_size=32):
-        #self.classifier.set_weights(self.initialWeights)
+    def fitClassifier(self, x_labeled, y_labeled, epochs=50, batch_size=32, from_scratch=False):
+        if from_scratch:
+            self.classifier.set_weights(self.initialWeights)
         train_history = self.classifier.fit(x_labeled, y_labeled, batch_size=batch_size, epochs=epochs, verbose=0,
                                             callbacks=[self.es], validation_data=(self.x_test, self.y_test))
 
@@ -63,5 +64,5 @@ class ALGame:
         self.classifier = self.modelFunction(inputShape=initial_x.shape[1:],
                                              numClasses=initial_y.shape[1])
         self.initialWeights = self.classifier.get_weights()
-        _ = self.fitClassifier(initial_x, initial_y)
+        self.fitClassifier(initial_x, initial_y)
         self.initialF1 = self.currentTestF1

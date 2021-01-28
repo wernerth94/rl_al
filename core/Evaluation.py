@@ -1,9 +1,8 @@
 import numpy as np
 from PoolManagement import *
 import Memory
-import config.batchConfig as c
 
-def scoreAgent(agent, env, dataset, printInterval=10, greed=0):
+def scoreAgent(agent, env, budget, dataset, printInterval=10, greed=0):
     STATE_SPACE = 3 + 2 * dataset[0].shape[1]
     memory = Memory.NStepMemory(STATE_SPACE, nSteps=1)
 
@@ -24,7 +23,7 @@ def scoreAgent(agent, env, dataset, printInterval=10, greed=0):
         reward = env.fitClassifier(xLabeled, yLabeled)
         stateIds = sampleNewBatch(xUnlabeled)
         statePrime = createState(env, xUnlabeled, xLabeled, stateIds)
-        done = checkDone(xLabeled, yUnlabeled)
+        done = checkDone(xLabeled, yUnlabeled, budget)
 
         f1Prog.append(env.currentTestF1)
         memory.addMemory(state[a], [reward], np.mean(statePrime, axis=0), done)
@@ -34,5 +33,5 @@ def scoreAgent(agent, env, dataset, printInterval=10, greed=0):
             print('%d | %1.3f'%(i, f1Prog[-1]))
         i += 1
 
-    print('stopping with f1', f1Prog[-1])
+    print('stopping with', i, 'images \t f1', f1Prog[-1])
     return memory, f1Prog

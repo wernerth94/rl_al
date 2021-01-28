@@ -59,7 +59,7 @@ def load_mnist_embedded(embedding, numTest=2000, prefix=''):
     return (x_train, y_train, x_test, y_test)
 
 
-def loadMNIST(color=False, numTest=2000, prefix=''):
+def loadMNIST(color=False, numTest=4000, prefix=''):
     with np.load(os.path.join(prefix, '../datasets/mnist.npz'), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]

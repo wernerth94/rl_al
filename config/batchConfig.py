@@ -2,8 +2,8 @@ import os
 import Misc
 
 # general
-DATASET = 'mnist_embedSmall'
-EMBEDDING_SIZE = 192
+DATASET = 'mnist'
+EMBEDDING_SIZE = 1280
 N_STEPS = 10
 MODEL_NAME = '_PROC_MNIST'
 USE_STOPSWITCH = True
@@ -38,8 +38,8 @@ EVAL_ITERATIONS = 10
 ##################################################################
 N_EXPLORE = 220000
 N_CONVERSION = 70000
-GREED = Misc.parameterPlan(0.16, 0.10, warmup=N_EXPLORE, conversion=N_CONVERSION)
-LR = Misc.parameterPlan(0.002, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
+GREED = Misc.parameterPlan(0.6, 0.10, warmup=N_EXPLORE, conversion=N_CONVERSION)
+LR = Misc.parameterPlan(0.001, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
 ##################################################################
 
 # Game Length

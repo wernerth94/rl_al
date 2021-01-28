@@ -23,6 +23,9 @@ def avrg(curve, window):
 
 
 def plot(curve, color, displayName, window=5):
+    if len(curve) > 2:
+        curve = np.concatenate( [np.expand_dims(np.mean(curve, axis=0), axis=0),
+                                 np.expand_dims(np.std(curve, axis=0), axis=0)],  axis=0)
     avrgCurve, stdCurve = avrg(curve, window)
     x = np.arange(len(avrgCurve))
     plt.fill_between(x, avrgCurve-stdCurve, avrgCurve+stdCurve, alpha=0.15, facecolor=color)
@@ -49,17 +52,18 @@ folder = '..'
 sns.set()
 
 
-plot(np.load(os.path.join(folder, 'baselines/emb_random_1000.npy')), 'gray', displayName='emb_random', window=1)
-plot(np.load(os.path.join(folder, 'baselines/emb_bvssb_1000.npy')), 'navy', displayName='emb_BvsSB', window=1)
-plot(np.load(os.path.join(folder, 'baselines/emb_entropy_1000.npy')), 'darkgreen', displayName='emb_Entropy', window=1)
+plot(np.load(os.path.join(folder, 'baselines/small/random.npy')), 'green', displayName='small_random', window=1)
+plot(np.load(os.path.join(folder, 'baselines/small/bvssb_1000.npy')), 'lime', displayName='small_BvsSB', window=1)
 
-plot(np.load(os.path.join(folder, 'baselines/random_1000.npy')), 'black', displayName='random', window=1)
+plot(np.load(os.path.join(folder, 'baselines/mobilenet/random.npy')), 'gray', displayName='mobilenet_random', window=1)
+plot(np.load(os.path.join(folder, 'baselines/mobilenet/bvssb_1000.npy')), 'navy', displayName='mobilenet_BvsSB', window=1)
+
+plot(np.load(os.path.join(folder, 'baselines/random.npy')), 'black', displayName='random', window=1)
 plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'blue', displayName='BvsSB', window=1)
-plot(np.load(os.path.join(folder, 'baselines/entropy_1000.npy')), 'green', displayName='Entropy', window=1)
 
-plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
-plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.1', maskingThreshold=0.0), 'orange', displayName='ddqn', window=1)
-plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.01', maskingThreshold=0.0), 'pink', displayName='ddqn', window=1)
+# plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
+# plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.1', maskingThreshold=0.0), 'orange', displayName='ddqn', window=1)
+# plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.01', maskingThreshold=0.0), 'pink', displayName='ddqn', window=1)
 # plot(collect(os.path.join(folder, 'goodRuns/MNIST_BATCH_2')), 'green', displayName='ddqn_2', window=1)
 
 plt.ylim(0.5, 1)

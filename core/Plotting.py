@@ -11,7 +11,7 @@ def avrg(curve, window):
     if len(curve) < 2:
         return [curve[0]]
     avrgCurve = []
-    w = min(len(curve), window)
+
     for i in range(len(curve)):
         avrgCurve.append(np.mean( curve[max(0, i - int(window/2)) : min(len(curve), i + int(window/2))] ))
     return avrgCurve

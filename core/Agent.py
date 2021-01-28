@@ -28,8 +28,8 @@ class DDVN:
         else:
             model = keras.models.Sequential([
                 keras.layers.Input(self.stateSpace),
-                keras.layers.Dense(24, activation='relu'),
-                keras.layers.Dense(48, activation='tanh'),
+                #keras.layers.Dense(24, activation='relu'),
+                keras.layers.Dense(10, activation='tanh'),
                 keras.layers.Dense(1)])
             opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
             model.compile(optimizer=tfa.optimizers.Lookahead(opt),
@@ -144,17 +144,26 @@ class DynaV(DDVN):
 
 
 class Baseline_Entropy:
+    def __init__(self, *args, **kwargs):
+        pass
+
     def predict(self, state, greedParameter=0):
         scores = state[:, 2]
         return scores, np.expand_dims(np.argmax(scores), axis=-1)
 
 
 class Baseline_BvsSB:
+    def __init__(self, *args, **kwargs):
+        pass
+
     def predict(self, state, greedParameter=0):
         scores = state[:, 1]
         return scores, np.expand_dims(np.argmax(scores), axis=-1)
 
 
 class Baseline_Random:
+    def __init__(self, *args, **kwargs):
+        pass
+
     def predict(self, state, greedParameter=0):
         return None, np.expand_dims(np.random.randint(len(state)), axis=-1)

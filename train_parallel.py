@@ -23,7 +23,6 @@ import Memory
 from core.Plotting import plot
 import Misc
 
-
 import config.batchConfig as c
 print('#########################################################')
 print('loaded config', c.MODEL_NAME)
@@ -33,7 +32,10 @@ print(c.N_EXPLORE, 'exploration', c.N_CONVERSION, 'conversion')
 print('#########################################################')
 print('#########################################################')
 
-if c.DATASET == 'mnist_embedSmall':
+if c.DATASET == 'mnist':
+    from Data import loadMNIST
+    dataset = loadMNIST()
+else:
     from Data import load_mnist_embedded
     dataset = load_mnist_embedded(c.DATASET)
 
@@ -43,7 +45,10 @@ def runAL(args):
 
     from PoolManagement import resetALPool, sampleNewBatch, createState, checkDone, addDatapointToPool
     import config.batchConfig as c
-    classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
+    if c.DATASET == 'mnist':
+        classifier = Classifier.DenseClassifierMNIST
+    else:
+        classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
     memory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
@@ -131,7 +136,8 @@ def trainAgent(args):
 
 ##############################################################################
 ###### Main ##################################################################
-STATE_SPACE = 3 + 2*dataset[0].shape[1]
+#STATE_SPACE = 3 + 2*dataset[0].shape[1]
+STATE_SPACE = 3
 NUM_PROCESSES = 4
 
 mainMemory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
