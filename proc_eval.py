@@ -23,9 +23,10 @@ def doEval(args):
     import config.batchConfig as c
 
     envFunc = Environment.ALGame
-    #agentFunc = Agent.DDVN
-    agentFunc = Agent.Baseline_BvsSB
-    c.SAMPLE_SIZE = 1000
+    agentFunc = Agent.DDVN
+    c.stateValueDir = 'tests/supervisedAgent'
+    #agentFunc = Agent.Baseline_BvsSB
+    c.SAMPLE_SIZE = 2000
 
     if c.DATASET == 'iris':
         classifier = Classifier.SimpleClassifier
@@ -34,7 +35,7 @@ def doEval(args):
     else:
         classifier = Classifier.EmbeddingClassifier(embeddingSize=c.EMBEDDING_SIZE)
 
-    STATE_SPACE = 3 + 2 * dataset[0].shape[1]
+    STATE_SPACE = 3 #+ 2 * dataset[0].shape[1]
 
     trajectories = list()
     scores = list()
@@ -89,17 +90,17 @@ for workerResult in result:
     trajectories.append(workerResult[1][0])
 f1Curves = np.array(f1Curves)
 
-folder = os.path.join('baselines', 'small')
-#folder = os.path.join(c.OUTPUT_FOLDER, 'curves')
+#folder = os.path.join('baselines', 'small')
+folder = os.path.join(c.OUTPUT_FOLDER, 'curves')
 os.makedirs(folder, exist_ok=True)
 file = os.path.join(folder, str(c.BUDGET) + 'x' + str(c.SAMPLE_SIZE) + '_' + str(int(startTime))[-4:])
 saveFile(file, f1Curves)
 
-#
-# trajFolder = os.path.join(folder, 'trajectories')
-# os.makedirs(trajFolder, exist_ok=True)
-# for i, t in enumerate(trajectories):
-#     trajPath = os.path.join(trajFolder, str(i))
-#     t.writeToDisk(trajPath)
+
+trajFolder = os.path.join(folder, 'trajectories')
+os.makedirs(trajFolder, exist_ok=True)
+for i, t in enumerate(trajectories):
+    trajPath = os.path.join(trajFolder, str(i))
+    t.writeToDisk(trajPath)
 
 print('time needed', int(time.time() - startTime), 'seconds')

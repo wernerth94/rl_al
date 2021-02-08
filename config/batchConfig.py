@@ -2,7 +2,7 @@ import os
 import Misc
 
 # general
-DATASET = 'mnist'
+DATASET = 'mnist_mobileNet'
 EMBEDDING_SIZE = 1280
 N_STEPS = 10
 MODEL_NAME = '_PROC_MNIST'
@@ -17,7 +17,7 @@ MEMORY_CAP = 70000 # 20k
 
 # Env config
 SAMPLE_SIZE = 2000
-BUDGET = 800 # MNIST
+BUDGET = 1000 # MNIST
 GAME_LENGTH = int(1e10)
 MAX_INTERACTIONS_PER_GAME = BUDGET * 5
 REWARD_SCALE = 1
@@ -38,7 +38,7 @@ EVAL_ITERATIONS = 10
 ##################################################################
 N_EXPLORE = 220000
 N_CONVERSION = 70000
-GREED = Misc.parameterPlan(0.6, 0.10, warmup=N_EXPLORE, conversion=N_CONVERSION)
+GREED = Misc.parameterPlan(0.1, 0.1, warmup=N_EXPLORE, conversion=N_CONVERSION)
 LR = Misc.parameterPlan(0.001, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
 ##################################################################
 

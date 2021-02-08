@@ -9,27 +9,27 @@ import AutoEncoder
 
 class DDVN:
 
-    def __init__(self, stateSpace, nSteps, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None, lr=0.01):
+    def __init__(self, stateSpace, nSteps, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
+                 lr=0.001, nHidden=80, activation='relu'):
         self.nSteps = nSteps
         self.gamma = gamma
         self.stateSpace = stateSpace
         self.callbacks = callbacks
         self.clipped = clipped
-        self.model1 = self.createStateValueModel(fromCheckpoints, lr=lr)
-        self.model2 = self.createStateValueModel(None)
+        self.model1 = self.createStateValueModel(fromCheckpoints, lr=lr, nHidden=nHidden, activation=activation)
+        self.model2 = self.createStateValueModel(None, nHidden=nHidden, activation=activation)
         self.model2.set_weights(self.model1.get_weights())
 
 
 
-    def createStateValueModel(self, fromCheckpoint, lr=0.001):
+    def createStateValueModel(self, fromCheckpoint, lr=0.001, nHidden=10, activation='tanh'):
         if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
             print('loaded model from ', fromCheckpoint)
             return keras.models.load_model(fromCheckpoint)
         else:
             model = keras.models.Sequential([
                 keras.layers.Input(self.stateSpace),
-                #keras.layers.Dense(24, activation='relu'),
-                keras.layers.Dense(10, activation='tanh'),
+                keras.layers.Dense(nHidden, activation=activation),
                 keras.layers.Dense(1)])
             opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
             model.compile(optimizer=tfa.optimizers.Lookahead(opt),

@@ -3,7 +3,7 @@ from PoolManagement import *
 import Memory
 
 def scoreAgent(agent, env, budget, dataset, printInterval=10, greed=0):
-    STATE_SPACE = 3 + 2 * dataset[0].shape[1]
+    STATE_SPACE = 3 # + 2 * dataset[0].shape[1]
     memory = Memory.NStepMemory(STATE_SPACE, nSteps=1)
 
     xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances = resetALPool(dataset)

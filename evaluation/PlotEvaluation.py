@@ -52,14 +52,16 @@ folder = '..'
 sns.set()
 
 
-plot(np.load(os.path.join(folder, 'baselines/small/random.npy')), 'green', displayName='small_random', window=1)
-plot(np.load(os.path.join(folder, 'baselines/small/bvssb_1000.npy')), 'lime', displayName='small_BvsSB', window=1)
+#plot(np.load(os.path.join(folder, 'baselines/small/random.npy')), 'green', displayName='small_random', window=1)
+#plot(np.load(os.path.join(folder, 'baselines/small/bvssb_1000.npy')), 'lime', displayName='small_BvsSB', window=1)
 
-plot(np.load(os.path.join(folder, 'baselines/mobilenet/random.npy')), 'gray', displayName='mobilenet_random', window=1)
-plot(np.load(os.path.join(folder, 'baselines/mobilenet/bvssb_1000.npy')), 'navy', displayName='mobilenet_BvsSB', window=1)
+#plot(np.load(os.path.join(folder, 'baselines/mobilenet/random.npy')), 'gray', displayName='mobilenet_random', window=1)
+#plot(np.load(os.path.join(folder, 'baselines/mobilenet/bvssb_1000.npy')), 'navy', displayName='mobilenet_BvsSB', window=1)
 
 plot(np.load(os.path.join(folder, 'baselines/random.npy')), 'black', displayName='random', window=1)
 plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'blue', displayName='BvsSB', window=1)
+
+plot(collect(os.path.join(folder, 'out_PROC_MNIST'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
 
 # plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
 # plot(collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves_0.1', maskingThreshold=0.0), 'orange', displayName='ddqn', window=1)

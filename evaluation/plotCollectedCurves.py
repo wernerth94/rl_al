@@ -57,6 +57,6 @@ def collect(folder, curvesFolder='curves'):
 
 folder = '..'
 
-collections, labels = collect(os.path.join(folder, 'out_backup_PROC_MNIST_BATCH_RS'), curvesFolder='curves')
+collections, labels = collect(os.path.join(folder, 'out_PROC_MNIST'), curvesFolder='curves')
 plot(collections, labels, window=1)
 #plot('output/DDQN_Iris', 'red', displayName='DDQN')
