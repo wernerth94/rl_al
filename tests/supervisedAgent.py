@@ -16,41 +16,47 @@ for dir in os.listdir(backlogDir):
     memory._append(m.memory)
 print('memory size', len(memory))
 
-def trainAgent(dataset, lr, bs, nHidden, activation, callbacks=[]):
+def trainAgent(dataset, lr, bs, nHidden, activation, callbacks=[], verbose=0):
     agent = Agent.DDVN(STATE_SPACE, c.N_STEPS, nHidden=nHidden, activation=activation, callbacks=callbacks)
     for epoch in range(10):
-        lastLoss = agent.fit(dataset, lr=lr, batchSize=bs)
+        lastLoss = agent.fit(dataset, lr=lr, batchSize=bs, verbose=verbose)
     return lastLoss
 
-paramList = list()
-lossList = list()
-cp_callback = K.callbacks.ModelCheckpoint('supervisedAgent', verbose=0, save_freq=2000, save_weights_only=False)
-dataset = memory.rowsToArgs(memory.memory)
-i, total = 0, 3*2*3*2
-for lr in [0.001, 0.005, 0.01]:
-    for bs in [16, 32]:
-        for nHidden in [20, 50, 80]:
-            for activation in ['tanh', 'relu']:
-                loss = 0
-                for run in range(3):
-                    loss += trainAgent(dataset, lr, bs, nHidden, activation, callbacks=[])#[cp_callback])
-                loss /= 3.0
-                lossList.append(loss)
-                paramList.append( (lr, bs, nHidden, activation) )
-                i += 1
-                print(i, '/', total, '|', lr, bs, nHidden, activation, ':', loss)
+def gridSearch(callbacks=[]):
+    paramList = list()
+    lossList = list()
+    cp_callback = K.callbacks.ModelCheckpoint('supervisedAgent', verbose=0, save_freq=2000, save_weights_only=False)
+    dataset = memory.rowsToArgs(memory.memory)
+    i, total = 0, 3*2*3*2
+    for lr in [0.001, 0.005, 0.01]:
+        for bs in [16, 32]:
+            for nHidden in [20, 50, 80]:
+                for activation in ['tanh', 'relu']:
+                    loss = 0
+                    for run in range(3):
+                        loss += trainAgent(dataset, lr, bs, nHidden, activation, callbacks=callbacks)
+                    loss /= 3.0
+                    lossList.append(loss)
+                    paramList.append( (lr, bs, nHidden, activation) )
+                    i += 1
+                    print(i, '/', total, '|', lr, bs, nHidden, activation, ':', loss)
 
-sort = sorted(zip(lossList, paramList), reverse=True)
-print(sort)
+    sort = sorted(zip(lossList, paramList), reverse=True)
+    print(sort)
 
-json.dump(sort, open('gridsearch', 'w'))
+    json.dump(sort, open('gridsearch', 'w'))
 
 # best setting:
 # ReLU
 # BS [16, 32]
 # nHidden [50-80]
 # LR 0.001
+cp_callback = K.callbacks.ModelCheckpoint('supervisedAgent', verbose=0, save_freq=2000, save_weights_only=False)
+dataset = memory.rowsToArgs(memory.memory)
+trainAgent(dataset, lr=0.001, bs=16, nHidden=80, activation='relu', callbacks=[cp_callback], verbose=1)
 
+
+# gridSearch()
 # (0.0008957878356644263, (0.001, 16, 20, 'tanh')),
 # (0.0006555954993624861, (0.001, 32, 20, 'relu')),
 # (0.00045088532109123963, (0.001, 32, 20, 'tanh')),

@@ -48,7 +48,7 @@ class DDVN:
             return v[:,0], np.array(i).reshape(-1)
 
 
-    def fit(self, memoryBatch, lr=None, batchSize=16):
+    def fit(self, memoryBatch, lr=None, batchSize=16, verbose=0):
         state = memoryBatch[0]
         rewards = memoryBatch[1]
         nextStates = memoryBatch[2]
@@ -73,7 +73,7 @@ class DDVN:
 
         if lr is not None:
             self.model1.optimizer.lr = lr
-        hist = self.model1.fit(x=state, y=V1, epochs=1, batch_size=batchSize, verbose=0, callbacks=self.callbacks)
+        hist = self.model1.fit(x=state, y=V1, epochs=1, batch_size=batchSize, verbose=verbose, callbacks=self.callbacks)
 
         return sum(hist.history['loss'])
 
