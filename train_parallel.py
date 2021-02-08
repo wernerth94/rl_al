@@ -10,7 +10,7 @@ sys.path.append("config")
 print(F"updated path is {sys.path}")
 
 import numpy as np
-import os, gc
+import os, sys
 from time import time
 import tensorflow.keras as keras
 import tensorflow as tf
@@ -138,7 +138,10 @@ def trainAgent(args):
 ###### Main ##################################################################
 #STATE_SPACE = 3 + 2*dataset[0].shape[1]
 STATE_SPACE = 3
-NUM_PROCESSES = 4
+if len(sys.argv) > 1:
+    NUM_PROCESSES = int(sys.argv[1])
+else:
+    NUM_PROCESSES = 4
 
 mainMemory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
