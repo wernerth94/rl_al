@@ -4,6 +4,23 @@ import seaborn as sns
 import numpy as np
 import os
 import Misc
+import config.batchConfig as c
+
+def baselineMean(curve):
+    return np.mean(curve[0, c.BUDGET-5 : c.BUDGET+5])
+
+baseline_random = None
+baseline_bvssb = None
+if c.DATASET == 'mnist_mobileNet':
+    baseline_random = np.load('baselines/mobilenet/random.npy')
+    baseline_bvssb = np.load('baselines/mobilenet/bvssb_1000.npy')
+else:
+    baseline_random = np.load('baselines/random.npy')
+    baseline_bvssb = np.load('baselines/bvssb_1000.npy')
+
+if baseline_random is not None: baseline_random = baselineMean(baseline_random)
+if baseline_bvssb is not None: baseline_bvssb = baselineMean(baseline_bvssb)
+
 
 def avrg(curve, window):
     if len(curve) <= 0:
@@ -102,8 +119,8 @@ def plot(trainState, config, outDir=None, showPlots=False):
     alphas[:-1] = alphas[:-1]
     colorIndices = np.linspace(0, 1, num=plots)
 
-    ax4.axvline(x=0.8462, color='k', linestyle='--', linewidth=1)
-    ax4.axvline(x=0.8904, color='b', linestyle='--', linewidth=1)
+    if baseline_random is not None: ax4.axvline(x=baseline_random, color='k', linestyle='--', linewidth=1)
+    if baseline_bvssb is not None:  ax4.axvline(x=baseline_bvssb, color='b', linestyle='--', linewidth=1)
     data = []
     for i in range(plots):
         high = len(trainState['f1Curve']) - (offset * i)
