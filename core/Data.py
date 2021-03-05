@@ -2,10 +2,25 @@ import numpy as np
 import sys, os
 import tensorflow.keras as keras
 from tensorflow.keras.utils import to_categorical
+from scipy.io import arff
+import pandas as pd
 
 CLUSTER = False
 if sys.prefix.startswith('/home/werner/miniconda3'):
     CLUSTER = True
+
+
+def loadTrafficSigns():
+    print('loading traffic signs')
+    data = arff.loadarff('../datasets/traffic_signs.arff')
+    df = pd.DataFrame(data[0])
+    data = df.values.astype('float32')
+    allIds = np.arange(len(data))
+    np.random.shuffle(allIds)
+    cutoff = int(len(data) * 0.8)
+    trainIds, testIds = allIds[:cutoff], allIds[cutoff:]
+    x, y = data[:, :-1], keras.utils.to_categorical(data[:, -1:])
+    return (x[trainIds], y[trainIds], x[testIds], y[testIds])
 
 
 def loadWine():

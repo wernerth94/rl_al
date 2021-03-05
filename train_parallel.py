@@ -11,6 +11,7 @@ print(F"updated path is {sys.path}")
 
 import numpy as np
 import os, sys
+from importlib import reload
 from time import time
 import tensorflow.keras as keras
 import tensorflow as tf
@@ -20,10 +21,10 @@ import Classifier
 import Environment
 import Agent
 import Memory
-from core.Plotting import plot
+import Plotting
 import Misc
 
-import config.batchConfig as c
+import config.mnistConfig as c
 print('#########################################################')
 print('loaded config', c.MODEL_NAME)
 
@@ -41,82 +42,75 @@ else:
 
 
 def runAL(args):
-    outConnection, STATE_SPACE, dataset = args
+    outConnection, dataset = args
+    import tensorflow as tf
+    tf.config.optimizer.set_jit(True)
 
-    from PoolManagement import resetALPool, sampleNewBatch, createState, checkDone, addDatapointToPool
-    import config.batchConfig as c
+    import config.mnistConfig as c
     if c.DATASET == 'mnist':
         classifier = Classifier.DenseClassifierMNIST
     else:
         classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-    memory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
-    agent = Agent.DDVN(STATE_SPACE, c.N_STEPS)
+    memory = Memory.NStepMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
+    agent = Agent.DDVN(env.stateSpace)
 
     stop = False
     while not stop:
-        stateBuffer = []; rewardBuffer = []
+        _ = env.reset()
         # receive seeds
         npSeed, tfSeed = outConnection.recv()
         np.random.seed(npSeed)
         tf.random.set_seed(tfSeed)
-
-        xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances = resetALPool(dataset)
-        env.reset(xLabeled, yLabeled)
-        stateIds = sampleNewBatch(xUnlabeled)
-        state = createState(env, xUnlabeled, xLabeled, stateIds)
-
         #receive current total steps, greed
         totalSteps, greed = outConnection.recv()
 
         epochLoss, epochRewards = 0, 0
-        steps, done, vStart = 0, False, 0
-        while not done:
-            for n in range(c.N_STEPS):
-                V, a = agent.predict(state, greedParameter=greed)
-                a = a[0]
-                if steps == 0:
-                    vStart = V[a]
+        steps, vStart = 0, 0
+        while not env.hardReset:
+            state = env.reset()
+            done = False
+            stateBuffer = []; rewardBuffer = []
+            while not done:
+                for n in range(c.N_STEPS):
+                    V, a = agent.predict(state, greedParameter=greed)
+                    a = a[0]
+                    if steps == 0:
+                        vStart = V[a]
 
-                xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances = addDatapointToPool(xLabeled,
-                                                                                                  yLabeled,
-                                                                                                  xUnlabeled,
-                                                                                                  yUnlabeled,
-                                                                                                  perClassIntances, a)
-                reward = env.fitClassifier(xLabeled, yLabeled)
-                stateIds = sampleNewBatch(xUnlabeled)
-                statePrime = createState(env, xUnlabeled, xLabeled, stateIds)
-                done = checkDone(xLabeled, yUnlabeled)
+                    statePrime, reward, done = env.step(a)
 
-                epochRewards += reward
-                stateBuffer.append(state[a])
-                rewardBuffer.append(reward)
+                    epochRewards += reward
+                    stateBuffer.append(state[a])
+                    rewardBuffer.append(reward)
 
-                if len(stateBuffer) >= c.N_STEPS:
-                    memory.addMemory(stateBuffer.pop(0), rewardBuffer, np.mean(statePrime, axis=0), done)
-                    rewardBuffer.pop(0)
+                    if len(stateBuffer) >= c.N_STEPS:
+                        memory.addMemory(stateBuffer.pop(0), rewardBuffer, np.mean(statePrime, axis=0), done)
+                        rewardBuffer.pop(0)
 
-                if done:
-                    break
-                state = statePrime
+                    if done:
+                        break
+                    state = statePrime
         # send back memories
         outConnection.send(memory.memory)
+        memory.clear()
         # send reward and V(s0)
         outConnection.send([epochRewards, vStart, env.currentTestF1])
         # receive new agent weights
         weights = outConnection.recv()
         agent.setAgentWeights(weights)
-
+        # receive stop signal
         stop = outConnection.recv()
-        memory.clear()
 
 
 def trainAgent(args):
-    conn, STATE_SPACE, BATCH_STATE = args
+    conn, STATE_SPACE = args
+    import tensorflow as tf
+    tf.config.optimizer.set_jit(True)
 
     cp_callback = keras.callbacks.ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
-    mainAgent = Agent.DDVN(STATE_SPACE, c.N_STEPS, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
+    mainAgent = Agent.DDVN(STATE_SPACE, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
 
     stop = False
     while not stop:
@@ -136,13 +130,14 @@ def trainAgent(args):
 
 ##############################################################################
 ###### Main ##################################################################
-#STATE_SPACE = 3 + 2*dataset[0].shape[1]
-STATE_SPACE = 3
+
 if len(sys.argv) > 1:
     NUM_PROCESSES = int(sys.argv[1])
 else:
     NUM_PROCESSES = 4
 
+
+STATE_SPACE = 7
 mainMemory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
 
@@ -170,7 +165,7 @@ connections = list()
 # start processes
 for i in range(NUM_PROCESSES):
     parent_conn, child_conn = Pipe()
-    args = [child_conn, STATE_SPACE, dataset]
+    args = [child_conn, dataset]
     p = Process(target=runAL, args=(args,))
     childProcesses.append(p)
     connections.append(parent_conn)
@@ -178,7 +173,7 @@ for i in range(NUM_PROCESSES):
 
 # start agent training process
 trainingConn, child_conn = Pipe()
-trainingProcess = Process(target=trainAgent, args=([child_conn, STATE_SPACE, c.BATCH_SIZE],))
+trainingProcess = Process(target=trainAgent, args=([child_conn, STATE_SPACE],))
 trainingProcess.start()
 
 try:
@@ -251,7 +246,8 @@ try:
                   'epoch reward %1.3f \t meanF1 %1.3f \t greed %1.3f \t lr %1.5f' % (
                       etaH, trainState['totalSteps'], meanReward, meanF1, greed, lr))
             trainState['eta'] = etaH
-            plot(trainState, c, c.OUTPUT_FOLDER)
+            reload(Plotting)
+            Plotting.plot(trainState, c, c.OUTPUT_FOLDER)
             mainMemory.writeToDisk(c.memDir)
             Misc.saveTrainState(c, trainState)
 

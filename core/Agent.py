@@ -9,9 +9,8 @@ import AutoEncoder
 
 class DDVN:
 
-    def __init__(self, stateSpace, nSteps, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
+    def __init__(self, stateSpace, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
                  lr=0.001, nHidden=80, activation='relu'):
-        self.nSteps = nSteps
         self.gamma = gamma
         self.stateSpace = stateSpace
         self.callbacks = callbacks
@@ -149,7 +148,12 @@ class Baseline_Entropy:
 
     def predict(self, state, greedParameter=0):
         scores = state[:, 2]
-        return scores, np.expand_dims(np.argmax(scores), axis=-1)
+        if greedParameter <= 0 or np.random.rand() > greedParameter:
+            a = np.expand_dims(np.argmax(scores), axis=-1)
+            return scores, a
+        else:
+            i = np.random.randint(len(scores))
+            return scores, np.array(i).reshape(-1)
 
 
 class Baseline_BvsSB:
@@ -158,7 +162,12 @@ class Baseline_BvsSB:
 
     def predict(self, state, greedParameter=0):
         scores = state[:, 1]
-        return scores, np.expand_dims(np.argmax(scores), axis=-1)
+        if greedParameter <= 0 or np.random.rand() > greedParameter:
+            a = np.expand_dims(np.argmax(scores), axis=-1)
+            return scores, a
+        else:
+            a = np.random.randint(len(scores))
+            return scores, np.array(a).reshape(-1)
 
 
 class Baseline_Random:

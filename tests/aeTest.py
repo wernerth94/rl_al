@@ -8,7 +8,7 @@ import os
 
 import Memory
 
-from config import batchConfig as c
+from config import mnistConfig as c
 
 
 memory = Memory.NStepMemory(3 + 1280, 5)

@@ -71,6 +71,19 @@ def DenseClassifierMNIST(inputShape=[28,28,1], numClasses=10):
     return model
 
 
+
+def trafficClassifier(inputShape=[256], numClasses=43):
+    model = keras.models.Sequential([
+        keras.Input(shape=inputShape),
+        keras.layers.Dense(numClasses, activation='softmax')
+    ])
+    opt = tfa.optimizers.RectifiedAdam()
+    model.compile(optimizer=tfa.optimizers.Lookahead(opt),
+                  loss=keras.losses.categorical_crossentropy,
+                  metrics=metrics(43))
+    return model
+
+
 class EmbeddingClassifier:
     def __init__(self, embeddingSize):
         self.embeddingSize = embeddingSize

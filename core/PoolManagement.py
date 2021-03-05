@@ -1,5 +1,5 @@
 import numpy as np
-import batchConfig as c
+import mnistConfig as c
 import gc
 
 def resetALPool(dataset):
@@ -46,19 +46,6 @@ def addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures):
     return np.concatenate([alFeatures, presentedImg, poolFeat], axis=1)
 
 
-def createState(env, xUnlabeled, xLabeled, stateIds):
-    alFeatures = env.createState(xUnlabeled[stateIds])
-    #state = addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures)
-    state = alFeatures
-    return state
-
-
 def sampleNewBatch(xUnlabeled):
     return np.random.choice(xUnlabeled.shape[0], c.SAMPLE_SIZE)
 
-
-def checkDone(xLabeled, yUnlabeled, budget=None):
-    if budget is not None:
-        return len(xLabeled) - (c.INIT_POINTS_PER_CLASS * yUnlabeled.shape[1]) >= budget
-    else:
-        return len(xLabeled) - (c.INIT_POINTS_PER_CLASS * yUnlabeled.shape[1]) >= c.BUDGET

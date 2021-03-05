@@ -4,7 +4,7 @@ import seaborn as sns
 import numpy as np
 import os
 import Misc
-import config.batchConfig as c
+import config.mnistConfig as c
 
 def baselineMean(curve):
     return np.mean(curve[0, c.BUDGET-5 : c.BUDGET+5])
@@ -21,17 +21,6 @@ else:
 if baseline_random is not None: baseline_random = baselineMean(baseline_random)
 if baseline_bvssb is not None: baseline_bvssb = baselineMean(baseline_bvssb)
 
-
-def avrg(curve, window):
-    if len(curve) <= 0:
-        return [0]
-    if len(curve) < 2:
-        return [curve[0]]
-    avrgCurve = []
-
-    for i in range(len(curve)):
-        avrgCurve.append(np.mean( curve[max(0, i - int(window/2)) : min(len(curve), i + int(window/2))] ))
-    return avrgCurve
 
 
 def gameLengthToEpochCurve(ts, c):
@@ -58,7 +47,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ##########################################
     # Top Left
     # loss
-    avrgCurve = avrg(trainState['lossCurve'], lossWindow)
+    avrgCurve = Misc.avrg(trainState['lossCurve'], lossWindow)
     mean = max(1e-7, np.average(avrgCurve))
     ax1.set_ylim(0, 2 * mean)
     ax1.plot(np.arange(len(avrgCurve)), avrgCurve, label='loss')
@@ -66,7 +55,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ax1.set_title('loss and reward')
 
     # rewards
-    avrgCurve = avrg(trainState['rewardCurve'], rewardWindow)
+    avrgCurve = Misc.avrg(trainState['rewardCurve'], rewardWindow)
     ax12 = ax1.twinx()
     ax12.plot(np.arange(len(avrgCurve)), avrgCurve, c='red', label='reward')
     ax12.set_ylabel('reward')
@@ -78,7 +67,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
     ##########################################
     # Top Right
     # Q values
-    avrgCurve = avrg(trainState['qCurve'], qWindow)
+    avrgCurve = Misc.avrg(trainState['qCurve'], qWindow)
     ax2.plot(np.arange(len(avrgCurve)), avrgCurve, c='purple', label='Q')
     #ax2.axhline(y=0, color='k')
     ax2.set_ylabel('Q')
@@ -151,7 +140,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
 
 if __name__ == "__main__":
-    from config import batchConfig as c
+    from config import mnistConfig as c
 
     # c.OUTPUT_FOLDER = 'outDDQN_MNIST_BATCH'
     # c.MODEL_NAME = 'DDQN_MNIST_BATCH'

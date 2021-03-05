@@ -13,25 +13,37 @@ from core.Misc import saveFile
 import numpy as np
 import os, time, gc
 from multiprocessing import Pool
-import Memory
+#import config.mnistConfig as c
+import config.trafficConfig as c
+
+SAVE_TRAJ = False
+c.OUTPUT_FOLDER = 'baselines'
+
+budget = int(sys.argv[1])
+numProcesses = 5
 
 
 def doEval(args):
     dataset, seed, iterations, budget = args
     import tensorflow
     import Classifier, Agent, Environment
-    import config.batchConfig as c
+    import config.trafficConfig as c
+
+    c.BUDGET = budget
+    c.GAME_LENGTH = c.BUDGET
+    c.SAMPLE_SIZE = 2000
 
     envFunc = Environment.ALGame
-    agentFunc = Agent.DDVN
-    c.stateValueDir = 'tests/supervisedAgent'
+    agentFunc = Agent.Baseline_Random
     #agentFunc = Agent.Baseline_BvsSB
-    c.SAMPLE_SIZE = 2000
+    #c.stateValueDir = 'tests/supervisedAgent'
 
     if c.DATASET == 'iris':
         classifier = Classifier.SimpleClassifier
     elif c.DATASET == 'mnist':
         classifier = Classifier.DenseClassifierMNIST
+    elif c.DATASET == 'traffic_signs':
+        classifier = Classifier.trafficClassifier
     else:
         classifier = Classifier.EmbeddingClassifier(embeddingSize=c.EMBEDDING_SIZE)
 
@@ -45,9 +57,9 @@ def doEval(args):
         np.random.seed(int(seed+run))
 
         env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-        agent = agentFunc(STATE_SPACE, nSteps=5, fromCheckpoints=c.stateValueDir)
+        agent = agentFunc(STATE_SPACE, fromCheckpoints=c.stateValueDir)
 
-        memory, f1 = scoreAgent(agent, env, budget, dataset, greed=0.5, printInterval=200)
+        memory, f1 = scoreAgent(agent, env, budget, dataset, imgsPerStep=1, greed=0.0, printInterval=200)
         trajectories.append(memory)
         scores.append(f1)
         del env
@@ -56,26 +68,19 @@ def doEval(args):
 
 ##################################
 ### MAIN
-budget = int(sys.argv[1])
 
-import config.batchConfig as c
-
+from Data import *
 if c.DATASET == 'mnist':
-    from Data import loadMNIST
     dataset = loadMNIST()
+if c.DATASET == 'traffic_signs':
+    dataset = loadTrafficSigns()
 else:
-    from Data import load_mnist_embedded
     dataset = load_mnist_embedded(c.DATASET)
 
 print('#########################################################')
 print('loaded config', c.MODEL_NAME, 'loaded dataset', c.DATASET)
 print('#########################################################')
 
-# adjust budget
-c.BUDGET = budget
-c.GAME_LENGTH = c.BUDGET
-
-numProcesses = 5
 startTime = time.time()
 seeds = int(startTime)
 seeds = [seeds/i for i in range(1, numProcesses+1)]
@@ -96,11 +101,11 @@ os.makedirs(folder, exist_ok=True)
 file = os.path.join(folder, str(c.BUDGET) + 'x' + str(c.SAMPLE_SIZE) + '_' + str(int(startTime))[-4:])
 saveFile(file, f1Curves)
 
-
-trajFolder = os.path.join(folder, 'trajectories')
-os.makedirs(trajFolder, exist_ok=True)
-for i, t in enumerate(trajectories):
-    trajPath = os.path.join(trajFolder, str(i))
-    t.writeToDisk(trajPath)
+if SAVE_TRAJ:
+    trajFolder = os.path.join(folder, 'trajectories')
+    os.makedirs(trajFolder, exist_ok=True)
+    for i, t in enumerate(trajectories):
+        trajPath = os.path.join(trajFolder, str(i))
+        t.writeToDisk(trajPath)
 
 print('time needed', int(time.time() - startTime), 'seconds')

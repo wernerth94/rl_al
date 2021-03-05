@@ -2,6 +2,7 @@ import tensorflow.keras as keras
 import gc
 import numpy as np
 import bottleneck as bn
+from PoolManagement import resetALPool, sampleNewBatch, addDatapointToPool
 
 
 class ALGame:
@@ -9,41 +10,91 @@ class ALGame:
     def __init__(self, dataset, modelFunction, config, verbose):
         self.x_test = dataset[2]
         self.y_test = dataset[3]
+        self.dataset = dataset
         self.nClasses = self.y_test.shape[1]
 
         self.config = config
+        self.budget = config.BUDGET
+        self.gameLength = config.GAME_LENGTH
         self.labelCost = config.LABEL_COST
         self.rewardScaling = config.REWARD_SCALE
         self.rewardShaping = config.REWARD_SHAPING
         self.verbose = verbose
 
-        self.stateSpace = 3
+        self.stateSpace = 3 + 4
 
         self.modelFunction = modelFunction
         self.es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=1)
-        self.classifier = modelFunction(inputShape=self.y_test.shape[1:],
+        self.classifier = modelFunction(inputShape=self.x_test.shape[1:],
                                         numClasses=self.y_test.shape[1])
+        self.hardReset = True
+        self.initialF1 = 0
+        self.currentTestF1 = 0
+
+    def reset(self):
+        # self.initialF1 = 0
+        # self.currentTestF1 = 0
+        self.nInteractions = 0
+
+        if self.hardReset:
+            self.classifier = self.modelFunction(inputShape=self.x_test.shape[1:],
+                                                 numClasses=self.y_test.shape[1])
+            self.initialWeights = self.classifier.get_weights()
+
+            self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, self.perClassIntances = resetALPool(self.dataset)
+            self.fitClassifier()
+            self.initialF1 = self.currentTestF1
+            self.hardReset = False
+
+        self.stateIds = sampleNewBatch(self.xUnlabeled)
+        return self.createState()
 
 
-    def createState(self, x):
+    def createState(self):
+        alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
+        # state = addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures)
+        state = alFeatures
+        return state
+
+
+    def getClassifierFeatures(self, x):
         eps = 1e-5
         # prediction metrics
         pred = self.classifier.predict(x)
-        part = (-bn.partition(-pred, 2, axis=1))[:,:2] # collects the two highest entries
+        part = (-bn.partition(-pred, 4, axis=1))[:,:4] # collects the two highest entries
         struct = np.sort(part, axis=1)
 
         weightedF1 = np.average(pred * self.perClassF1, axis=1)
         entropy = -np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1)
         bVsSB = 1 - (struct[:, -1] - struct[:, -2])
 
-        state = np.stack([bVsSB, entropy, weightedF1], axis=-1)
+        state = np.stack([weightedF1, bVsSB, entropy], axis=-1)
+        state = np.concatenate([state, struct], axis=1)
+
         return state
 
 
-    def fitClassifier(self, x_labeled, y_labeled, epochs=50, batch_size=32, from_scratch=False):
+    def step(self, action):
+        self.nInteractions += 1
+        datapointId = self.stateIds[action]
+        self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, perClassIntances = addDatapointToPool(self.xLabeled,
+                                                                                                              self.yLabeled,
+                                                                                                              self.xUnlabeled,
+                                                                                                              self.yUnlabeled,
+                                                                                                              self.perClassIntances,
+                                                                                                              datapointId)
+        reward = self.fitClassifier()
+        self.stateIds = sampleNewBatch(self.xUnlabeled)
+        statePrime = self.createState()
+
+        done, self.hardReset = self.checkDone()
+        return statePrime, reward, done
+
+
+    def fitClassifier(self, epochs=50, batch_size=32, from_scratch=False):
         if from_scratch:
             self.classifier.set_weights(self.initialWeights)
-        train_history = self.classifier.fit(x_labeled, y_labeled, batch_size=batch_size, epochs=epochs, verbose=0,
+        train_history = self.classifier.fit(self.xLabeled, self.yLabeled, batch_size=batch_size, epochs=epochs, verbose=0,
                                             callbacks=[self.es], validation_data=(self.x_test, self.y_test))
 
         self.perClassF1 = train_history.history['val_f1_score'][-1]
@@ -56,13 +107,43 @@ class ALGame:
         return reward
 
 
-    def reset(self, initial_x:np.array, initial_y:np.array):
-        self.initialF1 = 0
-        self.currentTestF1 = 0
+    def checkDone(self):
+        done = self.nInteractions >= self.gameLength
+        hardReset = False
 
-        # full reset
-        self.classifier = self.modelFunction(inputShape=initial_x.shape[1:],
-                                             numClasses=initial_y.shape[1])
-        self.initialWeights = self.classifier.get_weights()
-        self.fitClassifier(initial_x, initial_y)
-        self.initialF1 = self.currentTestF1
+        if len(self.xLabeled) - (self.config.INIT_POINTS_PER_CLASS * self.yUnlabeled.shape[1]) >= self.budget:
+            done = True
+            hardReset = True
+
+        return done, hardReset
+
+
+
+
+class CreditAssignmentGame:
+
+    def __init__(self, gameLength, stateSpace=5, sampleSize=20):
+        self.gameLength = gameLength
+        self.stateSpace = stateSpace
+        self.sampleSize = sampleSize
+        self.scale = 1 / gameLength
+        self.coeffs = np.array([1,-1, 1, -1, 1])
+        #self.coeffs = np.random.rand(stateSpace)*self.scale - self.scale/2
+
+
+    def createState(self):
+        self.currentState = np.random.rand(self.sampleSize, self.stateSpace)*self.scale - self.scale/2
+        return self.currentState
+
+
+    def reset(self):
+        self.currentState = None
+        self.nInteractions = 0
+        return self.createState()
+
+
+    def step(self, action):
+        self.nInteractions += 1
+        reward = self.currentState[action] @ self.coeffs
+        done = self.nInteractions >= self.gameLength
+        return reward, self.createState(), done

@@ -4,9 +4,9 @@ print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
 
 # path additions for the cluster
-sys.path.append("core")
-sys.path.append("evaluation")
-sys.path.append("config")
+sys.path.append("../core")
+sys.path.append("../evaluation")
+sys.path.append("../config")
 print(F"updated path is {sys.path}")
 
 import numpy as np
@@ -32,7 +32,7 @@ if dataset not in all_datasets: raise ValueError('dataset not in all_datasets;  
 if setup not in all_setups: raise ValueError('setup not in all_setups;  given: ' + setup)
 
 
-import config.batchConfig as c
+import config.mnistConfig as c
 
 print('#########################################################')
 print('loaded config', c.MODEL_NAME, '\t DATASET', dataset)

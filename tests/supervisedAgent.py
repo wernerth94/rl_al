@@ -1,8 +1,9 @@
 import os
 import numpy as np
 import Memory, Agent
-import config.batchConfig as c
+import config.mnistConfig as c
 import tensorflow.keras as K
+import tensorflow as tf
 import json
 
 STATE_SPACE = 3
@@ -16,44 +17,62 @@ for dir in os.listdir(backlogDir):
     memory._append(m.memory)
 print('memory size', len(memory))
 
-def trainAgent(dataset, lr, bs, nHidden, activation, callbacks=[], verbose=0):
-    agent = Agent.DDVN(STATE_SPACE, c.N_STEPS, nHidden=nHidden, activation=activation, callbacks=callbacks)
-    for epoch in range(10):
+def trainAgent(dataset, lr, bs, nHidden, activation, callbacks=[], verbose=1, agent=None):
+    if not agent:
+        agent = Agent.DDVN(STATE_SPACE, nHidden=nHidden, activation=activation, callbacks=callbacks, gamma=0.0)
+    for epoch in range(3):
         lastLoss = agent.fit(dataset, lr=lr, batchSize=bs, verbose=verbose)
-    return lastLoss
+    return lastLoss, agent
 
 def gridSearch(callbacks=[]):
     paramList = list()
     lossList = list()
-    cp_callback = K.callbacks.ModelCheckpoint('supervisedAgent', verbose=0, save_freq=2000, save_weights_only=False)
-    dataset = memory.rowsToArgs(memory.memory)
-    i, total = 0, 3*2*3*2
-    for lr in [0.001, 0.005, 0.01]:
-        for bs in [16, 32]:
-            for nHidden in [20, 50, 80]:
+    allIds = np.arange(len(memory))
+    np.random.shuffle(allIds)
+    cutoff = int(len(memory) * 0.8)
+    train = memory.rowsToArgs(memory.memory[allIds[:cutoff]])
+    test = memory.rowsToArgs(memory.memory[allIds[cutoff:]])
+    # dataset = memory.rowsToArgs(memory.memory)
+    i, total = 0, 2*2
+    for lr in [0.001]:
+        for bs in [16]:
+            for nHidden in [10, 50]:
                 for activation in ['tanh', 'relu']:
                     loss = 0
+                    valLoss = 0
                     for run in range(3):
-                        loss += trainAgent(dataset, lr, bs, nHidden, activation, callbacks=callbacks)
+                        print('train')
+                        l, agent = trainAgent(train, lr, bs, nHidden, activation, callbacks=callbacks)
+                        loss += l
+                        print('test')
+                        vl, _ = trainAgent(test, lr, bs, nHidden, activation, callbacks=callbacks)
+                        valLoss += vl
                     loss /= 3.0
-                    lossList.append(loss)
+                    valLoss /= 3.0
+                    lossList.append(valLoss)
                     paramList.append( (lr, bs, nHidden, activation) )
                     i += 1
-                    print(i, '/', total, '|', lr, bs, nHidden, activation, ':', loss)
+                    print(i, '/', total, '|', lr, bs, nHidden, activation, ': train', loss, 'validation', valLoss)
 
     sort = sorted(zip(lossList, paramList), reverse=True)
     print(sort)
 
     json.dump(sort, open('gridsearch', 'w'))
 
+# (2.021148247877136e-05, (0.001, 16, 50, 'tanh')),
+# (1.8936551593166467e-05, (0.001, 16, 10, 'tanh')),
+# (1.836288841635299e-05, (0.001, 16, 50, 'relu')),
+# (1.8352149102914456e-05, (0.001, 16, 10, 'relu'))
+
 # best setting:
 # ReLU
 # BS [16, 32]
 # nHidden [50-80]
 # LR 0.001
+tf.config.optimizer.set_jit(True)
 cp_callback = K.callbacks.ModelCheckpoint('supervisedAgent', verbose=0, save_freq=2000, save_weights_only=False)
-dataset = memory.rowsToArgs(memory.memory)
-trainAgent(dataset, lr=0.001, bs=16, nHidden=80, activation='relu', callbacks=[cp_callback], verbose=1)
+gridSearch()
+#trainAgent(train, test, lr=0.001, bs=16, nHidden=80, activation='relu', callbacks=[], verbose=1)
 
 
 # gridSearch()
