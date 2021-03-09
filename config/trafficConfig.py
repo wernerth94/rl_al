@@ -52,3 +52,5 @@ memDir = os.path.join(OUTPUT_FOLDER, 'memory')
 cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
 stateValueDir = os.path.join(cacheDir, 'stateVal')
 stateTransDir = os.path.join(cacheDir, 'stateTrans')
+
+print('LOADED CONFIG: TRAFFIC')

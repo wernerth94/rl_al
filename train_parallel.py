@@ -137,7 +137,8 @@ else:
     NUM_PROCESSES = 4
 
 
-STATE_SPACE = 7
+# STATE_SPACE = 7
+STATE_SPACE = 1
 mainMemory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
 

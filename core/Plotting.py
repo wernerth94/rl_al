@@ -34,7 +34,7 @@ def gameLengthToEpochCurve(ts, c):
 
 
 lossWindow = 20
-rewardWindow = 140
+rewardWindow = 200
 qWindow = 20
 stepWindow = 10
 

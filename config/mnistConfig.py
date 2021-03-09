@@ -5,7 +5,7 @@ import Misc
 DATASET = 'mnist_mobileNet'
 EMBEDDING_SIZE = 1280
 N_STEPS = 3
-MODEL_NAME = 'MNIST'
+MODEL_NAME = 'MNIST_BVSSB'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 EVAL_ITERATIONS = 10
@@ -52,3 +52,5 @@ memDir = os.path.join(OUTPUT_FOLDER, 'memory')
 cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
 stateValueDir = os.path.join(cacheDir, 'stateVal')
 stateTransDir = os.path.join(cacheDir, 'stateTrans')
+
+print('LOADED CONFIG: MNIST')

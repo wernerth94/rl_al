@@ -13,29 +13,36 @@ from core.Misc import saveFile
 import numpy as np
 import os, time, gc
 from multiprocessing import Pool
-#import config.mnistConfig as c
-import config.trafficConfig as c
+import tensorflow as tf
 
-SAVE_TRAJ = False
-c.OUTPUT_FOLDER = 'baselines'
-
+tf.config.optimizer.set_jit(True)
 budget = int(sys.argv[1])
 numProcesses = 5
 
+# CONFIG ##################################
+import config.mnistConfig as c
+# import config.trafficConfig as c
+SAVE_TRAJ = False
+c.OUTPUT_FOLDER = 'baselines'
+###########################################
 
 def doEval(args):
     dataset, seed, iterations, budget = args
     import tensorflow
     import Classifier, Agent, Environment
-    import config.trafficConfig as c
+    # CONFIG #############################
+    import config.mnistConfig as c
+    #import config.trafficConfig as c
+    ######################################
 
     c.BUDGET = budget
     c.GAME_LENGTH = c.BUDGET
-    c.SAMPLE_SIZE = 2000
+    c.SAMPLE_SIZE = 1000
 
     envFunc = Environment.ALGame
-    agentFunc = Agent.Baseline_Random
+    #agentFunc = Agent.Baseline_Random
     #agentFunc = Agent.Baseline_BvsSB
+    agentFunc = Agent.DDVN
     #c.stateValueDir = 'tests/supervisedAgent'
 
     if c.DATASET == 'iris':
@@ -47,7 +54,6 @@ def doEval(args):
     else:
         classifier = Classifier.EmbeddingClassifier(embeddingSize=c.EMBEDDING_SIZE)
 
-    STATE_SPACE = 3 #+ 2 * dataset[0].shape[1]
 
     trajectories = list()
     scores = list()
@@ -57,9 +63,9 @@ def doEval(args):
         np.random.seed(int(seed+run))
 
         env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-        agent = agentFunc(STATE_SPACE, fromCheckpoints=c.stateValueDir)
+        agent = agentFunc(env.stateSpace, fromCheckpoints=c.stateValueDir)
 
-        memory, f1 = scoreAgent(agent, env, budget, dataset, imgsPerStep=1, greed=0.0, printInterval=200)
+        memory, f1 = scoreAgent(agent, env, imgsPerStep=1, greed=0.0, printInterval=200)
         trajectories.append(memory)
         scores.append(f1)
         del env
