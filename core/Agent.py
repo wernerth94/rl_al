@@ -10,7 +10,7 @@ import AutoEncoder
 class DDVN:
 
     def __init__(self, stateSpace, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
-                 lr=0.001, nHidden=80, activation='relu'):
+                 lr=0.001, nHidden=1, activation='tanh'):
         self.gamma = gamma
         self.stateSpace = stateSpace
         self.callbacks = callbacks
