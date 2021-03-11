@@ -3,7 +3,7 @@ venv/
 stopSwitch
 *.npy
 memoryBacklog
-out_*/
+out*/
 plotting/*.png
 goodRuns
 backup_*

@@ -54,7 +54,7 @@ def runAL(args):
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
     memory = Memory.NStepMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
-    agent = Agent.DDVN(env.stateSpace)
+    agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA)
 
     stop = False
     while not stop:
@@ -110,7 +110,7 @@ def trainAgent(args):
     tf.config.optimizer.set_jit(True)
 
     cp_callback = keras.callbacks.ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
-    mainAgent = Agent.DDVN(STATE_SPACE, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
+    mainAgent = Agent.DDVN(STATE_SPACE, gamma=c.AGENT_GAMMA, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
 
     stop = False
     while not stop:

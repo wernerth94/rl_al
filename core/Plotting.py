@@ -6,8 +6,12 @@ import os
 import Misc
 import config.mnistConfig as c
 
+cwd = os.getcwd()
+if cwd.endswith('core'):
+    os.chdir('..')
+
 def baselineMean(curve):
-    return np.mean(curve[0, c.BUDGET-5 : c.BUDGET+5])
+    return np.mean(curve[0, c.BUDGET-1 : c.BUDGET+1])
 
 baseline_random = None
 baseline_bvssb = None
@@ -104,9 +108,8 @@ def plot(trainState, config, outDir=None, showPlots=False):
     offset = 100
     plots = 5
     cm = plt.get_cmap('OrRd')
-    alphas = np.linspace(0.45, 0.99, num=plots)
-    alphas[:-1] = alphas[:-1]
-    colorIndices = np.linspace(0, 1, num=plots)
+    alphas = np.linspace(0.65, 0.8, num=plots)
+    colorIndices = np.linspace(0.2, 1, num=plots)
 
     if baseline_random is not None: ax4.axvline(x=baseline_random, color='k', linestyle='--', linewidth=1)
     if baseline_bvssb is not None:  ax4.axvline(x=baseline_bvssb, color='b', linestyle='--', linewidth=1)
@@ -142,7 +145,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
 if __name__ == "__main__":
     from config import mnistConfig as c
 
-    # c.OUTPUT_FOLDER = 'outDDQN_MNIST_BATCH'
-    # c.MODEL_NAME = 'DDQN_MNIST_BATCH'
-    tS = Misc.loadTrainState(c, path_prefix='..')
+    c.OUTPUT_FOLDER = 'out_MNIST'
+    c.MODEL_NAME = 'MNIST'
+    tS = Misc.loadTrainState(c)
     plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), showPlots=True)
