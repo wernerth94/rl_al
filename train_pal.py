@@ -79,7 +79,7 @@ try:
             trainState['totalSteps'] += 1
             state = statePrime
 
-        trainState['lrCurve'].append(len(env.xLabeled));                trainState['greedCurve'].append(float(greed))
+        trainState['lrCurve'].append(len(env.xLabeled));        trainState['greedCurve'].append(float(greed))
         trainState['rewardCurve'].append(float(epochRewards));  trainState['lossCurve'].append(float(epochLoss))
         trainState['f1Curve'].append(float(env.currentTestF1))
         trainState['qCurve'].append(float(vStart))
@@ -97,6 +97,10 @@ try:
             Plotting.plot(trainState, c, c.OUTPUT_FOLDER)
             memory.writeToDisk(c.memDir)
             Misc.saveTrainState(c, trainState)
+
+        if c.USE_STOPSWITCH and not Misc.checkStopSwitch():
+            break
+
 except KeyboardInterrupt:
     print('training stopped by user')
 
