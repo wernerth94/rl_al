@@ -5,7 +5,7 @@ import Misc
 DATASET = 'mnist_mobileNet'
 EMBEDDING_SIZE = 1280
 N_STEPS = 3
-MODEL_NAME = 'MNIST_BVSSB2'
+MODEL_NAME = 'MNIST_PAL'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 EVAL_ITERATIONS = 10
@@ -19,9 +19,9 @@ AGENT_GAMMA = 1.0
 AGENT_NHIDDEN = 1
 
 # Env config
-SAMPLE_SIZE = 1000
+SAMPLE_SIZE = 1
 BUDGET = 1000 # MNIST
-GAME_LENGTH = BUDGET
+GAME_LENGTH = BUDGET * 4
 REWARD_SCALE = 1
 REWARD_SHAPING = True
 LABEL_COST = 0 # 0.001
@@ -52,7 +52,7 @@ OUTPUT_FOLDER = 'out_'+MODEL_NAME
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 memDir = os.path.join(OUTPUT_FOLDER, 'memory')
 cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
-stateValueDir = os.path.join(cacheDir, 'stateVal')
+stateValueDir = os.path.join(cacheDir, 'actionVal')
 stateTransDir = os.path.join(cacheDir, 'stateTrans')
 
 print('#########################################################')

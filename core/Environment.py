@@ -42,12 +42,14 @@ class ALGame:
                                                  numClasses=self.y_test.shape[1])
             self.initialWeights = self.classifier.get_weights()
 
-            self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, self.perClassIntances = resetALPool(self.dataset)
+            self.xLabeled, self.yLabeled, \
+            self.xUnlabeled, self.yUnlabeled, self.perClassIntances = resetALPool(self.dataset,
+                                                                                  self.config.INIT_POINTS_PER_CLASS)
             self.fitClassifier()
             self.initialF1 = self.currentTestF1
             self.hardReset = False
 
-        self.stateIds = sampleNewBatch(self.xUnlabeled)
+        self.stateIds = sampleNewBatch(self.xUnlabeled, self.config.SAMPLE_SIZE)
         return self.createState()
 
 
@@ -85,7 +87,7 @@ class ALGame:
                                                                                                               self.perClassIntances,
                                                                                                               datapointId)
         reward = self.fitClassifier()
-        self.stateIds = sampleNewBatch(self.xUnlabeled)
+        self.stateIds = sampleNewBatch(self.xUnlabeled, self.config.SAMPLE_SIZE)
         statePrime = self.createState()
 
         done, self.hardReset = self.checkDone()
@@ -117,6 +119,60 @@ class ALGame:
             hardReset = True
 
         return done, hardReset
+
+
+
+class ALStreamingGame(ALGame):
+
+    def __init__(self, dataset, modelFunction, config, verbose):
+        assert config.SAMPLE_SIZE == 1
+        super(ALStreamingGame, self).__init__(dataset, modelFunction, config, verbose)
+        self.actionSpace = 2
+
+
+    def createState(self):
+        alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
+        # state = addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures)
+        state = alFeatures
+        return state
+
+
+    def getClassifierFeatures(self, x):
+        eps = 1e-5
+        # prediction metrics
+        pred = self.classifier.predict(x)
+        part = (-bn.partition(-pred, 4, axis=1))[:,:4] # collects the two highest entries
+        struct = np.sort(part, axis=1)
+
+        # weightedF1 = np.average(pred * self.perClassF1, axis=1)
+        # entropy = -np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1)
+        bVsSB = 1 - (struct[:, -1] - struct[:, -2])
+
+        state = np.expand_dims(bVsSB, axis=-1)
+        # state = np.stack([weightedF1, bVsSB, entropy], axis=-1)
+        # state = np.concatenate([state, struct], axis=1)
+        return state
+
+
+    def step(self, action):
+        self.nInteractions += 1
+        datapointId = self.stateIds[0]
+        if action == 1:
+            self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, perClassIntances = addDatapointToPool(self.xLabeled,
+                                                                                                                  self.yLabeled,
+                                                                                                                  self.xUnlabeled,
+                                                                                                                  self.yUnlabeled,
+                                                                                                                  self.perClassIntances,
+                                                                                                                  datapointId)
+            reward = self.fitClassifier()
+        else:
+            reward = 0
+
+        self.stateIds = sampleNewBatch(self.xUnlabeled, self.config.SAMPLE_SIZE)
+        statePrime = self.createState()
+
+        done, self.hardReset = self.checkDone()
+        return statePrime, reward, done
 
 
 

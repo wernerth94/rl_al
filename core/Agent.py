@@ -6,11 +6,98 @@ import os
 import AutoEncoder
 
 
+class DDQN:
+
+    def __init__(self, stateSpace, actionSpace, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
+                 lr=0.001, nHidden=10, activation='tanh'):
+        self.gamma = gamma
+        self.stateSpace = stateSpace
+        self.actionSpace = actionSpace
+        self.callbacks = callbacks
+        self.clipped = clipped
+        self.model1 = self.createActionValueModel(fromCheckpoints, lr=lr, nHidden=nHidden, activation=activation)
+        self.model2 = self.createActionValueModel(None, nHidden=nHidden, activation=activation)
+        self.model2.set_weights(self.model1.get_weights())
+
+
+
+    def createActionValueModel(self, fromCheckpoint, lr=0.001, nHidden=10, activation='tanh'):
+        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
+            print('loaded model from ', fromCheckpoint)
+            return keras.models.load_model(fromCheckpoint)
+        else:
+            model = keras.models.Sequential([
+                keras.layers.Input(self.stateSpace),
+                keras.layers.Dense(nHidden, activation=activation),
+                keras.layers.Dense(self.actionSpace)])
+            opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
+            model.compile(optimizer=tfa.optimizers.Lookahead(opt),
+                          loss=keras.losses.Huber())
+
+        return model
+
+
+    def predict(self, inputs, greedParameter=1):
+        q = self.model1.predict(inputs)
+        if greedParameter <= 0 or np.random.rand() > greedParameter:
+            a = np.argmax(q, axis=1)
+            return q, a
+        else:
+            i = np.random.randint(len(inputs))
+            return q, np.array(i).reshape(-1, 1)
+
+
+    def fit(self, memoryBatch, lr=None, batchSize=16, verbose=0):
+        state = memoryBatch[0]
+        actions = memoryBatch[1].astype(int)
+        rewards = memoryBatch[2]
+        nextStates = memoryBatch[3]
+        dones = memoryBatch[4]
+        _all = range(len(state))
+
+        qBase = self.model1.predict(state)
+        qPrime2 = self.model2.predict(nextStates)
+        nextAction = np.argmax(qPrime2, axis=1)  # .squeeze()
+
+        if self.clipped:
+            qPrime1 = self.model1.predict(nextStates)
+            target = np.minimum(qPrime1, qPrime2)
+        else:
+            target = qPrime2[:, nextAction]
+
+        R = np.zeros(len(state))
+        for i in range(len(rewards)):
+            R += (self.gamma ** i) * rewards[i]
+
+        qBase[:, actions] = R
+        qBase[:, actions] += (1 - dones) * (self.gamma**len(rewards)) * target
+
+        if lr is not None:
+            self.model1.optimizer.lr = lr
+        hist = self.model1.fit(x=state, y=qBase, epochs=1, batch_size=batchSize, verbose=verbose, callbacks=self.callbacks)
+
+        return sum(hist.history['loss'])
+
+
+    def copyWeights(self):
+            self.model2.set_weights(self.model1.get_weights())
+
+
+    def getAgentWeights(self):
+        return [self.model1.get_weights(), self.model2.get_weights()]
+
+
+    def setAgentWeights(self, weights:list):
+        self.model1.set_weights(weights[0])
+        self.model2.set_weights(weights[1])
+
+
+
 
 class DDVN:
 
     def __init__(self, stateSpace, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
-                 lr=0.001, nHidden=1, activation='tanh'):
+                 lr=0.001, nHidden=10, activation='tanh'):
         self.gamma = gamma
         self.stateSpace = stateSpace
         self.callbacks = callbacks

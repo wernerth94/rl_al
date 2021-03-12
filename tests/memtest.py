@@ -4,7 +4,7 @@ from config import mnistConfig as c
 import numpy as np
 
 env = Environment.BatchALGame(Data.loadMNIST(prefix='..'), Classifier.DenseClassifierMNIST, c)
-mem = Memory.NStepMemory(env, 5)
+mem = Memory.NStepVMemory(env, 5)
 assert mem.loadFromDisk('../'+c.memDir)
 
 state, rewardList, newState, done = mem.sampleMemory(len(mem))

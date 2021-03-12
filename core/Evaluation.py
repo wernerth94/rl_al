@@ -4,7 +4,7 @@ import Memory
 
 def scoreAgent(agent, env, printInterval=10, greed=0, imgsPerStep=1):
 
-    memory = Memory.NStepMemory(env.stateSpace, nSteps=1)
+    memory = Memory.NStepVMemory(env.stateSpace, nSteps=1)
 
     state = env.reset()
     f1Prog = []

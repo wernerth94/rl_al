@@ -11,7 +11,7 @@ import Memory
 from config import mnistConfig as c
 
 
-memory = Memory.NStepMemory(3 + 1280, 5)
+memory = Memory.NStepVMemory(3 + 1280, 5)
 assert memory.loadFromDisk(os.path.join('..', c.memDir))
 
 state, rewardList, newState, done = memory.rowsToArgs(memory.memory)

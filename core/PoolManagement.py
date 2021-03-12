@@ -1,8 +1,7 @@
 import numpy as np
-import mnistConfig as c
 import gc
 
-def resetALPool(dataset):
+def resetALPool(dataset, init_points_per_class=5):
     x_train, y_train, x_test, y_test = dataset
     nClasses = y_train.shape[1]
     xLabeled, yLabeled = [], []
@@ -13,12 +12,12 @@ def resetALPool(dataset):
     usedIds = []
     for i in ids:
         label = np.argmax(y_train[i])
-        if perClassIntances[label] < c.INIT_POINTS_PER_CLASS:
+        if perClassIntances[label] < init_points_per_class:
             xLabeled.append(x_train[i])
             yLabeled.append(y_train[i])
             usedIds.append(i)
             perClassIntances[label] += 1
-        if sum(perClassIntances) >= c.INIT_POINTS_PER_CLASS * nClasses:
+        if sum(perClassIntances) >= init_points_per_class * nClasses:
             break
     unusedIds = [i for i in np.arange(x_train.shape[0]) if i not in usedIds]
     xLabeled = np.array(xLabeled)
@@ -46,6 +45,6 @@ def addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures):
     return np.concatenate([alFeatures, presentedImg, poolFeat], axis=1)
 
 
-def sampleNewBatch(xUnlabeled):
-    return np.random.choice(xUnlabeled.shape[0], c.SAMPLE_SIZE)
+def sampleNewBatch(xUnlabeled, sampleSize):
+    return np.random.choice(xUnlabeled.shape[0], sampleSize)
 

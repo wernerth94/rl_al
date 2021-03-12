@@ -9,10 +9,10 @@ import json
 STATE_SPACE = 3
 
 backlogDir = '../memoryBacklog'
-memory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=np.inf)
+memory = Memory.NStepVMemory(STATE_SPACE, c.N_STEPS, maxLength=np.inf)
 for dir in os.listdir(backlogDir):
     memDir = os.path.join(backlogDir, dir)
-    m = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=np.inf)
+    m = Memory.NStepVMemory(STATE_SPACE, c.N_STEPS, maxLength=np.inf)
     m.loadFromDisk(memDir)
     memory._append(m.memory)
 print('memory size', len(memory))

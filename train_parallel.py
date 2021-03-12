@@ -25,13 +25,7 @@ import Plotting
 import Misc
 
 import config.mnistConfig as c
-print('#########################################################')
-print('loaded config', c.MODEL_NAME)
 
-print('planned interactions', c.MIN_INTERACTIONS)
-print(c.N_EXPLORE, 'exploration', c.N_CONVERSION, 'conversion')
-print('#########################################################')
-print('#########################################################')
 
 if c.DATASET == 'mnist':
     from Data import loadMNIST
@@ -53,8 +47,8 @@ def runAL(args):
         classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-    memory = Memory.NStepMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
-    agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA)
+    memory = Memory.NStepVMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
+    agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN)
 
     stop = False
     while not stop:
@@ -139,7 +133,7 @@ else:
 
 # STATE_SPACE = 7
 STATE_SPACE = 1
-mainMemory = Memory.NStepMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
+mainMemory = Memory.NStepVMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
 
 if c.USE_STOPSWITCH:
@@ -253,7 +247,7 @@ try:
             Misc.saveTrainState(c, trainState)
 
         # check for early stopping
-        stop = c.USE_STOPSWITCH and not os.path.exists('stopSwitch')
+        stop = c.USE_STOPSWITCH and not Misc.checkStopSwitch()
         trainingConn.send(stop)
         for i, conn in enumerate(connections):
             conn.send(stop)

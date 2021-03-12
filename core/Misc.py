@@ -36,9 +36,12 @@ def asympParameterPlan(val1, val2, warmup, conversion):
     return np.concatenate([plan1, plan2])
 
 
+def checkStopSwitch():
+    return os.path.exists("config/stopSwitch")
+
 def createStopSwitch():
-    if not os.path.exists("stopSwitch"):
-        open("stopSwitch", 'a').close()
+    if not os.path.exists("config/stopSwitch"):
+        open("config/stopSwitch", 'a').close()
 
 
 def saveTrainState(config, state:dict):
