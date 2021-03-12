@@ -9,12 +9,19 @@
 
 \section{Problem Formulation}
     \subsection{Reinforcement Learning}
-        The Problem is defined as a Markov Decision Process \\
-        $MDP = (S, A, p(s' | s, a), R(s, a))$ \\[1mm]
-        State space $S = \mathbb{R}^k$ \\[1mm]
-        Action space $A = \text{1}$ \\[1mm]
+        \subsubsection{Environment}
+            The Problem is defined as a Markov Decision Process (\cite{sutton18} p.48) \\
+            $MDP = (S, A, p(s' | s, a), r(s, a))$ \\[1mm]
+            State space $S = \mathbb{R}^k$ \\[1mm]
+            Action space $A = \textbf{1}$ \\[1mm]
+            Transition probability $p: S \times A \times S \rightarrow [0,1]$ \\[1mm]
+            Reward function $r: S \times A \rightarrow \mathbb{R}$
+        \subsubsection{Agent}
 
 
     \subsection{Active Learning}
 
+    \begin{thebibliography}{9}
+        \bibitem{sutton18} Sutton, Richard S., and Andrew G. Barto. Reinforcement learning: An introduction. MIT press, 2018.
+    \end{thebibliography}
 \end{document}
