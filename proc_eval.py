@@ -13,33 +13,49 @@ from core.Misc import saveFile
 import numpy as np
 import os, time, gc
 from multiprocessing import Pool
+import tensorflow as tf
 
+tf.config.optimizer.set_jit(True)
+budget = int(sys.argv[1])
+numProcesses = 5
+
+# CONFIG ##################################
+import config.mnistConfig as c
+# import config.trafficConfig as c
+SAVE_TRAJ = False
+c.OUTPUT_FOLDER = 'baselines'
+###########################################
 
 def doEval(args):
-    setup, datasetName, dataset, seed, iterations = args
+    dataset, seed, iterations, budget = args
     import tensorflow
     import Classifier, Agent, Environment
+    # CONFIG #############################
+    import config.mnistConfig as c
+    #import config.trafficConfig as c
+    ######################################
 
-    if setup == 'dense':
-        import config as c
-        envFunc = Environment.ImageClassificationGame
-        agentFunc = Agent.DenseAgent
-    elif setup == 'conv':
-        import config.convConfig as c
-        envFunc = Environment.ConvALGame
-        agentFunc = Agent.ConvAgent
-    elif setup == 'batch':
-        import config.batchConfig as c
-        envFunc = Environment.BatchALGame
-        agentFunc = Agent.BatchAgent
+    c.BUDGET = budget
+    c.GAME_LENGTH = c.BUDGET
+    c.SAMPLE_SIZE = 1000
 
-    if datasetName == 'iris':
+    envFunc = Environment.ALGame
+    #agentFunc = Agent.Baseline_Random
+    #agentFunc = Agent.Baseline_BvsSB
+    agentFunc = Agent.DDVN
+    #c.stateValueDir = 'tests/supervisedAgent'
+
+    if c.DATASET == 'iris':
         classifier = Classifier.SimpleClassifier
-    elif datasetName == 'mnist':
+    elif c.DATASET == 'mnist':
         classifier = Classifier.DenseClassifierMNIST
-    elif datasetName == 'mnist_mobilenet':
-        classifier = Classifier.EmbeddingClassifier(embeddingSize=1280)
+    elif c.DATASET == 'traffic_signs':
+        classifier = Classifier.trafficClassifier
+    else:
+        classifier = Classifier.EmbeddingClassifier(embeddingSize=c.EMBEDDING_SIZE)
 
+
+    trajectories = list()
     scores = list()
     for run in range(iterations):
         print('seed %d \t start \t %d/%d'%(seed, run, iterations))
@@ -47,75 +63,55 @@ def doEval(args):
         np.random.seed(int(seed+run))
 
         env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-        agent = agentFunc(env, fromCheckpoints=c.ckptDir)
+        agent = agentFunc(env.stateSpace, fromCheckpoints=c.stateValueDir)
 
-        f1, loss = scoreAgent(agent, env, c.BUDGET, greed=0.1, printInterval=200)
+        memory, f1 = scoreAgent(agent, env, imgsPerStep=1, greed=0.0, printInterval=200)
+        trajectories.append(memory)
         scores.append(f1)
         del env
         gc.collect()
-    return scores
+    return (scores, trajectories)
 
 ##################################
 ### MAIN
-all_datasets = ['mnist', 'iris', 'mnist_mobilenet']
-all_setups = ['conv', 'dense', 'batch']
-setup = str(sys.argv[1])
-datasetName = str(sys.argv[2])
-budget = int(sys.argv[3])
-if datasetName not in all_datasets: raise ValueError('dataset not in all_datasets;  given: ' + datasetName)
-if setup not in all_setups: raise ValueError('setup not in all_setups;  given: ' + setup)
 
-if setup == 'dense':
-    import config.config as c
-elif setup == 'conv':
-    import config.convConfig as c
-elif setup == 'batch':
-    import config.batchConfig as c
-
-if datasetName == 'iris':
-    from Data import loadIRIS
-    dataset = loadIRIS()
-elif datasetName == 'mnist':
-    from Data import loadMNIST
+from Data import *
+if c.DATASET == 'mnist':
     dataset = loadMNIST()
-elif datasetName == 'mnist_mobilenet':
-    from Data import load_mnist_mobilenet
-    dataset = load_mnist_mobilenet()
+if c.DATASET == 'traffic_signs':
+    dataset = loadTrafficSigns()
+else:
+    dataset = load_mnist_embedded(c.DATASET)
 
 print('#########################################################')
-print('loaded config', c.MODEL_NAME, 'loaded dataset', datasetName)
+print('loaded config', c.MODEL_NAME, 'loaded dataset', c.DATASET)
 print('#########################################################')
 
-# adjust budget
-c.BUDGET = budget
-c.GAME_LENGTH = c.BUDGET
-
-# load old model
-# c.MODEL_NAME = 'DDQN_MNIST_BATCH'
-# c.OUTPUT_FOLDER = 'out'+c.MODEL_NAME
-# c.cacheDir = os.path.join(c.OUTPUT_FOLDER, 'cache')
-# c.ckptDir = os.path.join(c.cacheDir, 'ckpt')
-# assert os.path.exists(c.ckptDir + '.index')
-
-numProcesses = 5
 startTime = time.time()
 seeds = int(startTime)
 seeds = [seeds/i for i in range(1, numProcesses+1)]
 with Pool(numProcesses) as pool:
-    args = zip([setup]*numProcesses, [datasetName]*numProcesses, [dataset]*numProcesses,
-               seeds, [int(c.EVAL_ITERATIONS/numProcesses)]*numProcesses)
+    args = zip([dataset]*numProcesses, seeds, [int(c.EVAL_ITERATIONS/numProcesses)]*numProcesses, [budget]*numProcesses)
     result = pool.map(doEval, args)
 
-
+trajectories = []
 f1Curves = []
 for workerResult in result:
-    for curve in workerResult:
-        f1Curves.append(curve)
+    f1Curves.append(workerResult[0][0])
+    trajectories.append(workerResult[1][0])
 f1Curves = np.array(f1Curves)
 
+#folder = os.path.join('baselines', 'small')
 folder = os.path.join(c.OUTPUT_FOLDER, 'curves')
 os.makedirs(folder, exist_ok=True)
 file = os.path.join(folder, str(c.BUDGET) + 'x' + str(c.SAMPLE_SIZE) + '_' + str(int(startTime))[-4:])
 saveFile(file, f1Curves)
+
+if SAVE_TRAJ:
+    trajFolder = os.path.join(folder, 'trajectories')
+    os.makedirs(trajFolder, exist_ok=True)
+    for i, t in enumerate(trajectories):
+        trajPath = os.path.join(trajFolder, str(i))
+        t.writeToDisk(trajPath)
 
 print('time needed', int(time.time() - startTime), 'seconds')

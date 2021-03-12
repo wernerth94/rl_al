@@ -1,12 +1,12 @@
 venv/
 .idea/
+stopSwitch
+*.npy
 memoryBacklog
 out*/
-stopSwitch
-baselines/
-*.npy
 plotting/*.png
 goodRuns
+backup_*
 
 __pycache__
 core/__pycache__

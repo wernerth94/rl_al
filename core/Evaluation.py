@@ -1,26 +1,29 @@
 import numpy as np
+from PoolManagement import *
+import Memory
 
-def scoreAgent(agent, env, numImgs, greed=-1, printInterval=0):
+def scoreAgent(agent, env, printInterval=10, greed=0, imgsPerStep=1):
+
+    memory = Memory.NStepMemory(env.stateSpace, nSteps=1)
+
     state = env.reset()
-    lossProg = []
     f1Prog = []
     i = 0
-    done = False
-    while not done:
-        Q, a = agent.predict(state, greedParameter=greed)
+    #done = False
+    while not env.hardReset:
+        #for nImg in range(imgsPerStep):
+        V, a = agent.predict(state, greedParameter=greed)
         a = a[0]
-        state, reward, done, _ = env.step(a)
+        statePrime, reward, done = env.step(a)
 
-        for _ in range(env.imgsToAvrg):
-            f1Prog.append(env.currentTestF1)
-            lossProg.append(env.currentTestLoss)
+        #for _ in range(imgsPerStep):
+        f1Prog.append(env.currentTestF1)
+        memory.addMemory(state[a], [reward], np.mean(statePrime, axis=0), done)
 
-        if printInterval > 0 and len(f1Prog) > 0 and i % printInterval == 0 :
-            print('%d : %1.3f'%(env.addedImages, f1Prog[-1]))
+        state = statePrime
+        if i % printInterval == 0 and len(f1Prog) > 0:
+            print('%d | %1.3f'%(i, f1Prog[-1]))
         i += 1
 
-    print('stopping with f1', f1Prog[-1])
-    if env.addedImages >= numImgs:
-        return f1Prog, lossProg
-    else:
-        raise AssertionError('not converged')
+    print('stopping with', len(env.yLabeled) - c.INIT_POINTS_PER_CLASS * env.yLabeled.shape[1], 'images \t f1', f1Prog[-1])
+    return memory, f1Prog

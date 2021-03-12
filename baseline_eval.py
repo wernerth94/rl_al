@@ -24,7 +24,7 @@ sampleSize = int(sys.argv[2])
 budget = int(sys.argv[3])
 if baselineName not in all_baselines: raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
 
-from config import batchConfig as c
+from config import mnistConfig as c
 
 envFunc = Environment.BatchALGame
 from Data import loadMNIST

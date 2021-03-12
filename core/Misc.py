@@ -1,6 +1,20 @@
-import os
+import os, gc
 import numpy as np
 import json
+
+
+
+def avrg(curve, window):
+    if len(curve) <= 0:
+        return [0]
+    if len(curve) < 2:
+        return [curve[0]]
+    avrgCurve = []
+
+    for i in range(len(curve)):
+        avrgCurve.append(np.mean( curve[max(0, i - int(window/2)) : min(len(curve), i + int(window/2))] ))
+    return avrgCurve
+
 
 def saveFile(name, file):
     if os.path.exists(name + '.npy'):

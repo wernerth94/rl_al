@@ -2,10 +2,25 @@ import numpy as np
 import sys, os
 import tensorflow.keras as keras
 from tensorflow.keras.utils import to_categorical
+from scipy.io import arff
+import pandas as pd
 
 CLUSTER = False
 if sys.prefix.startswith('/home/werner/miniconda3'):
     CLUSTER = True
+
+
+def loadTrafficSigns():
+    print('loading traffic signs')
+    data = arff.loadarff('../datasets/traffic_signs.arff')
+    df = pd.DataFrame(data[0])
+    data = df.values.astype('float32')
+    allIds = np.arange(len(data))
+    np.random.shuffle(allIds)
+    cutoff = int(len(data) * 0.8)
+    trainIds, testIds = allIds[:cutoff], allIds[cutoff:]
+    x, y = data[:, :-1], keras.utils.to_categorical(data[:, -1:])
+    return (x[trainIds], y[trainIds], x[testIds], y[testIds])
 
 
 def loadWine():
@@ -46,8 +61,12 @@ def loadIRIS():
     return (x[trainIdx], y[trainIdx], x[testIdx], y[testIdx])
 
 
-def load_mnist_mobilenet(numTest=2000, prefix=''):
-    with np.load(os.path.join(prefix, '../datasets/mnist_mobileNetV2.npz'), allow_pickle=True) as f:
+def load_mnist_embedded(embedding, numTest=2000, prefix=''):
+    if embedding == 'mnist_mobileNet':
+        file = 'mnist_mobileNetV2.npz'
+    elif embedding == 'mnist_embedSmall':
+        file = 'mnist_embedSmall.npz'
+    with np.load(os.path.join(prefix, '../datasets', file), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
 
@@ -55,7 +74,7 @@ def load_mnist_mobilenet(numTest=2000, prefix=''):
     return (x_train, y_train, x_test, y_test)
 
 
-def loadMNIST(color=False, numTest=2000, prefix=''):
+def loadMNIST(color=False, numTest=4000, prefix=''):
     with np.load(os.path.join(prefix, '../datasets/mnist.npz'), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
@@ -83,5 +102,14 @@ def loadCifar(numTest=1000, numLabels=10):
     x_train = np.array(x_train, dtype=float) / 255
     y_test = to_categorical(y_test[:numTest], numLabels)
     x_test = np.array(x_test, dtype=float)[:numTest] / 255
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    return (x_train, y_train, x_test, y_test)
+
+
+def load_cifar10_mobilenet(numTest=1000, prefix=''):
+    with np.load(os.path.join(prefix, '../datasets/cifar10_mobileNetV2.npz'), allow_pickle=True) as f:
+        x_train, y_train = f['x_train'], f['y_train']
+        x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
+
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     return (x_train, y_train, x_test, y_test)
