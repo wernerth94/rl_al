@@ -104,7 +104,7 @@ def trainAgent(args):
     tf.config.optimizer.set_jit(True)
 
     cp_callback = keras.callbacks.ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
-    mainAgent = Agent.DDVN(STATE_SPACE, gamma=c.AGENT_GAMMA, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
+    mainAgent = Agent.DDVN(STATE_SPACE, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN, fromCheckpoints=c.stateValueDir, callbacks=[cp_callback])
 
     stop = False
     while not stop:
@@ -132,7 +132,7 @@ else:
 
 
 # STATE_SPACE = 7
-STATE_SPACE = 1
+STATE_SPACE = 2
 mainMemory = Memory.NStepVMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
 
@@ -264,7 +264,10 @@ Misc.saveTrainState(c, trainState)
 print('took', (time()-startTime)/60.0/60.0, 'hours')
 
 for p in childProcesses:
+    p.join(timeout=100)
     p.terminate()
     p.close()
+trainingProcess.join(timeout=100)
+trainingProcess.terminate()
 trainingProcess.close()
 print('all processes closed')

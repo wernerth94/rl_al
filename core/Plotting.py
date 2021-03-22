@@ -122,9 +122,9 @@ def plot(trainState, config, outDir=None, showPlots=False):
     data.reverse()
 
     for i, d, a, cId in zip(np.flip(np.arange(len(data))), data, alphas, colorIndices):
-        c = cm(cId)
-        c = tuple(list(c[:3]) + [a])
-        sns.kdeplot(d, ax=ax4, c=c, label=str(-i*offset))
+        color = cm(cId)
+        color = tuple(list(color[:3]) + [a])
+        sns.kdeplot(d, ax=ax4, c=color, label=str(-i*offset))
 
     ax4.legend(fontsize='small')
 
@@ -133,7 +133,7 @@ def plot(trainState, config, outDir=None, showPlots=False):
     gl = 0 #trainState['glCurve'][-1]
     lr = trainState['lrCurve'][-1]
     greed = trainState['greedCurve'][-1]
-    fig.suptitle('Eta %3.1f h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(etaH, totalSteps, gl, lr, greed), fontsize=16)
+    fig.suptitle('%s - Eta %3.1f h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(c.MODEL_NAME, etaH, totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     os.makedirs(outDir, exist_ok=True)
 

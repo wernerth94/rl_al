@@ -23,7 +23,7 @@ numProcesses = 5
 import config.mnistConfig as c
 # import config.trafficConfig as c
 SAVE_TRAJ = False
-c.OUTPUT_FOLDER = 'baselines'
+#c.OUTPUT_FOLDER = 'out_MNIST_BVSSB'
 ###########################################
 
 def doEval(args):
@@ -32,7 +32,6 @@ def doEval(args):
     import Classifier, Agent, Environment
     # CONFIG #############################
     import config.mnistConfig as c
-    #import config.trafficConfig as c
     ######################################
 
     c.BUDGET = budget
@@ -43,7 +42,6 @@ def doEval(args):
     #agentFunc = Agent.Baseline_Random
     #agentFunc = Agent.Baseline_BvsSB
     agentFunc = Agent.DDVN
-    #c.stateValueDir = 'tests/supervisedAgent'
 
     if c.DATASET == 'iris':
         classifier = Classifier.SimpleClassifier
@@ -63,7 +61,7 @@ def doEval(args):
         np.random.seed(int(seed+run))
 
         env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-        agent = agentFunc(env.stateSpace, fromCheckpoints=c.stateValueDir)
+        agent = agentFunc(env.stateSpace, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN, fromCheckpoints=c.stateValueDir)
 
         memory, f1 = scoreAgent(agent, env, imgsPerStep=1, greed=0.0, printInterval=200)
         trajectories.append(memory)
@@ -83,9 +81,6 @@ if c.DATASET == 'traffic_signs':
 else:
     dataset = load_mnist_embedded(c.DATASET)
 
-print('#########################################################')
-print('loaded config', c.MODEL_NAME, 'loaded dataset', c.DATASET)
-print('#########################################################')
 
 startTime = time.time()
 seeds = int(startTime)

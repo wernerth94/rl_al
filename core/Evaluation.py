@@ -25,5 +25,5 @@ def scoreAgent(agent, env, printInterval=10, greed=0, imgsPerStep=1):
             print('%d | %1.3f'%(i, f1Prog[-1]))
         i += 1
 
-    print('stopping with', len(env.yLabeled) - c.INIT_POINTS_PER_CLASS * env.yLabeled.shape[1], 'images \t f1', f1Prog[-1])
+    print('stopping with', len(env.yLabeled), 'images \t f1', f1Prog[-1])
     return memory, f1Prog
