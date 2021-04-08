@@ -12,6 +12,7 @@ print(F"updated path is {sys.path}")
 import numpy as np
 from time import time
 from importlib import reload
+from tensorflow.keras.callbacks import ModelCheckpoint
 import Classifier
 import Environment
 import Agent
@@ -32,7 +33,9 @@ else:
 
 env = Environment.ALStreamingGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 memory = Memory.NStepQMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
-agent = Agent.DDQN(env.stateSpace, env.actionSpace, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN)
+
+cp_callback = ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
+agent = Agent.DDQN(env.stateSpace, env.actionSpace, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN, callbacks=[cp_callback])
 
 # Load Past Train State
 trainState = Misc.loadTrainState(c)

@@ -131,9 +131,7 @@ else:
     NUM_PROCESSES = 4
 
 
-# STATE_SPACE = 7
-STATE_SPACE = 2
-mainMemory = Memory.NStepVMemory(STATE_SPACE, c.N_STEPS, maxLength=c.MEMORY_CAP)
+mainMemory = Memory.NStepVMemory(Environment.ALGame.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
 mainMemory.loadFromDisk(c.memDir)
 
 if c.USE_STOPSWITCH:
@@ -168,7 +166,7 @@ for i in range(NUM_PROCESSES):
 
 # start agent training process
 trainingConn, child_conn = Pipe()
-trainingProcess = Process(target=trainAgent, args=([child_conn, STATE_SPACE],))
+trainingProcess = Process(target=trainAgent, args=([child_conn, Environment.ALGame.stateSpace],))
 trainingProcess.start()
 
 try:

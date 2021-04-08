@@ -38,9 +38,9 @@ def gameLengthToEpochCurve(ts, c):
     return length
 
 
-lossWindow = 20
+lossWindow = 40
 rewardWindow = 200
-qWindow = 20
+qWindow = 40
 stepWindow = 10
 
 def plot(trainState, config, outDir=None, showPlots=False):

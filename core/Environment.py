@@ -7,6 +7,8 @@ from PoolManagement import resetALPool, sampleNewBatch, addDatapointToPool
 
 class ALGame:
 
+    stateSpace = 2
+
     def __init__(self, dataset, modelFunction, config, verbose):
         self.x_test = dataset[2]
         self.y_test = dataset[3]
@@ -21,8 +23,7 @@ class ALGame:
         self.rewardShaping = config.REWARD_SHAPING
         self.verbose = verbose
 
-        self.stateSpace = 2
-        # self.stateSpace = 3 + 4
+        self.stateSpace = ALGame.stateSpace
 
         self.modelFunction = modelFunction
         self.es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=1)
@@ -71,7 +72,7 @@ class ALGame:
         entropy = -np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1)
         bVsSB = 1 - (struct[:, -1] - struct[:, -2])
 
-        #state = np.expand_dims(bVsSB, axis=-1)
+        # state = np.expand_dims(bVsSB, axis=-1)
         state = np.stack([bVsSB, entropy], axis=-1)
         # state = np.concatenate([state, struct], axis=1)
         return state
