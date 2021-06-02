@@ -1,11 +1,12 @@
 import os
 import Misc
 
+DEBUG = True
 # general
 DATASET = 'mnist_mobileNet'
 EMBEDDING_SIZE = 1280
 N_STEPS = 3
-MODEL_NAME = 'MNIST_SCRATCH'
+MODEL_NAME = 'MODEL_BASED'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 EVAL_ITERATIONS = 10

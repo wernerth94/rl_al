@@ -5,7 +5,7 @@ import numpy as np
 import os
 import Misc
 
-import config.palConfig as c
+import config.modelConfig as c
 
 cwd = os.getcwd()
 if cwd.endswith('core'):
@@ -38,9 +38,9 @@ def gameLengthToEpochCurve(ts, c):
     return length
 
 
-lossWindow = 40
-rewardWindow = 200
-qWindow = 40
+lossWindow = 10
+rewardWindow = 10
+qWindow = 4
 stepWindow = 10
 
 def plot(trainState, config, outDir=None, showPlots=False):
@@ -130,10 +130,12 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
     totalSteps = trainState.get('totalSteps', 0)
     etaH = trainState.get('eta', 0)
+    etaD = int(etaH / 24)
+    etaH = int(etaH % 24)
     gl = 0 #trainState['glCurve'][-1]
     lr = trainState['lrCurve'][-1]
     greed = trainState['greedCurve'][-1]
-    fig.suptitle('%s - Eta %3.1f h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(c.MODEL_NAME, etaH, totalSteps, gl, lr, greed), fontsize=16)
+    fig.suptitle('%s - Eta %d D %d h  Current Step %d  GameLength %d  LR: %0.4f  Greed: %0.3f'%(c.MODEL_NAME, etaD, etaH, totalSteps, gl, lr, greed), fontsize=16)
     fig.tight_layout()
     os.makedirs(outDir, exist_ok=True)
 
@@ -144,9 +146,10 @@ def plot(trainState, config, outDir=None, showPlots=False):
 
 
 if __name__ == "__main__":
-    from config import palConfig as c
-
-    c.OUTPUT_FOLDER = 'out_MNIST'
-    c.MODEL_NAME = 'MNIST'
+    #from config import modelConfig as c
+    #
+    c.MODEL_NAME = 'MNIST_MODEL'
+    c.OUTPUT_FOLDER = 'out_' + c.MODEL_NAME
+    #os.chdir('..')
     tS = Misc.loadTrainState(c)
     plot(tS, c, outDir=os.path.join('..', c.OUTPUT_FOLDER), showPlots=True)

@@ -7,7 +7,7 @@ from PoolManagement import resetALPool, sampleNewBatch, addDatapointToPool
 
 class ALGame:
 
-    stateSpace = 2
+    stateSpace = 3
 
     def __init__(self, dataset, modelFunction, config, verbose):
         self.x_test = dataset[2]
@@ -21,17 +21,21 @@ class ALGame:
         self.labelCost = config.LABEL_COST
         self.rewardScaling = config.REWARD_SCALE
         self.rewardShaping = config.REWARD_SHAPING
+        self.from_scratch = config.CLASS_FROM_SCRATCH
         self.verbose = verbose
 
-        self.stateSpace = ALGame.stateSpace
 
         self.modelFunction = modelFunction
         self.es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=1)
         self.classifier = modelFunction(inputShape=self.x_test.shape[1:],
                                         numClasses=self.y_test.shape[1])
-        self.hardReset = True
         self.initialF1 = 0
         self.currentTestF1 = 0
+        self.hardReset = True
+        self.reset()
+        state = self.createState()
+        self.stateSpace = state.shape[1]
+        self.hardReset = True
 
     def reset(self):
         # self.initialF1 = 0
@@ -39,6 +43,7 @@ class ALGame:
         self.nInteractions = 0
 
         if self.hardReset:
+            self.hardReset = False
             self.classifier = self.modelFunction(inputShape=self.x_test.shape[1:],
                                                  numClasses=self.y_test.shape[1])
             self.initialWeights = self.classifier.get_weights()
@@ -48,7 +53,6 @@ class ALGame:
                                                                                   self.config.INIT_POINTS_PER_CLASS)
             self.fitClassifier()
             self.initialF1 = self.currentTestF1
-            self.hardReset = False
 
         self.stateIds = sampleNewBatch(self.xUnlabeled, self.config.SAMPLE_SIZE)
         return self.createState()
@@ -62,18 +66,19 @@ class ALGame:
 
 
     def getClassifierFeatures(self, x):
-        eps = 1e-5
+        eps = 1e-7
         # prediction metrics
         pred = self.classifier.predict(x)
         part = (-bn.partition(-pred, 4, axis=1))[:,:4] # collects the two highest entries
         struct = np.sort(part, axis=1)
 
         # weightedF1 = np.average(pred * self.perClassF1, axis=1)
+        f1 = np.repeat(np.mean(self.currentTestF1), len(x))
         entropy = -np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1)
         bVsSB = 1 - (struct[:, -1] - struct[:, -2])
 
         # state = np.expand_dims(bVsSB, axis=-1)
-        state = np.stack([bVsSB, entropy], axis=-1)
+        state = np.stack([f1, bVsSB, entropy], axis=-1)
         # state = np.concatenate([state, struct], axis=1)
         return state
 
@@ -95,18 +100,20 @@ class ALGame:
         return statePrime, reward, done
 
 
-    def fitClassifier(self, epochs=50, batch_size=32, from_scratch=False):
-        if from_scratch:
+    def fitClassifier(self, epochs=50, batch_size=32):
+        if self.from_scratch:
             self.classifier.set_weights(self.initialWeights)
         train_history = self.classifier.fit(self.xLabeled, self.yLabeled, batch_size=batch_size, epochs=epochs, verbose=0,
                                             callbacks=[self.es], validation_data=(self.x_test, self.y_test))
 
         self.perClassF1 = train_history.history['val_f1_score'][-1]
-        newTestF1, self.currentTestLoss = np.mean(self.perClassF1), np.min(train_history.history['val_loss'])
+        newTestF1, self.currentTestLoss = np.mean(self.perClassF1), train_history.history['val_loss'][-1]
 
         reward = 0
         if self.rewardShaping:
             reward = (newTestF1 - self.currentTestF1 - self.labelCost) * self.rewardScaling
+        else:
+            raise NotImplementedError()
         self.currentTestF1 = newTestF1
         return reward
 
@@ -146,7 +153,7 @@ class ALStreamingGame(ALGame):
         struct = np.sort(part, axis=1)
 
         # weightedF1 = np.average(pred * self.perClassF1, axis=1)
-        # entropy = -np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1)
+        entropy = -np.average(pred * np.log(eps + pred) + (1+eps-pred) * np.log(1+eps-pred), axis=1)
         bVsSB = 1 - (struct[:, -1] - struct[:, -2])
 
         state = np.expand_dims(bVsSB, axis=-1)

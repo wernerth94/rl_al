@@ -2,7 +2,11 @@ import os, gc
 import numpy as np
 import json
 
-
+def trainTestIDSplit(length, cutoff=0.8):
+    ids = np.arange(length)
+    split = int(length * cutoff)
+    np.random.shuffle(ids)
+    return ids[:split], ids[split:]
 
 def avrg(curve, window):
     if len(curve) <= 0:
