@@ -1,7 +1,7 @@
 import os
 import Misc
 
-DEBUG = True
+DEBUG = False
 # general
 DATASET = 'mnist_mobileNet'
 EMBEDDING_SIZE = 1280
