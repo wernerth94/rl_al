@@ -95,8 +95,10 @@ class NStepVMemory(Memory):
         #     self._append(s, action, reward, sP, done)
 
 
-    def sampleMemory(self, size):
+    def sampleMemory(self, size, returnTable=False):
         idx = np.random.choice(len(self.memory), min(len(self.memory), size), replace=False)
+        if returnTable:
+            return self.memory[idx]
         state, rewardList, newState, done = self.rowsToArgs(self.memory[idx])
         return state, rewardList, newState, done
 

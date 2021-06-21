@@ -99,12 +99,12 @@ def collectData(args):
         stop = outConnection.recv()
 
 # Worker
-def trainAgentInModel(agent, dynamicsModel, greed=0.1, eDataCollection=100, eAgentTraining=40):
+def trainAgentInModel(agent, dynamicsModel, realMemorySample, greed=0.1):
     memory = Memory.NStepVMemory(dynamicsModel.sample().shape[1], c.N_STEPS, maxLength=c.MEMORY_CAP)
-    for epoch in range(eDataCollection):
+    for epoch in range(c.DATA_COLLECTION_EPOCHS):
         state = dynamicsModel.sample()
         stateBuffer = []; rewardBuffer = []
-        for i in range(c.N_STEPS * 3):
+        for i in range(c.TRAJECTORY_LENGTH):
             V, a = agent.predict(state, greedParameter=greed)
             a = a[0]
             nextState = dynamicsModel(np.expand_dims(state[a], axis=0), additionalSamples=10)
@@ -116,10 +116,11 @@ def trainAgentInModel(agent, dynamicsModel, greed=0.1, eDataCollection=100, eAge
                 memory.addMemory(stateBuffer.pop(0), rewardBuffer, np.mean(nextState, axis=0), False)
                 rewardBuffer.pop(0)
             state = nextState
+    memory._append(realMemorySample)
 
     trainSteps = 0
-    sampleSize = int(len(memory)*0.8)
-    for epoch in range(eAgentTraining):
+    sampleSize = int(len(memory)*0.6)
+    for epoch in range(c.AGENT_TRAINING_EPOCHS):
         trainSteps += sampleSize
         sample = memory.sampleMemory(sampleSize)
         loss = agent.fit(sample)
@@ -136,6 +137,7 @@ def trainAgent(args):
     import tensorflow as tf
     from AutoEncoder import VAE
     from Misc import trainTestIDSplit
+    import config.modelConfig as c
     tf.config.optimizer.set_jit(True)
 
     cp_callback = keras.callbacks.ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
@@ -150,21 +152,17 @@ def trainAgent(args):
         mem, lr, updateTargetNet = conn.recv()
         if c.DEBUG: print('start dynamic model training')
         # train world model
-        state, _, newState, __ = mem
+        state, _, newState, __ = mem.sampleMemory(c.BATCH_SIZE * c.BUDGET)
         train, test = trainTestIDSplit(len(state))
         if len(train) > 0:
             train_hist = dynamicsModel.fit(state[train], newState[train], validation_data=(state[test], newState[test]),
                                             epochs=100, batch_size=32, callbacks=[es_callback], verbose=0)
             print('world model recon loss', train_hist.history['reconstruction_loss'][0], 'mae', train_hist.history['mae'][0])
 
-        # loss = mainAgent.fit(mem, lr=lr)
-        # if updateTargetNet:
-        #     mainAgent.copyWeights()
         if c.DEBUG: print('start agent training')
-        loss = trainAgentInModel(mainAgent, dynamicsModel)
-        # send loss
+        loss = trainAgentInModel(mainAgent, dynamicsModel, mem.sampleMemory(c.DATA_COLLECTION_EPOCHS * c.TRAJECTORY_LENGTH, returnTable=True))
+        # send loss and new weights
         conn.send(loss)
-        #send new weights
         conn.send(mainAgent.getAgentWeights())
         # receive stop signal
         stop = conn.recv()
@@ -239,9 +237,9 @@ try:
         updateTargetNet = trainState['totalSteps'] >= nextTargetNetUpdate
         if updateTargetNet:
             nextTargetNetUpdate += c.C
-        memSample = mainMemory.sampleMemory(c.BATCH_SIZE * c.BUDGET)
+        #memSample = mainMemory.sampleMemory(c.BATCH_SIZE * c.BUDGET, returnTable=True)
         # send memory data to training process
-        trainingConn.send([memSample, lr, updateTargetNet])
+        trainingConn.send([mainMemory, lr, updateTargetNet])
         # receive loss from agent training
         epochLoss = trainingConn.recv()
 
