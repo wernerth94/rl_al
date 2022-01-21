@@ -1,6 +1,7 @@
 import numpy as np
 import sys, os
 import tensorflow.keras as keras
+import torch
 from tensorflow.keras.utils import to_categorical
 from scipy.io import arff
 import pandas as pd
@@ -67,8 +68,8 @@ def load_mnist_embedded(embedding, numTest=2000, prefix=''):
     elif embedding == 'mnist_embedSmall':
         file = 'mnist_embedSmall.npz'
     with np.load(os.path.join(prefix, '../datasets', file), allow_pickle=True) as f:
-        x_train, y_train = f['x_train'], f['y_train']
-        x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
+        x_train, y_train = f['x_train'].astype(np.float32), f['y_train'].astype(np.float32)
+        x_test, y_test = f['x_test'][:numTest].astype(np.float32), f['y_test'][:numTest].astype(np.float32)
 
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     return (x_train, y_train, x_test, y_test)
@@ -94,22 +95,45 @@ def loadMNIST(color=False, numTest=4000, prefix=''):
     return (x_train, y_train, x_test, y_test)
 
 
+def _post_process(x_train, y_train, x_test, y_test, return_tensors=False, channelFirst=False):
+    if return_tensors:
+        x_train = torch.from_numpy(x_train).float()
+        y_train = torch.from_numpy(y_train).float()
+        x_test = torch.from_numpy(x_test).float()
+        y_test = torch.from_numpy(y_test).float()
+        if channelFirst:
+            x_train = x_train.permute(0, 3, 1, 2)
+            x_test = x_test.permute(0, 3, 1, 2)
+    else:
+        if channelFirst:
+            x_train = np.moveaxis(x_train, -1, 1)
+            x_test = np.moveaxis(x_test, -1, 1)
+    return (x_train, y_train, x_test, y_test)
 
 
-def loadCifar(numTest=1000, numLabels=10):
+def loadCifar(numTest=1000, numLabels=10, return_tensors=False, channelFirst=False):
     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
     y_train = to_categorical(y_train, numLabels)
     x_train = np.array(x_train, dtype=float) / 255
     y_test = to_categorical(y_test[:numTest], numLabels)
     x_test = np.array(x_test, dtype=float)[:numTest] / 255
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-    return (x_train, y_train, x_test, y_test)
+    return _post_process(x_train, y_train, x_test, y_test,
+                         return_tensors=return_tensors, channelFirst=channelFirst)
 
 
-def load_cifar10_mobilenet(numTest=1000, prefix=''):
+def load_cifar10_mobilenet(numTest=1000, prefix='', return_tensors=False, channelFirst=False):
     with np.load(os.path.join(prefix, '../datasets/cifar10_mobileNetV2.npz'), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
-
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-    return (x_train, y_train, x_test, y_test)
+    return _post_process(x_train, y_train, x_test, y_test,
+                         return_tensors=return_tensors, channelFirst=channelFirst)
+
+def load_cifar10_custom(numTest=1000, prefix='', return_tensors=False, channelFirst=False):
+    with np.load(os.path.join(prefix, '../datasets/cifar10_custom.npz'), allow_pickle=True) as f:
+        x_train, y_train = f['x_train'], f['y_train']
+        x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    return _post_process(x_train, y_train, x_test, y_test,
+                         return_tensors=return_tensors, channelFirst=channelFirst)

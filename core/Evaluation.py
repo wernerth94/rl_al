@@ -12,7 +12,7 @@ def scoreAgent(agent, env, printInterval=10, greed=0, imgsPerStep=1):
     #done = False
     while not env.hardReset:
         #for nImg in range(imgsPerStep):
-        V, a = agent.predict(state, greedParameter=greed)
+        V, a = agent.predict(state, greed=greed)
         a = a[0]
         statePrime, reward, done = env.step(a)
 

@@ -44,7 +44,7 @@ def collectData(args):
     if c.DATASET == 'mnist':
         classifier = Classifier.DenseClassifierMNIST
     else:
-        classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
+        classifier = Classifier.EmbeddingClassifierFactory(c.EMBEDDING_SIZE)
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
     memory = Memory.NStepVMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
@@ -69,7 +69,7 @@ def collectData(args):
             stateBuffer = []; rewardBuffer = []
             while not done:
                 for n in range(c.N_STEPS):
-                    V, a = agent.predict(state, greedParameter=greed)
+                    V, a = agent.predict(state, greed=greed)
                     a = a[0]
                     if steps == 0:
                         vStart = V[a]
@@ -105,7 +105,7 @@ def trainAgentInModel(agent, dynamicsModel, realMemorySample, greed=0.1):
         state = dynamicsModel.sample()
         stateBuffer = []; rewardBuffer = []
         for i in range(c.TRAJECTORY_LENGTH):
-            V, a = agent.predict(state, greedParameter=greed)
+            V, a = agent.predict(state, greed=greed)
             a = a[0]
             nextState = dynamicsModel(np.expand_dims(state[a], axis=0), additionalSamples=10)
             proxyReward = np.mean(nextState[:, 0]) - state[a, 0]

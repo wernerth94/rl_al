@@ -1,12 +1,15 @@
 venv/
 .idea/
-config/stopSwitch
 *.npy
+
+config/stopSwitch
 memoryBacklog
-out*/
-plotting/*.png
-goodRuns
 backup_*
+
+out*/
+/runs/
+evaluation/*.png
+tests
 
 __pycache__
 core/__pycache__
@@ -14,4 +17,3 @@ core/__pycache__
 *.log
 *.err
 *.sh
-/goodRuns/

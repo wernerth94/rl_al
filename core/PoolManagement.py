@@ -1,5 +1,6 @@
 import numpy as np
 import gc
+import torch
 
 def resetALPool(dataset, init_points_per_class=5):
     x_train, y_train, x_test, y_test = dataset
@@ -13,17 +14,19 @@ def resetALPool(dataset, init_points_per_class=5):
     for i in ids:
         label = np.argmax(y_train[i])
         if perClassIntances[label] < init_points_per_class:
-            xLabeled.append(x_train[i])
-            yLabeled.append(y_train[i])
+            xLabeled.append(i)
+            yLabeled.append(i)
+            # xLabeled.append(x_train[i])
+            # yLabeled.append(y_train[i])
             usedIds.append(i)
             perClassIntances[label] += 1
         if sum(perClassIntances) >= init_points_per_class * nClasses:
             break
     unusedIds = [i for i in np.arange(x_train.shape[0]) if i not in usedIds]
-    xLabeled = np.array(xLabeled)
-    yLabeled = np.array(yLabeled)
-    xUnlabeled = np.array(x_train[unusedIds])
-    yUnlabeled = np.array(y_train[unusedIds])
+    xLabeled = x_train[xLabeled]
+    yLabeled = y_train[yLabeled]
+    xUnlabeled = x_train[unusedIds]
+    yUnlabeled = y_train[unusedIds]
     gc.collect()
     return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
 
@@ -31,10 +34,10 @@ def resetALPool(dataset, init_points_per_class=5):
 def addDatapointToPool(xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances, dpId: int):
     # add images
     perClassIntances[int(np.argmax(yUnlabeled[dpId]))] += 1  # keep track of the added images
-    xLabeled = np.append(xLabeled, xUnlabeled[dpId:dpId + 1], axis=0)
-    yLabeled = np.append(yLabeled, yUnlabeled[dpId:dpId + 1], axis=0)
-    xUnlabeled = np.delete(xUnlabeled, dpId, axis=0)
-    yUnlabeled = np.delete(yUnlabeled, dpId, axis=0)
+    xLabeled = torch.cat([ xLabeled, xUnlabeled[dpId:dpId + 1] ], dim=0)
+    yLabeled = torch.cat([ yLabeled, yUnlabeled[dpId:dpId + 1] ], dim=0)
+    xUnlabeled = torch.cat([ xUnlabeled[:dpId], xUnlabeled[dpId+1:] ], dim=0)
+    yUnlabeled = torch.cat([ yUnlabeled[:dpId], yUnlabeled[dpId+1:] ], dim=0)
     return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
 
 

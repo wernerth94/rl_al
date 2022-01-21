@@ -29,7 +29,7 @@ if c.DATASET == 'mnist':
 else:
     from Data import load_mnist_embedded
     dataset = load_mnist_embedded(c.DATASET)
-    classifier = Classifier.EmbeddingClassifier(c.EMBEDDING_SIZE)
+    classifier = Classifier.EmbeddingClassifierFactory(c.EMBEDDING_SIZE)
 
 env = Environment.ALStreamingGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 memory = Memory.NStepQMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
@@ -62,7 +62,7 @@ try:
         state = env.reset()
         while not done:
             greed = c.GREED[np.clip(trainState['totalSteps'], 0, len(c.GREED) - 1)]
-            Q, action = agent.predict(state, greedParameter=greed)
+            Q, action = agent.predict(state, greed=greed)
             action = action[0]
             if steps == 0:
                 vStart = Q[0, action]

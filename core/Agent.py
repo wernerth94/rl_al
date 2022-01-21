@@ -1,231 +1,95 @@
-import tensorflow.keras as keras
-import tensorflow_addons as tfa
-import tensorflow as tf
 import numpy as np
 import os
-import AutoEncoder
-
-
-class DDQN:
-
-    def __init__(self, stateSpace, actionSpace, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
-                 lr=0.001, nHidden=10, activation='tanh'):
-        self.gamma = gamma
-        self.stateSpace = stateSpace
-        self.actionSpace = actionSpace
-        self.callbacks = callbacks
-        self.clipped = clipped
-        self.model1 = self.createActionValueModel(fromCheckpoints, lr=lr, nHidden=nHidden, activation=activation)
-        self.model2 = self.createActionValueModel(None, nHidden=nHidden, activation=activation)
-        self.model2.set_weights(self.model1.get_weights())
-
-
-
-    def createActionValueModel(self, fromCheckpoint, lr=0.001, nHidden=10, activation='tanh'):
-        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
-            print('loaded model from ', fromCheckpoint)
-            return keras.models.load_model(fromCheckpoint)
-        else:
-            model = keras.models.Sequential([
-                keras.layers.Input(self.stateSpace),
-                keras.layers.Dense(nHidden, activation=activation),
-                keras.layers.Dense(self.actionSpace)])
-            opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
-            model.compile(optimizer=tfa.optimizers.Lookahead(opt),
-                          loss=keras.losses.Huber())
-
-        return model
-
-
-    def predict(self, inputs, greedParameter=1):
-        q = self.model1.predict(inputs)
-        if greedParameter <= 0 or np.random.rand() > greedParameter:
-            a = np.argmax(q, axis=1)
-            return q, a
-        else:
-            i = np.random.randint(len(inputs))
-            return q, np.array(i).reshape(-1, 1)
-
-
-    def fit(self, memoryBatch, lr=None, batchSize=16, verbose=0):
-        state = memoryBatch[0]
-        actions = memoryBatch[1].astype(int)
-        rewards = memoryBatch[2]
-        nextStates = memoryBatch[3]
-        dones = memoryBatch[4]
-        _all = range(len(state))
-
-        qBase = self.model1.predict(state)
-        qPrime2 = self.model2.predict(nextStates)
-        nextAction = np.argmax(qPrime2, axis=1)  # .squeeze()
-
-        if self.clipped:
-            qPrime1 = self.model1.predict(nextStates)
-            target = np.minimum(qPrime1, qPrime2)
-        else:
-            target = qPrime2[:, nextAction]
-
-        R = np.zeros(len(state))
-        for i in range(len(rewards)):
-            R += (self.gamma ** i) * rewards[i]
-
-        qBase[:, actions] = R
-        qBase[:, actions] += (1 - dones) * (self.gamma**len(rewards)) * target
-
-        if lr is not None:
-            self.model1.optimizer.lr = lr
-        hist = self.model1.fit(x=state, y=qBase, epochs=1, batch_size=batchSize, verbose=verbose, callbacks=self.callbacks)
-
-        return sum(hist.history['loss'])
-
-
-    def copyWeights(self):
-            self.model2.set_weights(self.model1.get_weights())
-
-
-    def getAgentWeights(self):
-        return [self.model1.get_weights(), self.model2.get_weights()]
-
-
-    def setAgentWeights(self, weights:list):
-        self.model1.set_weights(weights[0])
-        self.model2.set_weights(weights[1])
-
-
-
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
 class DDVN:
 
-    def __init__(self, stateSpace, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None,
-                 lr=0.001, nHidden=10, activation='tanh'):
+    def __init__(self, stateSpace, clipped=False, gamma=0.99, lr=0.001, nHidden=10):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print(F'placing model on device {self.device}')
+
         self.gamma = gamma
         self.stateSpace = stateSpace
-        self.callbacks = callbacks
         self.clipped = clipped
-        self.model1 = self.createStateValueModel(fromCheckpoints, lr=lr, nHidden=nHidden, activation=activation)
-        self.model2 = self.createStateValueModel(None, nHidden=nHidden, activation=activation)
-        self.model2.set_weights(self.model1.get_weights())
+        self.weight_copy_interval = 3
+        self.training_steps = 0
+
+        self.model = self.v_network(stateSpace, n_hidden=nHidden)
+        self.model = self.model.to(self.device)
+        self.target_model = self.v_network(stateSpace, n_hidden=nHidden)
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model = self.target_model.to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        self.loss = nn.SmoothL1Loss()
 
 
+    def v_network(self, state_space, n_hidden):
+        return nn.Sequential(nn.Linear(state_space, n_hidden),
+                             nn.LeakyReLU(),
+                             nn.Linear(n_hidden, int(n_hidden/2)),
+                             nn.LeakyReLU(),
+                             nn.Linear(int(n_hidden/2), 1)
+                             )
 
-    def createStateValueModel(self, fromCheckpoint, lr=0.001, nHidden=10, activation='tanh'):
-        if fromCheckpoint is not None and os.path.exists(fromCheckpoint):
-            print('loaded model from ', fromCheckpoint)
-            return keras.models.load_model(fromCheckpoint)
+
+    def predict(self, inputs, greed=1, model='main'):
+        if type(inputs) is not torch.Tensor:
+            inputs = torch.tensor(inputs, dtype=torch.float)
+        if len(inputs.shape) < 2:
+            inputs = torch.unsqueeze(inputs, 0)
+        inputs = inputs.to(self.device)
+
+        if model == 'target':
+            v = self.target_model(inputs)
         else:
-            model = keras.models.Sequential([
-                keras.layers.Input(self.stateSpace),
-                keras.layers.Dense(nHidden, activation=activation),
-                keras.layers.Dense(1)])
-            opt = tfa.optimizers.RectifiedAdam(learning_rate=lr)
-            model.compile(optimizer=tfa.optimizers.Lookahead(opt),
-                          loss=keras.losses.Huber())
+            v = self.model(inputs)
 
-        return model
-
-
-    def predict(self, inputs, greedParameter=1):
-        v = self.model1.predict(inputs)
-        if greedParameter <= 0 or np.random.rand() > greedParameter:
-            a = np.argmax(v, axis=0)
-            return v[:,0], a
+        eps = np.random.rand()
+        if greed <= 0 or eps > greed:
+            action = torch.argmax(v, dim=0)
         else:
-            i = np.random.randint(len(inputs))
-            return v[:,0], np.array(i).reshape(-1)
+            action = torch.tensor([np.random.randint(2)])
+        return v, action
 
 
-    def fit(self, memoryBatch, lr=None, batchSize=16, verbose=0):
-        state = memoryBatch[0]
-        rewards = memoryBatch[1]
-        nextStates = memoryBatch[2]
-        dones = memoryBatch[3]
-        _all = range(len(state))
+    def fit(self, memory_batch):
+        state = torch.tensor(memory_batch[0], dtype=torch.float, device=self.device)
+        actions = torch.tensor(memory_batch[1], dtype=torch.int, device=self.device)
+        rewards = torch.tensor(memory_batch[2], dtype=torch.float, device=self.device)
+        next_states = torch.tensor(memory_batch[3], dtype=torch.float, device=self.device)
+        dones = torch.tensor(memory_batch[4], dtype=torch.float, device=self.device)
 
-        #V1 = self.model1.predict(state)[:,0]
-        vPrime2 = self.model2.predict(nextStates)[:,0]
+        qHat, _ = self.predict(state)
 
-        #nextAction = np.argmax(vPrime1, axis=1)  # .squeeze()
-        if self.clipped:
-            vPrime1 = self.model1.predict(nextStates)[:,0]
-            target = np.minimum(vPrime1, vPrime2)
-        else:
-            target = vPrime2
+        with torch.no_grad():
+            q = qHat.clone()
+            q_target, _ = self.predict(next_states, model='target')
+            next_action = torch.argmax(q_target, dim=1)  # .squeeze()
 
-        R = np.zeros(len(state))
-        for i in range(len(rewards)):
-            R += (self.gamma ** i) * rewards[i]
-        # V1 = R + (1 - dones) * self.gamma * target # OLD and wrong
-        V1 = R + (1 - dones) * (self.gamma**len(rewards)) * target
+            expected_rewards_c = q_target[:, next_action][0]
 
-        if lr is not None:
-            self.model1.optimizer.lr = lr
-        hist = self.model1.fit(x=state, y=V1, epochs=1, batch_size=batchSize, verbose=verbose, callbacks=self.callbacks)
+            r_c = torch.zeros(len(state)).to(self.device)
+            for i, rew in enumerate(rewards):
+                r_c += (self.gamma ** i) * rew[:, 0]
 
-        return sum(hist.history['loss'])
+            for b, rew in enumerate(r_c):
+                q[b, actions[b]] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
 
+        totalLoss = self.loss(qHat, q)
 
-    def copyWeights(self):
-            self.model2.set_weights(self.model1.get_weights())
+        self.optimizer.zero_grad()
+        totalLoss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 10)
+        self.optimizer.step()
 
+        if self.training_steps >= self.weight_copy_interval:
+            self.target_model.load_state_dict(self.model.state_dict())
+            self.training_steps = 0
+        self.training_steps += 1
 
-    def getAgentWeights(self):
-        return [self.model1.get_weights(), self.model2.get_weights()]
-
-
-    def setAgentWeights(self, weights:list):
-        self.model1.set_weights(weights[0])
-        self.model2.set_weights(weights[1])
-
-
-
-
-class DynaV(DDVN):
-    def __init__(self, stateSpace, nSteps, latentSpace=10, clipped=False, gamma=0.99, callbacks=[], fromCheckpoints=None, lr=0.01):
-        super(DynaV, self).__init__(stateSpace, nSteps, clipped, gamma, callbacks, fromCheckpoints, lr)
-        self.latentSpace = latentSpace
-        self.stateTransModel = self.createStateTransitionModel(fromCheckpoints=None)
-
-
-    def createStateTransitionModel(self, fromCheckpoint, lr=0.001):
-        if fromCheckpoint is not None:
-            pass
-        else:
-            model = AutoEncoder.VAE(self.stateSpace)
-
-        return model
-
-
-    def predict(self, inputs, greedParameter=1):
-        V, a = super(DynaV, self).predict(inputs, greedParameter)
-        # planning
-
-        return a
-
-
-    def fit(self, memoryBatch, lr=None):
-        # direkt RL
-        direktRLLoss = super(DynaV, self).fit(memoryBatch, lr)
-
-        states = memoryBatch[0]
-        newStates = memoryBatch[2]
-        # fit state transition model
-        hist = self.stateTransModel.fit(states, newStates, epochs=1, verbose=0)
-        transitionLoss = hist.history['mae'][-1]
-        # simulate experience
-        simStates = self.stateTransModel(states)
-        # fit on simulated experience
-        simulatedRLLoss = super(DynaV, self).fit((states, memoryBatch[1], simStates, memoryBatch[3]), lr)
-
-        return direktRLLoss, transitionLoss, simulatedRLLoss
-
-
-    def getAgentWeights(self):
-        stateValueWeights = super(DynaV, self).getAgentWeights()
-        return [stateValueWeights, self.stateTransModel.get_weights()]
-
-    def setAgentWeights(self, weights: list):
-        super(DynaV, self).setAgentWeights(weights[0])
-        self.stateTransModel.set_weights(weights[1])
+        return totalLoss
 
 
 

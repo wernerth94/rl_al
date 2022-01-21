@@ -50,7 +50,7 @@ def doEval(args):
     elif c.DATASET == 'traffic_signs':
         classifier = Classifier.trafficClassifier
     else:
-        classifier = Classifier.EmbeddingClassifier(embeddingSize=c.EMBEDDING_SIZE)
+        classifier = Classifier.EmbeddingClassifierFactory(embeddingSize=c.EMBEDDING_SIZE)
 
 
     trajectories = list()
