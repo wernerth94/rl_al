@@ -6,13 +6,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-
-def accuracy(yHat, labels):
-    yHat = torch.argmax(yHat, dim=1)
-    labels = torch.argmax(labels, dim=1)
-    correct = yHat == labels
-    acc = torch.sum(correct) / len(yHat)
-    return acc.numpy()
+from Misc import accuracy
 
 encoder = nn.Sequential(
     nn.Conv2d(3, 32, (3,3)),
@@ -133,4 +127,5 @@ def train_new_model():
 
 if __name__ == '__main__':
     #convert_dataset()
+    #train_new_model()
     pass

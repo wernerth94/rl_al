@@ -22,7 +22,7 @@ try:
         steps, done, vStart = 0, False, 0
         while not done:
             for n in range(nSteps):
-                V, a = agent.predict(state, greedParameter=0.1)
+                V, a = agent.predict(state, greed=0.1)
                 a = a[0]
                 if steps == 0:
                     vStart = V[a]

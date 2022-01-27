@@ -17,3 +17,4 @@ core/__pycache__
 *.log
 *.err
 *.sh
+/logutils/

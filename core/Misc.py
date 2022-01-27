@@ -2,8 +2,49 @@ import os, gc
 import numpy as np
 import json
 from collections import OrderedDict
-
 import torch
+from torch import Tensor
+
+def multi_norm(
+    tensors, p = 2, q = 2, normalize = True
+) -> Tensor:
+    r"""Return the (scaled) p-q norm of the gradients.
+
+    Parameters
+    ----------
+    tensors: list[Tensor]
+    p: float, default: 2
+    q: float, default: 2
+    normalize: bool, default: True
+        If true, accumulate with mean instead of sum
+
+    Returns
+    -------
+    Tensor
+    """
+    if len(tensors) == 0:
+        return torch.tensor(0.0)
+
+    # TODO: implement special cases p,q = ±∞
+    if normalize:
+        # Initializing s this way automatically gets the dtype and device correct
+        s = torch.mean(tensors.pop() ** p) ** (q / p)
+        for x in tensors:
+            s += torch.mean(x ** p) ** (q / p)
+        return (s / (1 + len(tensors))) ** (1 / q)
+    # else
+    s = torch.sum(tensors.pop() ** p) ** (q / p)
+    for x in tensors:
+        s += torch.sum(x ** p) ** (q / p)
+    return s ** (1 / q)
+
+
+def accuracy(yHat, labels):
+    yHat = torch.argmax(yHat, dim=1)
+    labels = torch.argmax(labels, dim=1)
+    correct = yHat == labels
+    acc = torch.sum(correct) / len(yHat)
+    return acc.numpy()
 
 
 def trainTestIDSplit(length, cutoff=0.8):
@@ -83,12 +124,19 @@ class RLAgentLogger:
     def fit(self, sample):
         loss = self.agent.fit(sample)
         self.writer.add_scalar('agent/loss', loss, self.step)
+
+        variables = list(self.agent.model.parameters())
+        gradients = [w.grad for w in variables]
+        self.writer.add_scalar(f"agent/variables", multi_norm(variables), self.step)
+        self.writer.add_scalar(f"agent/gradients", multi_norm(gradients), self.step)
+        self.writer.flush()
+
         self.step += 1
         return loss
 
 
     def __enter__(self):
-        self.step = 0
+        self.step = 1
         agent_conf = self._get_agent_config()
         with open(self.writer.log_dir + '/agent_config.txt', 'w') as f:
             f.write(agent_conf)
@@ -127,12 +175,13 @@ class RLEnvLogger:
     def reset(self):
         self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
         self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
+        self.writer.flush()
 
         self.current_epoch += 1
         self.epoch_reward_list.append(self.current_reward)
         if self.current_epoch % self.print_interval == 0:
             meanReward = float(np.mean(self.epoch_reward_list[-self.smoothing_window:]))
-            print(F'{self.current_epoch} - reward {meanReward} steps {self.steps_in_epoch}')
+            print('%d - reward %1.4f steps %d'%(self.current_epoch, meanReward, self.steps_in_epoch))
         self.current_reward = 0
         self.steps_in_epoch = 0
         return self.env.reset()
@@ -150,7 +199,7 @@ class RLEnvLogger:
         self.steps_in_epoch = 0
         self.total_steps = 0
         self.current_reward = 0
-        self.current_epoch = 0
+        self.current_epoch = 1
         self.epoch_reward_list = []
         print("this environment will be logged")
         print('== ENVIRONMENT CONFIG ==')

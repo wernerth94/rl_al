@@ -36,10 +36,10 @@ class DDVN:
 
     def predict(self, inputs, greed=1, model='main'):
         if type(inputs) is not torch.Tensor:
-            inputs = torch.tensor(inputs, dtype=torch.float)
+            inputs = torch.tensor(inputs)
         if len(inputs.shape) < 2:
             inputs = torch.unsqueeze(inputs, 0)
-        inputs = inputs.to(self.device)
+        inputs = inputs.to(self.device).float()
 
         if model == 'target':
             v = self.target_model(inputs)
@@ -56,32 +56,31 @@ class DDVN:
 
     def fit(self, memory_batch):
         state = torch.tensor(memory_batch[0], dtype=torch.float, device=self.device)
-        actions = torch.tensor(memory_batch[1], dtype=torch.int, device=self.device)
-        rewards = torch.tensor(memory_batch[2], dtype=torch.float, device=self.device)
-        next_states = torch.tensor(memory_batch[3], dtype=torch.float, device=self.device)
-        dones = torch.tensor(memory_batch[4], dtype=torch.float, device=self.device)
+        rewards = torch.tensor(np.array(memory_batch[1]), dtype=torch.float, device=self.device)
+        next_states = torch.tensor(memory_batch[2], dtype=torch.float, device=self.device)
+        dones = torch.tensor(memory_batch[3], dtype=torch.float, device=self.device)
 
-        qHat, _ = self.predict(state)
+        v_hat, _ = self.predict(state)
 
         with torch.no_grad():
-            q = qHat.clone()
-            q_target, _ = self.predict(next_states, model='target')
-            next_action = torch.argmax(q_target, dim=1)  # .squeeze()
+            v = v_hat.clone()
+            v_target, _ = self.predict(next_states, model='target')
+            next_action = torch.argmax(v_target, dim=1)  # .squeeze()
 
-            expected_rewards_c = q_target[:, next_action][0]
+            expected_rewards_c = v_target[:, next_action][0]
 
             r_c = torch.zeros(len(state)).to(self.device)
             for i, rew in enumerate(rewards):
-                r_c += (self.gamma ** i) * rew[:, 0]
+                r_c += (self.gamma ** i) * rew # [:, 0]
 
             for b, rew in enumerate(r_c):
-                q[b, actions[b]] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
+                v[b, 0] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
 
-        totalLoss = self.loss(qHat, q)
+        total_loss = self.loss(v_hat, v)
 
         self.optimizer.zero_grad()
-        totalLoss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 10)
+        total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
         self.optimizer.step()
 
         if self.training_steps >= self.weight_copy_interval:
@@ -89,7 +88,7 @@ class DDVN:
             self.training_steps = 0
         self.training_steps += 1
 
-        return totalLoss
+        return total_loss
 
 
 

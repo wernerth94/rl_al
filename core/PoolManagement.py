@@ -49,5 +49,5 @@ def addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures):
 
 
 def sampleNewBatch(xUnlabeled, sampleSize):
-    return np.random.choice(xUnlabeled.shape[0], sampleSize)
+    return np.random.choice(len(xUnlabeled), sampleSize)
 
