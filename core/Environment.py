@@ -7,7 +7,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 from Misc import accuracy
-from tests.class_sanity_check import run_test
+# from tests.class_sanity_check import run_test
 
 class ALGame:
 
