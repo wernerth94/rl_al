@@ -5,9 +5,7 @@ from collections import OrderedDict
 import torch
 from torch import Tensor
 
-def multi_norm(
-    tensors, p = 2, q = 2, normalize = True
-) -> Tensor:
+def multi_norm(tensors, p = 2, q = 2, normalize = True) -> Tensor:
     r"""Return the (scaled) p-q norm of the gradients.
 
     Parameters

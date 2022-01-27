@@ -1,8 +1,6 @@
 import numpy as np
 import sys, os
-# import tensorflow.keras as keras
 import torch
-from tensorflow.keras.utils import to_categorical
 from scipy.io import arff
 import pandas as pd
 
@@ -10,6 +8,10 @@ CLUSTER = False
 if sys.prefix.startswith('/home/werner/miniconda3'):
     CLUSTER = True
 
+def to_categorical(labels, num_classes=None):
+    if not num_classes:
+        num_classes = max(labels)
+    return np.eye(num_classes, dtype='uint8')[np.argmax(labels, axis=1)]
 
 def loadTrafficSigns():
     print('loading traffic signs')
@@ -20,6 +22,7 @@ def loadTrafficSigns():
     np.random.shuffle(allIds)
     cutoff = int(len(data) * 0.8)
     trainIds, testIds = allIds[:cutoff], allIds[cutoff:]
+
     x, y = data[:, :-1], to_categorical(data[:, -1:])
     return (x[trainIds], y[trainIds], x[testIds], y[testIds])
 
