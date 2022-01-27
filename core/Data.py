@@ -1,6 +1,6 @@
 import numpy as np
 import sys, os
-import tensorflow.keras as keras
+# import tensorflow.keras as keras
 import torch
 from tensorflow.keras.utils import to_categorical
 from scipy.io import arff
@@ -20,7 +20,7 @@ def loadTrafficSigns():
     np.random.shuffle(allIds)
     cutoff = int(len(data) * 0.8)
     trainIds, testIds = allIds[:cutoff], allIds[cutoff:]
-    x, y = data[:, :-1], keras.utils.to_categorical(data[:, -1:])
+    x, y = data[:, :-1], to_categorical(data[:, -1:])
     return (x[trainIds], y[trainIds], x[testIds], y[testIds])
 
 
@@ -111,15 +111,15 @@ def _post_process(x_train, y_train, x_test, y_test, return_tensors=False, channe
     return (x_train, y_train, x_test, y_test)
 
 
-def loadCifar(numTest=1000, numLabels=10, return_tensors=False, channelFirst=False):
-    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
-    y_train = to_categorical(y_train, numLabels)
-    x_train = np.array(x_train, dtype=float) / 255
-    y_test = to_categorical(y_test[:numTest], numLabels)
-    x_test = np.array(x_test, dtype=float)[:numTest] / 255
-    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-    return _post_process(x_train, y_train, x_test, y_test,
-                         return_tensors=return_tensors, channelFirst=channelFirst)
+# def loadCifar(numTest=1000, numLabels=10, return_tensors=False, channelFirst=False):
+#     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+#     y_train = to_categorical(y_train, numLabels)
+#     x_train = np.array(x_train, dtype=float) / 255
+#     y_test = to_categorical(y_test[:numTest], numLabels)
+#     x_test = np.array(x_test, dtype=float)[:numTest] / 255
+#     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+#     return _post_process(x_train, y_train, x_test, y_test,
+#                          return_tensors=return_tensors, channelFirst=channelFirst)
 
 
 def load_cifar10_mobilenet(numTest=1000, prefix='', return_tensors=False, channelFirst=False):
