@@ -1,16 +1,4 @@
-import tensorflow
-import tensorflow.keras as keras
-import tensorflow_addons as tfa
-import torch
 import torch.nn as nn
-import torch.optim as optim
-
-def metrics(numClasses):
-    return [keras.metrics.categorical_accuracy,
-            tfa.metrics.F1Score(numClasses)]
-            #keras.metrics.Precision(),
-            #keras.metrics.Recall()]
-
 
 class EmbeddingClassifierFactory:
     def __init__(self, embeddingSize):
