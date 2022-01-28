@@ -88,9 +88,10 @@ class ALGame:
         entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
         bVsSB = 1 - (struct[:, -1] - struct[:, -2])
 
-        # state = np.expand_dims(bVsSB, axis=-1)
+        f1 = f1.to(self.device)
+        entropy = entropy.to(self.device)
+        bVsSB = bVsSB.to(self.device)
         state = torch.stack([f1, bVsSB, entropy], dim=-1)
-        # state = np.concatenate([state, struct], axis=1)
         return state
 
 
