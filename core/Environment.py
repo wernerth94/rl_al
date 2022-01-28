@@ -145,7 +145,8 @@ class ALGame:
                     # break
                 lastLoss = test_loss
 
-        newTestF1 = f1_score(self.y_test.cpu().numpy(), np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1)], average="samples")
+        one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1).cpu()]
+        newTestF1 = f1_score(self.y_test.cpu().numpy(), one_hot_y_hat, average="samples")
         self.currentTestLoss = test_loss
 
         if self.rewardShaping:
