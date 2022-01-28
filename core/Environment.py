@@ -49,8 +49,10 @@ class ALGame:
     def reset(self):
         self.nInteractions = 0
 
+        del self.classifier
         self.classifier = self.modelFunction(inputShape=self.x_test.shape[1:],
                                              numClasses=self.y_test.shape[1])
+        self.classifier.to(self.device)
         self.initialWeights = self.classifier.state_dict()
         self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
 
