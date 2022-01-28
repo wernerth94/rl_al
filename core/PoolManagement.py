@@ -1,6 +1,7 @@
 import numpy as np
 import gc
 import torch
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def resetALPool(dataset, init_points_per_class=5):
     x_train, y_train, x_test, y_test = dataset
@@ -27,6 +28,11 @@ def resetALPool(dataset, init_points_per_class=5):
     yLabeled = y_train[yLabeled]
     xUnlabeled = x_train[unusedIds]
     yUnlabeled = y_train[unusedIds]
+
+    xLabeled = xLabeled.to(device)
+    yLabeled = yLabeled.to(device)
+    xUnlabeled = xUnlabeled.to(device)
+    yUnlabeled = yUnlabeled.to(device)
     gc.collect()
     return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
 
