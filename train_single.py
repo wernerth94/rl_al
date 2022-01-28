@@ -22,7 +22,7 @@ import config.cifarConfig as c
 from Data import load_cifar10_mobilenet,  load_cifar10_custom
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--max_epochs', '-m', default=5000, type=int)
+parser.add_argument('--max_epochs', '-m', default=2000, type=int)
 parser.add_argument('--warmup_epochs', '-w', default=10, type=int)
 parser.add_argument('--batch_size', '-b', default=16, type=int)
 args = parser.parse_args()
@@ -48,7 +48,7 @@ with RLEnvLogger(summary_writer, env, print_interval=1) as env:
             done = False
             state = env.reset()
             while not done:
-                greed = 0.1 if total_epochs < 1000 else 0.01
+                greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                 q, action = agent.predict(state, greed=greed)
                 action = action[0].item()
 

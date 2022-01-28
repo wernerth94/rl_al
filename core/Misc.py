@@ -1,4 +1,4 @@
-import os, gc
+import os, time
 import numpy as np
 import json
 from collections import OrderedDict
@@ -169,10 +169,22 @@ class RLEnvLogger:
         self.print_interval = print_interval
         self.smoothing_window = smoothing_window
         self.writer = writer
+        self.al_baseline = np.load(env.config.BASELINE_FILE)[0,:] # select the mean performance
 
     def reset(self):
-        self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
-        self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
+        end = time.time()
+        if self.epoch_time > 0:
+            self.writer.add_scalar('env/time per epoch', end - self.epoch_time, self.current_epoch)
+        self.epoch_time = end
+        if self.current_reward > 0:
+            self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
+        if self.steps_in_epoch > 0:
+            self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
+        for step in range(len(self.al_baseline)):
+            self.writer.add_scalars('env/al_performance', {
+                "agent": self.al_performance[step],
+                "baseline": self.al_baseline[step] # mean value
+            }, step)
         self.writer.flush()
 
         self.current_epoch += 1
@@ -187,6 +199,8 @@ class RLEnvLogger:
 
     def step(self, action):
         new_state, reward, done, _ = self.env.step(action)
+        self.al_performance[self.steps_in_epoch] = 0.9 * self.al_performance[self.steps_in_epoch] + \
+                                                   0.1 * self.env.currentTestF1
         self.total_steps += 1
         self.steps_in_epoch += 1
         self.current_reward += reward
@@ -197,8 +211,10 @@ class RLEnvLogger:
         self.steps_in_epoch = 0
         self.total_steps = 0
         self.current_reward = 0
-        self.current_epoch = 1
+        self.current_epoch = 0
         self.epoch_reward_list = []
+        self.epoch_time = -1
+        self.al_performance = self.al_baseline.copy() # initialize the moving average with sensible values
         print("this environment will be logged")
         print('== ENVIRONMENT CONFIG ==')
         env_conf = self._get_env_config()

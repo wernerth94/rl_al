@@ -19,19 +19,15 @@ import Classifier, Agent, Environment
 ##################################
 ### MAIN
 all_baselines = ['random', 'bvssb', 'entropy']
-baselineName = str(sys.argv[1])
-sampleSize = int(sys.argv[2])
-budget = int(sys.argv[3])
+baselineName = 'bvssb'
 if baselineName not in all_baselines: raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
 
-from config import mnistConfig as c
+from config import cifarConfig as c
+from Data import load_cifar10_custom
 
-envFunc = Environment.BatchALGame
-from Data import loadMNIST
-dataset = loadMNIST()
-classifier = Classifier.DenseClassifierMNIST
-#classifier = Classifier.EmbeddingClassifier(embeddingSize=1280)
-
+envFunc = Environment.ALGame
+dataset = load_cifar10_custom(return_tensors=True)
+classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 
 if baselineName == 'bvssb':
     agent = Agent.Baseline_BvsSB()
@@ -41,13 +37,10 @@ elif baselineName == 'random':
     agent = Agent.Baseline_Random()
 
 print('#########################################################')
-print('testing', baselineName, 'with samplesize', sampleSize)
+print('testing', baselineName, 'with samplesize', c.SAMPLE_SIZE)
 print('#########################################################')
 
-c.BUDGET = budget
-c.GAME_LENGTH = c.BUDGET
-c.EVAL_ITERATIONS = 15
-c.SAMPLE_SIZE = sampleSize
+c.EVAL_ITERATIONS = 5
 startTime = time.time()
 
 result = list()
@@ -60,7 +53,7 @@ for run in range(c.EVAL_ITERATIONS):
     env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
     #agent = agentFunc(env, fromCheckpoints=c.ckptDir)
 
-    f1, loss = scoreAgent(agent, env, c.BUDGET)
+    memory, f1 = scoreAgent(agent, env, c.BUDGET)
     result.append(f1)
 
 result = np.array(result)
@@ -69,7 +62,7 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, baselineName + '_' + str(sampleSize))
+file = os.path.join(folder, baselineName + '_' + str(c.SAMPLE_SIZE))
 saveFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')

@@ -9,6 +9,9 @@ USE_STOPSWITCH = True
 PRINT_FREQ = 1
 EVAL_ITERATIONS = 10
 
+# baselines
+BASELINE_FILE = 'baselines/cifar10_custom/bvssb_1000.npy'
+
 # RL training
 BATCH_SIZE = 16
 C = 2 # TODO
@@ -19,7 +22,7 @@ AGENT_NHIDDEN = 100
 
 # Env config
 SAMPLE_SIZE = 1000
-BUDGET = 800 # MNIST TODO
+BUDGET = 200 # TODO
 GAME_LENGTH = BUDGET
 REWARD_SCALE = 1
 REWARD_SHAPING = True
@@ -31,9 +34,9 @@ MIN_INTERACTIONS = 800000 # 150k
 MAX_EPOCHS = MIN_INTERACTIONS / BUDGET # 150k
 WARMUP_EPOCHS = 10
 
-CONVERSION_EPOCHS = int(MAX_EPOCHS / 2.0)
+CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
 GREED = Misc.parameterPlan(0.9, 0.1, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
-LR = Misc.parameterPlan(0.001, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
+LR = Misc.parameterPlan(0.001, 0.001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
 ##################################################################
 
 # Game Length
