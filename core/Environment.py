@@ -96,8 +96,8 @@ class ALGame:
 
 
     def getPoolInfo(self):
-        labeled = torch.mean(self.xLabeled, dim=0)
-        unlabeled = torch.mean(self.xUnlabeled, dim=0)
+        labeled = torch.mean(self.xLabeled, dim=0).to(self.device)
+        unlabeled = torch.mean(self.xUnlabeled, dim=0).to(self.device)
         return torch.cat([labeled, unlabeled])
 
 
