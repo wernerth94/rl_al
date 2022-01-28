@@ -39,7 +39,7 @@ def resetALPool(dataset, init_points_per_class=5):
 
 def addDatapointToPool(xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances, dpId: int):
     # add images
-    perClassIntances[int(np.argmax(yUnlabeled[dpId]))] += 1  # keep track of the added images
+    perClassIntances[int(torch.argmax(yUnlabeled[dpId]).cpu())] += 1  # keep track of the added images
     xLabeled = torch.cat([ xLabeled, xUnlabeled[dpId:dpId + 1] ], dim=0)
     yLabeled = torch.cat([ yLabeled, yUnlabeled[dpId:dpId + 1] ], dim=0)
     xUnlabeled = torch.cat([ xUnlabeled[:dpId], xUnlabeled[dpId+1:] ], dim=0)
