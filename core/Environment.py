@@ -80,7 +80,7 @@ class ALGame:
         # prediction metrics
         x = x.to(self.device).float()
         pred = self.classifier(x).detach()
-        part = (-bn.partition(-pred.numpy(), 4, axis=1))[:,:4] # collects the two highest entries
+        part = (-bn.partition(-pred.cpu().numpy(), 4, axis=1))[:,:4] # collects the two highest entries
         struct, indices = torch.sort(torch.from_numpy(part), dim=1)
 
         # weightedF1 = np.average(pred * self.perClassF1, axis=1)
@@ -145,7 +145,7 @@ class ALGame:
                     # break
                 lastLoss = test_loss
 
-        newTestF1 = f1_score(self.y_test.numpy(), np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1)], average="samples")
+        newTestF1 = f1_score(self.y_test.cpu().numpy(), np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1)], average="samples")
         self.currentTestLoss = test_loss
 
         if self.rewardShaping:

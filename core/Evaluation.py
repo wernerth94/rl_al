@@ -16,7 +16,7 @@ def scoreAgent(agent, env, printInterval=10, greed=0):
         statePrime, reward, done, _ = env.step(a)
 
         f1Prog.append(env.currentTestF1)
-        memory.addMemory(state[a].numpy(), [reward], np.mean(statePrime.numpy(), axis=0), done)
+        memory.addMemory(state[a].cpu().numpy(), [reward], np.mean(statePrime.cpu().numpy(), axis=0), done)
 
         state = statePrime
         if i % printInterval == 0 and len(f1Prog) > 0:

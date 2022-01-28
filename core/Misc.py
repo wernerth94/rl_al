@@ -42,7 +42,7 @@ def accuracy(yHat, labels):
     labels = torch.argmax(labels, dim=1)
     correct = yHat == labels
     acc = torch.sum(correct) / len(yHat)
-    return acc.numpy()
+    return acc.cpu().numpy()
 
 
 def trainTestIDSplit(length, cutoff=0.8):

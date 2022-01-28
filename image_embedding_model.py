@@ -44,12 +44,12 @@ def convert_dataset():
     with torch.no_grad():
         train_result = []
         for i in range(len(x_train)):
-            train_result.append(encoder(torch.from_numpy(x_train[i:i+1]).float()).numpy()[0])
+            train_result.append(encoder(torch.from_numpy(x_train[i:i+1]).float()).cpu().numpy()[0])
         x_train = np.array(train_result)
 
         test_result = []
         for i in range(len(x_test)):
-            test_result.append(encoder(torch.from_numpy(x_test[i:i+1]).float()).numpy()[0])
+            test_result.append(encoder(torch.from_numpy(x_test[i:i+1]).float()).cpu().numpy()[0])
         x_test = np.array(test_result)
 
     OUT_FILE = "../datasets/cifar10_custom.npz"
@@ -101,7 +101,7 @@ def train_new_model():
                 yHat = model(batch_x)
                 acc += accuracy(yHat.detach(), batch_y)
                 loss_val = loss(yHat, batch_y)
-                sum += loss_val.detach().numpy()
+                sum += loss_val.detach().cpu().numpy()
                 counter += 1
             sum /= counter; val_errors.append(sum)
             acc /= counter; val_accs.append(acc)

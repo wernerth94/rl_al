@@ -53,7 +53,7 @@ with RLEnvLogger(summary_writer, env, print_interval=1) as env:
                 action = action[0].item()
 
                 new_state, reward, done, _ = env.step(action)
-                memory.addMemory(state[action].numpy(), [reward], np.mean(new_state.numpy(), axis=0), done)
+                memory.addMemory(state[action].cpu().numpy(), [reward], np.mean(new_state.cpu().numpy(), axis=0), done)
 
                 if total_epochs > args.warmup_epochs:
                     sample = memory.sampleMemory(args.batch_size)
