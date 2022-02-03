@@ -55,10 +55,14 @@ class DDVN:
 
 
     def fit(self, memory_batch):
-        state = torch.tensor(memory_batch[0], dtype=torch.float, device=self.device)
-        rewards = torch.tensor(np.array(memory_batch[1]), dtype=torch.float, device=self.device)
-        next_states = torch.tensor(memory_batch[2], dtype=torch.float, device=self.device)
-        dones = torch.tensor(memory_batch[3], dtype=torch.float, device=self.device)
+        state = memory_batch[0]
+        rewards = memory_batch[1]
+        next_states = memory_batch[2]
+        dones = memory_batch[3]
+        # state = torch.tensor(memory_batch[0], dtype=torch.float, device=self.device)
+        # rewards = torch.tensor(np.array(memory_batch[1]), dtype=torch.float, device=self.device)
+        # next_states = torch.tensor(memory_batch[2], dtype=torch.float, device=self.device)
+        # dones = torch.tensor(memory_batch[3], dtype=torch.float, device=self.device)
 
         v_hat, _ = self.predict(state)
 
