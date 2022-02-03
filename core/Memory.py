@@ -67,9 +67,12 @@ class NStepVMemory(Memory):
     def argsToRow(self, state:torch.Tensor, rewardList:list, newState:torch.Tensor, done:int):
         row = torch.unsqueeze(state.clone(), dim=0)
         for r in rewardList:
-            row = torch.cat([row, torch.Tensor([r]).reshape(1, -1)], dim=1)
-        row = torch.cat([row, torch.unsqueeze(newState, dim=0)], dim=1)
-        row = torch.cat([row, torch.Tensor([done]).reshape(1, -1)], dim=1)
+            r_t = torch.Tensor([r]).reshape(1, -1)
+            row = torch.cat([row, r_t.to(self.device)], dim=1)
+        s_t = torch.unsqueeze(newState, dim=0)
+        row = torch.cat([row, s_t.to(self.device)], dim=1)
+        d_t = torch.Tensor([done]).reshape(1, -1)
+        row = torch.cat([row, d_t.to(self.device)], dim=1)
         return row
 
 
