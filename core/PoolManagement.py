@@ -13,7 +13,7 @@ def resetALPool(dataset, init_points_per_class=5):
     perClassIntances = [0 for _ in range(nClasses)]
     usedIds = []
     for i in ids:
-        label = np.argmax(y_train[i])
+        label = torch.argmax(y_train[i])
         if perClassIntances[label] < init_points_per_class:
             xLabeled.append(i)
             yLabeled.append(i)
@@ -49,9 +49,9 @@ def addDatapointToPool(xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntan
 
 def addPoolInformation(xUnlabeled, xLabeled, stateIds, alFeatures):
     presentedImg = xUnlabeled[stateIds]
-    labeledPool = np.mean(xLabeled, axis=0)
-    poolFeat = np.tile(labeledPool, (len(alFeatures), 1))
-    return np.concatenate([alFeatures, presentedImg, poolFeat], axis=1)
+    labeledPool = torch.mean(xLabeled, dim=0)
+    poolFeat = torch.tile(labeledPool, (len(alFeatures), 1))
+    return torch.cat([alFeatures, presentedImg, poolFeat], dim=1)
 
 
 def sampleNewBatch(xUnlabeled, sampleSize):

@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import bottleneck as bn
 from PoolManagement import resetALPool, sampleNewBatch, addDatapointToPool
 from sklearn.metrics import f1_score
 import torch.optim as optim
@@ -14,13 +13,11 @@ class ALGame:
     stateSpace = 3
 
     def __init__(self, dataset, modelFunction, config, verbose):
+        assert all([isinstance(d, torch.Tensor) for d in dataset])
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # dataset = (torch.from_numpy(dataset[0]),
-        #            torch.from_numpy(dataset[1]),
-        #            torch.from_numpy(dataset[2]),
-        #            torch.from_numpy(dataset[3]))
         self.x_test = dataset[2]
         self.y_test = dataset[3]
+        self.y_test_cpu = self.y_test.clone().cpu()
         self.dataset = dataset
         self.nClasses = self.y_test.shape[1]
 
@@ -78,26 +75,27 @@ class ALGame:
     def getClassifierFeatures(self, x):
         eps = 1e-7
         # prediction metrics
-        x = x.to(self.device).float()
+        # x = x.to(self.device).float()
         pred = self.classifier(x).detach()
-        part = (-bn.partition(-pred.cpu().numpy(), 4, axis=1))[:,:4] # collects the two highest entries
-        struct, indices = torch.sort(torch.from_numpy(part), dim=1)
+        two_highest, _ = pred.topk(2, dim=1)
+        #part = (-bn.partition(-pred.cpu().numpy(), 4, axis=1))[:,:4] # collects the two highest entries
+        #struct, indices = torch.sort(two_highest, dim=1)
 
         # weightedF1 = np.average(pred * self.perClassF1, axis=1)
         f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
         entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
-        bVsSB = 1 - (struct[:, -1] - struct[:, -2])
+        bVsSB = 1 - (two_highest[:, -2] - two_highest[:, -1])
 
         f1 = f1.to(self.device)
-        entropy = entropy.to(self.device)
-        bVsSB = bVsSB.to(self.device)
+        # entropy = entropy.to(self.device)
+        # bVsSB = bVsSB.to(self.device)
         state = torch.stack([f1, bVsSB, entropy], dim=-1)
         return state
 
 
     def getPoolInfo(self):
-        labeled = torch.mean(self.xLabeled, dim=0).to(self.device)
-        unlabeled = torch.mean(self.xUnlabeled, dim=0).to(self.device)
+        labeled = torch.mean(self.xLabeled, dim=0)
+        unlabeled = torch.mean(self.xUnlabeled, dim=0)
         return torch.cat([labeled, unlabeled])
 
 
@@ -120,10 +118,10 @@ class ALGame:
             self.classifier.load_state_dict(self.initialWeights)
 
         #batch_size = min(batch_size, int(len(self.xLabeled)/5))
-        self.xLabeled = self.xLabeled.to(self.device)
-        self.yLabeled = self.yLabeled.to(self.device)
-        self.x_test = self.x_test.to(self.device)
-        self.y_test = self.y_test.to(self.device)
+        self.xLabeled = self.xLabeled
+        self.yLabeled = self.yLabeled
+        self.x_test = self.x_test
+        self.y_test = self.y_test
         train_dataloader = DataLoader(TensorDataset(self.xLabeled, self.yLabeled), batch_size=batch_size)
         test_dataloader = DataLoader(TensorDataset(self.x_test, self.y_test), batch_size=batch_size)
 
@@ -147,7 +145,7 @@ class ALGame:
                 lastLoss = test_loss
 
         one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1).cpu()]
-        newTestF1 = f1_score(self.y_test.cpu().numpy(), one_hot_y_hat, average="samples")
+        newTestF1 = f1_score(self.y_test_cpu, one_hot_y_hat, average="samples")
         self.currentTestLoss = test_loss
 
         if self.rewardShaping:

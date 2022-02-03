@@ -115,6 +115,7 @@ class RLAgentLogger:
 
 
     def predict(self, state, greed=0.1):
+        self.writer.add_scalar('agent/greed', greed, self.step)
         q, action = self.agent.predict(state, greed=greed)
         return q, action
 
@@ -164,27 +165,30 @@ class RLAgentLogger:
 
 class RLEnvLogger:
 
-    def __init__(self, writer, env, print_interval, smoothing_window=100):
+    def __init__(self, writer, env, print_interval, smoothing_window=100, record_al_perf=True):
         self.env = env
         self.print_interval = print_interval
         self.smoothing_window = smoothing_window
         self.writer = writer
-        self.al_baseline = np.load(env.config.BASELINE_FILE)[0,:] # select the mean performance
+        self.record_al_perf = record_al_perf
+        if record_al_perf:
+            self.al_baseline = np.load(env.config.BASELINE_FILE)[0,:] # select the mean performance
 
     def reset(self):
         end = time.time()
         if self.epoch_time > 0:
             self.writer.add_scalar('env/time per epoch', end - self.epoch_time, self.current_epoch)
         self.epoch_time = end
-        if self.current_reward > 0:
-            self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
+
+        self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
         if self.steps_in_epoch > 0:
             self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
-        for step in range(len(self.al_baseline)):
-            self.writer.add_scalars('env/al_performance', {
-                "agent": self.al_performance[step],
-                "baseline": self.al_baseline[step] # mean value
-            }, step)
+        if self.record_al_perf:
+            for step in range(len(self.al_baseline)):
+                self.writer.add_scalars('env/al_performance', {
+                    "agent": self.al_performance[step],
+                    "baseline": self.al_baseline[step] # mean value
+                }, step)
         self.writer.flush()
 
         self.current_epoch += 1

@@ -25,11 +25,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--max_epochs', '-m', default=2000, type=int)
 parser.add_argument('--warmup_epochs', '-w', default=10, type=int)
 parser.add_argument('--batch_size', '-b', default=16, type=int)
+parser.add_argument('--record_al_perf', '-a', default=1, type=bool)
 args = parser.parse_args()
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # dataset = load_cifar10_mobilenet()
 dataset = load_cifar10_custom(return_tensors=True)
 classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+dataset = [d.to(device) for d in dataset]
 
 env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 memory = Memory.NStepVMemory(env.stateSpace, 1, maxLength=c.MEMORY_CAP)
@@ -42,7 +46,8 @@ with open(os.path.join(log_dir, "config.txt"), "w") as f:
     f.write(c.get_description())
 
 total_epochs = 0
-with RLEnvLogger(summary_writer, env, print_interval=1) as env:
+with RLEnvLogger(summary_writer, env,
+                 print_interval=1, record_al_perf=args.record_al_perf) as env:
     with RLAgentLogger(summary_writer, agent) as agent:
         while total_epochs < args.max_epochs:
             done = False
@@ -53,7 +58,7 @@ with RLEnvLogger(summary_writer, env, print_interval=1) as env:
                 action = action[0].item()
 
                 new_state, reward, done, _ = env.step(action)
-                memory.addMemory(state[action].cpu().numpy(), [reward], np.mean(new_state.cpu().numpy(), axis=0), done)
+                memory.addMemory(state[action], [reward], torch.mean(new_state, dim=0), done)
 
                 if total_epochs > args.warmup_epochs:
                     sample = memory.sampleMemory(args.batch_size)
