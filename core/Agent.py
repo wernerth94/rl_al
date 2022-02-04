@@ -54,17 +54,15 @@ class DDVN:
         return v, action
 
 
-    def fit(self, memory_batch):
+    def fit(self, memory_batch, weights=None, return_priorities=False):
         state = memory_batch[0]
         rewards = memory_batch[1]
         next_states = memory_batch[2]
         dones = memory_batch[3]
-        # state = torch.tensor(memory_batch[0], dtype=torch.float, device=self.device)
-        # rewards = torch.tensor(np.array(memory_batch[1]), dtype=torch.float, device=self.device)
-        # next_states = torch.tensor(memory_batch[2], dtype=torch.float, device=self.device)
-        # dones = torch.tensor(memory_batch[3], dtype=torch.float, device=self.device)
 
         v_hat, _ = self.predict(state)
+        if weights is None:
+            weights = torch.zeros(len(v_hat))
 
         with torch.no_grad():
             v = v_hat.clone()
@@ -80,7 +78,8 @@ class DDVN:
             for b, rew in enumerate(r_c):
                 v[b, 0] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
 
-        total_loss = self.loss(v_hat, v)
+        total_loss = torch.sum(weights * torch.squeeze(v_hat - v)**2)
+        # total_loss = self.loss(v_hat, v)
 
         self.optimizer.zero_grad()
         total_loss.backward()
@@ -92,6 +91,9 @@ class DDVN:
             self.training_steps = 0
         self.training_steps += 1
 
+        if return_priorities:
+            prios = torch.abs(v_hat - v)
+            return total_loss, prios
         return total_loss
 
 

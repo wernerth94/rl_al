@@ -120,8 +120,12 @@ class RLAgentLogger:
         return q, action
 
 
-    def fit(self, sample):
-        loss = self.agent.fit(sample)
+    def fit(self, *args, **kwargs):
+        ret_val = self.agent.fit(*args, **kwargs)
+        if isinstance(ret_val, tuple):
+            loss = ret_val[0] # extract the loss
+        else:
+            loss = ret_val
         self.writer.add_scalar('agent/loss', loss, self.step)
 
         variables = list(self.agent.model.parameters())
@@ -131,7 +135,7 @@ class RLAgentLogger:
         self.writer.flush()
 
         self.step += 1
-        return loss
+        return ret_val
 
 
     def __enter__(self):
@@ -191,11 +195,12 @@ class RLEnvLogger:
                 }, step)
         self.writer.flush()
 
+        if self.current_epoch > 0:
+            self.epoch_reward_list.append(self.current_reward)
+            if self.current_epoch % self.print_interval == 0:
+                meanReward = float(np.mean(self.epoch_reward_list[-self.smoothing_window:]))
+                print('%d - reward %1.4f steps %d'%(self.current_epoch, meanReward, self.steps_in_epoch))
         self.current_epoch += 1
-        self.epoch_reward_list.append(self.current_reward)
-        if self.current_epoch % self.print_interval == 0:
-            meanReward = float(np.mean(self.epoch_reward_list[-self.smoothing_window:]))
-            print('%d - reward %1.4f steps %d'%(self.current_epoch, meanReward, self.steps_in_epoch))
         self.current_reward = 0
         self.steps_in_epoch = 0
         return self.env.reset()
@@ -203,8 +208,9 @@ class RLEnvLogger:
 
     def step(self, action):
         new_state, reward, done, _ = self.env.step(action)
-        self.al_performance[self.steps_in_epoch] = 0.9 * self.al_performance[self.steps_in_epoch] + \
-                                                   0.1 * self.env.currentTestF1
+        if self.record_al_perf:
+            self.al_performance[self.steps_in_epoch] = 0.9 * self.al_performance[self.steps_in_epoch] + \
+                                                       0.1 * self.env.currentTestF1
         self.total_steps += 1
         self.steps_in_epoch += 1
         self.current_reward += reward
@@ -218,7 +224,8 @@ class RLEnvLogger:
         self.current_epoch = 0
         self.epoch_reward_list = []
         self.epoch_time = -1
-        self.al_performance = self.al_baseline.copy() # initialize the moving average with sensible values
+        if self.record_al_perf:
+            self.al_performance = self.al_baseline.copy() # initialize the moving average with sensible values
         print("this environment will be logged")
         print('== ENVIRONMENT CONFIG ==')
         env_conf = self._get_env_config()

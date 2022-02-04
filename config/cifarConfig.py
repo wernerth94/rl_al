@@ -32,9 +32,10 @@ CLASS_FROM_SCRATCH = False
 # training loop
 MIN_INTERACTIONS = 800000 # 150k
 MAX_EPOCHS = MIN_INTERACTIONS / BUDGET # 150k
-WARMUP_EPOCHS = 10
+WARMUP_EPOCHS = 100
 
-CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
+CONVERSION_EPOCHS = 1
+# CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
 GREED = Misc.parameterPlan(0.9, 0.1, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
 LR = Misc.parameterPlan(0.001, 0.001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
 ##################################################################
