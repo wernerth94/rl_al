@@ -7,23 +7,21 @@ print(F"The virtualenv is: {sys.prefix}")
 sys.path.append("core")
 sys.path.append("evaluation")
 sys.path.append("config")
-sys.path.append("logutils")
 print(F"updated path is {sys.path}")
 
 import argparse
 import Classifier
 import Environment
 import Agent
-import Memory
 from Misc import *
-from logutils.env_logger import RLEnvLogger
-from logutils.agent_logger import RLAgentLogger
+from env_logger import RLEnvLogger
+from agent_logger import RLAgentLogger
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 from ReplayBuffer import PrioritizedReplayMemory
 
 import config.cifarConfig as c
-from Data import load_cifar10_mobilenet,  load_cifar10_custom
+from Data import load_cifar10_custom
 
 # Used for Cluster vs Local settings
 parser = argparse.ArgumentParser()
