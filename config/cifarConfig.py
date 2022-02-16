@@ -10,7 +10,8 @@ PRINT_FREQ = 1
 EVAL_ITERATIONS = 10
 
 # baselines
-BASELINE_FILE = 'baselines/cifar10_custom/bvssb_1000.npy'
+BASELINE_FILE = 'baselines/cifar10_custom/bvssb_800.npy'
+LOWER_BOUND_FILE = 'baselines/cifar10_custom/random_800.npy'
 
 # RL training
 BATCH_SIZE = 16
@@ -22,7 +23,7 @@ AGENT_NHIDDEN = 100
 
 # Env config
 SAMPLE_SIZE = 1000
-BUDGET = 200 # TODO
+BUDGET = 800 # TODO
 GAME_LENGTH = BUDGET
 REWARD_SCALE = 1
 REWARD_SHAPING = True
@@ -30,13 +31,13 @@ INIT_POINTS_PER_CLASS = 10
 CLASS_FROM_SCRATCH = False
 
 # training loop
-MIN_INTERACTIONS = 800000 # 150k
+MIN_INTERACTIONS = 400000 # 150k
 MAX_EPOCHS = MIN_INTERACTIONS / BUDGET # 150k
-WARMUP_EPOCHS = 100
+WARMUP_EPOCHS = 20
 
 CONVERSION_EPOCHS = 1
 # CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
-GREED = Misc.parameterPlan(0.9, 0.1, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
+GREED = Misc.parameterPlan(0.1, 0.1, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
 LR = Misc.parameterPlan(0.001, 0.001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
 ##################################################################
 

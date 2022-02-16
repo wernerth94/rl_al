@@ -9,7 +9,7 @@ sys.path.append("evaluation")
 print(F"updated path is {sys.path}")
 
 from core.Evaluation import scoreAgent
-from core.Misc import saveFile
+from core.Misc import saveNumpyFile
 import numpy as np
 import os, time
 import tensorflow
@@ -53,7 +53,7 @@ for run in range(c.EVAL_ITERATIONS):
     env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
     #agent = agentFunc(env, fromCheckpoints=c.ckptDir)
 
-    memory, f1 = scoreAgent(agent, env, c.BUDGET)
+    f1 = scoreAgent(agent, env)
     result.append(f1)
 
 result = np.array(result)
@@ -62,7 +62,7 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, baselineName + '_' + str(c.SAMPLE_SIZE))
-saveFile(file, f1)
+file = os.path.join(folder, baselineName + '_' + str(c.BUDGET))
+saveNumpyFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')

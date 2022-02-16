@@ -102,9 +102,9 @@ class Baseline_Entropy:
     def __init__(self, *args, **kwargs):
         pass
 
-    def predict(self, state, greedParameter=0):
+    def predict(self, state, greed=0):
         scores = state[:, 2]
-        if greedParameter <= 0 or np.random.rand() > greedParameter:
+        if greed <= 0 or np.random.rand() > greed:
             a = np.expand_dims(np.argmax(scores), axis=-1)
             return scores, a
         else:
@@ -130,5 +130,5 @@ class Baseline_Random:
     def __init__(self, *args, **kwargs):
         pass
 
-    def predict(self, state, greedParameter=0):
+    def predict(self, state, greed=0):
         return None, np.expand_dims(np.random.randint(len(state)), axis=-1)

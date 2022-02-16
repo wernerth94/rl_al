@@ -15,6 +15,8 @@ import Environment
 import Agent
 import Memory
 from Misc import *
+from logutils.env_logger import RLEnvLogger
+from logutils.agent_logger import RLAgentLogger
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 from ReplayBuffer import PrioritizedReplayMemory
@@ -36,7 +38,7 @@ dataset = [d.to(device) for d in dataset]
 
 env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 #memory = Memory.NStepVMemory(env.stateSpace, 1, maxLength=c.MEMORY_CAP)
-replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP)
+replay_buffer = PrioritizedReplayMemory(10000) # 2000
 agent = Agent.DDVN(env.stateSpace, lr=0.1, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN)
 
 current_time = datetime.now().strftime('%b%d_%H-%M-%S')
