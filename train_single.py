@@ -7,6 +7,7 @@ print(F"The virtualenv is: {sys.prefix}")
 sys.path.append("core")
 sys.path.append("evaluation")
 sys.path.append("config")
+sys.path.append("logutils")
 print(F"updated path is {sys.path}")
 
 import argparse
