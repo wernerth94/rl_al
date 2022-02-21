@@ -3,7 +3,7 @@ import seaborn as sns
 import numpy as np
 import os
 
-from config import mnistConfig as c
+from config import cifarConfig as c
 
 LINE_WIDTH = 2
 plt.figure(dpi=200)
@@ -28,7 +28,7 @@ def plot(curve, color, displayName, window=5):
                                  np.expand_dims(np.std(curve, axis=0), axis=0)],  axis=0)
     avrgCurve, stdCurve = avrg(curve, window)
     x = np.arange(len(avrgCurve))
-    plt.fill_between(x, avrgCurve-stdCurve, avrgCurve+stdCurve, alpha=0.15, facecolor=color)
+    plt.fill_between(x, avrgCurve-stdCurve, avrgCurve+stdCurve, alpha=0.3, facecolor=color)
     plt.plot(x, avrgCurve, label=displayName, linewidth=LINE_WIDTH, c=color)
 
 
@@ -52,18 +52,15 @@ folder = '..'
 sns.set()
 
 
-plot(np.load(os.path.join(folder, 'baselines/mobilenet/random.npy')), 'gray', displayName='mobilenet_random', window=1)
-plot(np.load(os.path.join(folder, 'baselines/mobilenet/bvssb_1000.npy')), 'navy', displayName='mobilenet_BvsSB', window=1)
+plot(np.load('../baselines/cifar10_custom/random_800.npy'), 'gray', displayName='random', window=5)
+plot(np.load('../baselines/cifar10_custom/random2_800.npy'), 'gray', displayName='random', window=5)
+# plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'navy', displayName='BvsSB', window=1)
 
-plot(np.load(os.path.join(folder, 'baselines/random.npy')), 'black', displayName='random', window=1)
-plot(np.load(os.path.join(folder, 'baselines/bvssb_1000.npy')), 'blue', displayName='BvsSB', window=1)
+# plot(collect(os.path.join(folder, 'out_MNIST_BVSSB'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddvn', window=1)
 
-plot(collect(os.path.join(folder, 'out_MNIST_BVSSB'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddqn', window=1)
-plot(collect(os.path.join(folder, 'out_MNIST_BVSSB2'), curvesFolder='curves', maskingThreshold=0.0), 'pink', displayName='ddqn2', window=1)
-
-plt.ylim(0.5, 1)
-plt.yticks(np.arange(0.5, 1, 0.1))
-plt.axhline(y=0.965, label='upper bound', c='black', linestyle='dashed')
+# plt.ylim(0.5, 1)
+# plt.yticks(np.arange(0.5, 1, 0.1))
+# plt.axhline(y=0.965, label='upper bound', c='black', linestyle='dashed')
 plt.legend(fontsize='x-small')
 plt.savefig('plot_'+c.MODEL_NAME+'.png')
 plt.show()

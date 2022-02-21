@@ -7,7 +7,6 @@ N_STEPS = 3
 MODEL_NAME = 'CIFAR10'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
-EVAL_ITERATIONS = 10
 
 # baselines
 BASELINE_FILE = 'baselines/cifar10_custom/bvssb_800.npy'
@@ -57,9 +56,9 @@ def get_description():
     desc += f'LOADED CONFIG: {MODEL_NAME} \tDATASET: {DATASET}\n'
     desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}\n'
     desc += f'AGENT: batch size={BATCH_SIZE}, C={C}\n'
+    desc += f'AGENT: greed {GREED[0]} - {GREED[-1]} \t learningRate {LR[0]} - {LR[-1]}\n'
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
     desc += f'TRAINING: warmup={WARMUP_EPOCHS}, conversion={CONVERSION_EPOCHS}\n'
-    desc += f'Greed {GREED[0]} - {GREED[-1]} \t LearningRate {LR[0]} - {LR[-1]}\n'
     return desc
 
 print('#########################################################')
