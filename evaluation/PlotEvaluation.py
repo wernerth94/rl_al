@@ -51,10 +51,13 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
+plot(np.load('../baselines/random_2000.npy'), 'blue', displayName='BvsSB', window=1)
+plot(np.load('../baselines/random_2000_scratch.npy'), 'red', displayName='BvsSB_scratch', window=1)
 
-plot(np.load('../baselines/cifar10_custom/random_800.npy'), 'gray', displayName='random', window=5)
-plot(np.load('../baselines/cifar10_custom/random2_800.npy'), 'gray', displayName='random', window=5)
-# plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'navy', displayName='BvsSB', window=1)
+# plot(np.load('../baselines/cifar10_custom/random_800.npy'), 'gray', displayName='random', window=5)
+# #plot(np.load('../baselines/bvssb_800.npy'), 'navy', displayName='BvsSB', window=1)
+# plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'blue', displayName='BvsSB', window=1)
+# plot(np.load('../baselines/eval.npy'), 'red', displayName='rainbow', window=1)
 
 # plot(collect(os.path.join(folder, 'out_MNIST_BVSSB'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddvn', window=1)
 

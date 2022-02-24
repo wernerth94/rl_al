@@ -26,11 +26,11 @@ class DDVN:
 
 
     def v_network(self, state_space, n_hidden):
-        return nn.Sequential(nn.Linear(state_space, n_hidden),
+        return nn.Sequential(nn.Linear(state_space, 64),
                              nn.LeakyReLU(),
-                             nn.Linear(n_hidden, int(n_hidden/2)),
+                             nn.Linear(64, n_hidden),
                              nn.LeakyReLU(),
-                             nn.Linear(int(n_hidden/2), 1)
+                             nn.Linear(n_hidden, 1)
                              )
 
 

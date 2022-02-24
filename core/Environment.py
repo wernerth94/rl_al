@@ -141,8 +141,8 @@ class ALGame:
                 yHat_test = self.classifier(self.x_test)
                 test_loss = self.loss(yHat_test, self.y_test)
                 if test_loss >= lastLoss:
-                    pass
-                    # break
+                    #print(f"labeled {len(self.xLabeled)}: stopped after {e} epochs")
+                    break
                 lastLoss = test_loss
 
         one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1).cpu()]

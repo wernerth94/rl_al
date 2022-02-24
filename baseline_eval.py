@@ -17,7 +17,7 @@ import Classifier, Agent, Environment
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', '-n', default='bvssb', type=str)
+parser.add_argument('--name', '-n', default='random', type=str)
 parser.add_argument('--iterations', '-i', default=5, type=int)
 args = parser.parse_args()
 
@@ -67,7 +67,7 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, baselineName + '2_' + str(c.BUDGET))
+file = os.path.join(folder, baselineName + '_' + str(c.BUDGET))
 saveNumpyFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')
