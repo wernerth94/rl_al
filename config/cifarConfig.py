@@ -8,10 +8,6 @@ MODEL_NAME = 'CIFAR10'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 
-# baselines
-BASELINE_FILE = 'baselines/cifar10_custom/bvssb_800.npy'
-LOWER_BOUND_FILE = 'baselines/cifar10_custom/random_800.npy'
-
 # RL training
 BATCH_SIZE = 32
 C = 500 # TODO
@@ -38,18 +34,16 @@ CONVERSION_EPOCHS = 5
 # CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
 GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
 LR = Misc.parameterPlan(0.001, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
-##################################################################
 
-# Game Length
-# GL = Misc.asympParameterPlan(BUDGET, BUDGET, warmup=WARMUP_EPOCHS + int(0.1 * MIN_INTERACTIONS), conversion=int(0.6 * MIN_INTERACTIONS))
 
-# file paths
-OUTPUT_FOLDER = 'out_'+MODEL_NAME
-# os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-memDir = os.path.join(OUTPUT_FOLDER, 'memory')
-cacheDir = os.path.join(OUTPUT_FOLDER, 'cache')
-stateValueDir = os.path.join(cacheDir, 'stateVal')
-stateTransDir = os.path.join(cacheDir, 'stateTrans')
+# File Paths
+#########################################
+# baselines
+RECORD_AL_PERFORMANCE = False
+BASELINE_FILE = f'baselines/cifar10_custom/bvssb_{BUDGET}.npy'
+LOWER_BOUND_FILE = f'baselines/cifar10_custom/random_{BUDGET}.npy'
+if os.path.exists(BASELINE_FILE) and os.path.exists(LOWER_BOUND_FILE):
+    RECORD_AL_PERFORMANCE = True
 
 def get_description():
     desc = ""

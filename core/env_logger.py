@@ -26,11 +26,11 @@ class RLEnvLogger:
             self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
         if self.record_al_perf:
             for step in range(len(self.al_baseline)):
-                self.writer.add_scalars('env/al_performance', {
-                    "agent": self.al_performance[step],
-                    "baseline": self.al_baseline[step],
-                    "lower bound": self.al_lower_bound[step]
-                }, step)
+                values = {"agent": self.al_performance[step],}
+                if self.record_al_perf:
+                    values["baseline"] = self.al_baseline[step]
+                    values["lower bound"] = self.al_lower_bound[step]
+                self.writer.add_scalars('env/al_performance', values, step)
         self.writer.flush()
 
         if self.current_epoch > 0:

@@ -48,7 +48,7 @@ with open(os.path.join(log_dir, "config.txt"), "w") as f:
 
 total_epochs = 0
 with RLEnvLogger(summary_writer, env,
-                 print_interval=1, record_al_perf=bool(args.record_al_perf)) as env:
+                 print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
     with RLAgentLogger(summary_writer, agent) as agent:
         while total_epochs < c.MAX_EPOCHS:
             done = False
