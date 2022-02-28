@@ -17,8 +17,8 @@ import Classifier, Agent, Environment
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', '-n', default='random', type=str)
-parser.add_argument('--iterations', '-i', default=5, type=int)
+parser.add_argument('--name', '-n', default='bvssb', type=str)
+parser.add_argument('--iterations', '-i', default=20, type=int)
 args = parser.parse_args()
 
 ##################################

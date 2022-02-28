@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 from torch import Tensor
@@ -38,40 +39,58 @@ def multi_norm(tensors, p = 2, q = 2, normalize = True) -> Tensor:
 
 class RLAgentLogger:
 
-    def __init__(self, writer, agent):
+    def __init__(self, writer, agent, log_interval=100, checkpoint_interval=-1):
         self.agent = agent
         self.writer = writer
+        self.log_interval = log_interval
+        self.checkpoint_interval = checkpoint_interval
+        self.checkpoint_file = os.path.join(self.writer.log_dir, "agent.pt")
 
 
     def predict(self, state, greed=0.1):
-        self.writer.add_scalar('agent/greed', greed, self.step)
+        self.log_counter += 1
+        self.step += 1
+        if self.log_counter % self.log_interval == 0:
+            self.writer.add_scalar('agent/greed', greed, self.step)
         q, action = self.agent.predict(state, greed=greed)
         return q, action
 
 
     def fit(self, *args, **kwargs):
+        self.checkpoint_counter += 1
+
         ret_val = self.agent.fit(*args, **kwargs)
         if isinstance(ret_val, tuple):
             loss = ret_val[0] # extract the loss
         else:
             loss = ret_val
-        self.writer.add_scalar('agent/loss', loss, self.step)
 
-        variables = list(self.agent.model.parameters())
-        gradients = [w.grad for w in variables]
-        self.writer.add_scalar(f"agent/variables", multi_norm(variables), self.step)
-        self.writer.add_scalar(f"agent/gradients", multi_norm(gradients), self.step)
-        self.writer.flush()
+        if self.log_counter % self.log_interval == 0:
+            self.log_counter = 1
+            self.writer.add_scalar('agent/loss', loss, self.step)
+            variables = list(self.agent.model.parameters())
+            gradients = [w.grad for w in variables]
+            self.writer.add_scalar(f"agent/variables", multi_norm(variables), self.step)
+            self.writer.add_scalar(f"agent/gradients", multi_norm(gradients), self.step)
+            self.writer.flush()
 
-        self.step += 1
+        if self.checkpoint_counter % self.checkpoint_interval == 0:
+            self.checkpoint_counter = 0
+            if os.path.exists(self.checkpoint_file):
+                os.remove(self.checkpoint_file)
+            torch.save(self.agent, self.checkpoint_file)
+
         return ret_val
 
 
     def __enter__(self):
-        self.step = 1
+        self.step = 0
+        self.log_counter = 0
+        self.checkpoint_counter = 0
         agent_conf = self._get_agent_config()
         with open(self.writer.log_dir + '/agent_config.txt', 'w') as f:
             f.write(agent_conf)
+        self.writer.add_text("agent_conf", agent_conf)
         return self
 
 

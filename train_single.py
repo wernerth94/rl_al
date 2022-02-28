@@ -49,7 +49,7 @@ with open(os.path.join(log_dir, "config.txt"), "w") as f:
 total_epochs = 0
 with RLEnvLogger(summary_writer, env,
                  print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
-    with RLAgentLogger(summary_writer, agent) as agent:
+    with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
         while total_epochs < c.MAX_EPOCHS:
             done = False
             state = env.reset()
@@ -59,13 +59,7 @@ with RLEnvLogger(summary_writer, env,
                 action = action[0].item()
 
                 new_state, reward, done, _ = env.step(action)
-                # memory.addMemory(state[action], [reward], torch.mean(new_state, dim=0), done)
-
                 replay_buffer.push( (state[action], [reward], torch.mean(new_state, dim=0), done) )
-                # if len(replay_buffer) > c.BATCH_SIZE:
-                #     sample, idxs, weights = replay_buffer.sample(c.BATCH_SIZE)
-                #     loss, prios = agent.fit(sample, weights, return_priorities=True)
-                #     replay_buffer.update_priorities(idxs, prios)
 
                 if total_epochs > c.WARMUP_EPOCHS:
                     sample, idxs, weights = replay_buffer.sample(c.BATCH_SIZE)
