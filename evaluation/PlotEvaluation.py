@@ -27,9 +27,13 @@ def plot(curve, color, displayName, window=5):
         curve = np.concatenate( [np.expand_dims(np.mean(curve, axis=0), axis=0),
                                  np.expand_dims(np.std(curve, axis=0), axis=0)],  axis=0)
     avrgCurve, stdCurve = avrg(curve, window)
+
+    improvement = round(avrgCurve[-1] - avrgCurve[0], 3)
+    auc = round(sum(avrgCurve) / len(avrgCurve), 3)
+    fullName = f"{displayName} improv. {improvement} auc {auc}"
     x = np.arange(len(avrgCurve))
     plt.fill_between(x, avrgCurve-stdCurve, avrgCurve+stdCurve, alpha=0.3, facecolor=color)
-    plt.plot(x, avrgCurve, label=displayName, linewidth=LINE_WIDTH, c=color)
+    plt.plot(x, avrgCurve, label=fullName, linewidth=LINE_WIDTH, c=color)
 
 
 def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
@@ -51,11 +55,12 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
-plot(np.load('../baselines/random_2000.npy'), 'blue', displayName='BvsSB', window=1)
-plot(np.load('../baselines/random_2000_scratch.npy'), 'red', displayName='BvsSB_scratch', window=1)
 
-# plot(np.load('../baselines/cifar10_custom/random_800.npy'), 'gray', displayName='random', window=5)
-# #plot(np.load('../baselines/bvssb_800.npy'), 'navy', displayName='BvsSB', window=1)
+plot(np.load('../baselines/cifar10_custom/random_800.npy'), 'gray', displayName='random', window=5)
+plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'navy', displayName='BvsSB', window=5)
+# plot(np.load('../baselines/cifar10_custom/random_2000.npy'), 'gray', displayName='random', window=5)
+# plot(np.load('../baselines/cifar10_custom/bvssb_2000.npy'), 'navy', displayName='BvsSB', window=5)
+
 # plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'blue', displayName='BvsSB', window=1)
 # plot(np.load('../baselines/eval.npy'), 'red', displayName='rainbow', window=1)
 

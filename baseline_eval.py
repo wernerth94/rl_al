@@ -40,6 +40,7 @@ print('#########################################################')
 
 startTime = time.time()
 
+avrgImprov = 0
 result = list()
 for run in range(args.iterations):
     seed = int(startTime / 100) + run
@@ -58,9 +59,11 @@ for run in range(args.iterations):
     else:
         raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
 
-    f1 = scoreAgent(agent, env)
+    f1, improvement = scoreAgent(agent, env)
+    avrgImprov += improvement
     result.append(f1)
 
+avrgImprov /= args.iterations
 result = np.array(result)
 f1 = np.array([np.mean(result, axis=0),
                np.std(result, axis=0)])
@@ -71,3 +74,4 @@ file = os.path.join(folder, baselineName + '_' + str(c.BUDGET))
 saveNumpyFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')
+print(f"average improvement {avrgImprov}")

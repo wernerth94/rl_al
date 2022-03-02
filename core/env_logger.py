@@ -21,9 +21,11 @@ class RLEnvLogger:
             self.writer.add_scalar('env/time per epoch', end - self.epoch_time, self.current_epoch)
         self.epoch_time = end
 
-        self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
         if self.steps_in_epoch > 0:
+            self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
             self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
+            auc = self.auc / self.env.budget
+            self.writer.add_scalar('env/auc', auc, self.current_epoch)
 
         if self.record_al_perf:
             self._log_al_performance()
@@ -37,6 +39,7 @@ class RLEnvLogger:
                 print('%d - reward %1.4f steps %d'%(self.current_epoch, meanReward, self.steps_in_epoch))
         self.current_epoch += 1
         self.current_reward = 0
+        self.auc = 0
         self.steps_in_epoch = 0
         return self.env.reset()
 
@@ -53,11 +56,12 @@ class RLEnvLogger:
     def step(self, action):
         new_state, reward, done, _ = self.env.step(action)
         if self.record_al_perf:
-            self.al_performance[self.steps_in_epoch] = 0.9 * self.al_performance[self.steps_in_epoch] + \
-                                                       0.1 * self.env.currentTestF1
+            self.al_performance[self.steps_in_epoch] = 0.95 * self.al_performance[self.steps_in_epoch] + \
+                                                       0.05 * self.env.currentTestF1
         self.total_steps += 1
         self.steps_in_epoch += 1
         self.current_reward += reward
+        self.auc += self.env.currentTestF1
         return new_state, reward, done, _
 
 
@@ -65,6 +69,7 @@ class RLEnvLogger:
         self.steps_in_epoch = 0
         self.total_steps = 0
         self.current_reward = 0
+        self.auc = 0
         self.current_epoch = 0
         self.epoch_reward_list = []
         self.epoch_time = -1

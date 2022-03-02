@@ -18,7 +18,8 @@ def scoreAgent(agent, env, printInterval=100, greed=0):
             print('%d | %1.3f'%(i, f1Prog[-1]))
         i += 1
 
-    print('start %1.3f end %1.3f improvement %1.3f'%(f1Prog[0], f1Prog[-1], f1Prog[-1] - f1Prog[0]))
+    improvement = f1Prog[-1] - f1Prog[0]
+    print('start %1.3f end %1.3f improvement %1.3f'%(f1Prog[0], f1Prog[-1], improvement))
     print("-------------------------------------------------------")
-    return f1Prog
+    return f1Prog, improvement
     # return memory, f1Prog
