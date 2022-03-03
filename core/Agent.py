@@ -97,6 +97,100 @@ class DDVN:
         return total_loss
 
 
+class DDQN:
+
+    def __init__(self, state_space, action_space, clipped=False, gamma=0.99, lr=0.001, nHidden=10):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print(F'placing model on device {self.device}')
+
+        self.gamma = gamma
+        self.state_space = state_space
+        self.action_space = action_space
+        self.clipped = clipped
+        self.weight_copy_interval = 3
+        self.training_steps = 0
+
+        self.model = self.q_network(state_space, action_space, n_hidden=nHidden)
+        self.model = self.model.to(self.device)
+        self.target_model = self.q_network(state_space, action_space, n_hidden=nHidden)
+        self.target_model.load_state_dict(self.model.state_dict())
+        self.target_model = self.target_model.to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
+        self.loss = nn.SmoothL1Loss()
+
+
+    def q_network(self, state_space, action_space, n_hidden):
+        return nn.Sequential(nn.Linear(state_space, 64),
+                             nn.LeakyReLU(),
+                             nn.Linear(64, n_hidden),
+                             nn.LeakyReLU(),
+                             nn.Linear(n_hidden, action_space)
+                             )
+
+
+    def predict(self, inputs, greed=1, model='main'):
+        if type(inputs) is not torch.Tensor:
+            inputs = torch.tensor(inputs)
+        if len(inputs.shape) < 2:
+            inputs = torch.unsqueeze(inputs, 0)
+        inputs = inputs.to(self.device).float()
+
+        if model == 'target':
+            q = self.target_model(inputs)
+        else:
+            q = self.model(inputs)
+
+        eps = np.random.rand()
+        if greed <= 0 or eps > greed:
+            action = torch.argmax(q, dim=1)
+        else:
+            action = torch.tensor([np.random.randint(2)])
+        return q, action
+
+
+    def fit(self, memory_batch, weights=None, return_priorities=False):
+        state = memory_batch[0]
+        rewards = memory_batch[1]
+        next_states = memory_batch[2]
+        dones = memory_batch[3]
+
+        q_hat, _ = self.predict(state)
+        if weights is None:
+            weights = torch.zeros(len(q_hat))
+
+        with torch.no_grad():
+            q = q_hat.clone()
+            q_target, _ = self.predict(next_states, model='target')
+            next_action = torch.argmax(q_target, dim=1)
+
+            expected_rewards_c = q_target[range(len(q_target)), next_action]
+
+            r_c = torch.zeros(len(state)).to(self.device)
+            for i, rew in enumerate(rewards):
+                r_c += (self.gamma ** i) * rew # [:, 0]
+
+            for b, rew in enumerate(r_c):
+                q[b, next_action[b]] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
+
+        total_loss = torch.sum(weights * torch.sum(q_hat - q, dim=1)**2)
+        # total_loss = self.loss(v_hat, v)
+
+        self.optimizer.zero_grad()
+        total_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
+        self.optimizer.step()
+
+        if self.training_steps >= self.weight_copy_interval:
+            self.target_model.load_state_dict(self.model.state_dict())
+            self.training_steps = 0
+        self.training_steps += 1
+
+        if return_priorities:
+            prios = torch.sum(torch.abs(q_hat - q), dim=1)
+            return total_loss, prios
+        return total_loss
+
+
 
 class Baseline_Entropy:
     def __init__(self, *args, **kwargs):

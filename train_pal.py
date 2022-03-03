@@ -9,114 +9,54 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
-import numpy as np
-from time import time
-from importlib import reload
-from tensorflow.keras.callbacks import ModelCheckpoint
 import Classifier
 import Environment
 import Agent
-import Memory
-import Plotting
-import Misc
+from Misc import *
+from env_logger import RLEnvLogger
+from agent_logger import RLAgentLogger
+from datetime import datetime
+from torch.utils.tensorboard import SummaryWriter
+from ReplayBuffer import PrioritizedReplayMemory
 
-import config.palConfig as c
+import config.cifarConfig as c
+from Data import load_cifar10_custom
 
-if c.DATASET == 'mnist':
-    from Data import loadMNIST
-    dataset = loadMNIST()
-    classifier = Classifier.DenseClassifierMNIST
-else:
-    from Data import load_mnist_embedded
-    dataset = load_mnist_embedded(c.DATASET)
-    classifier = Classifier.EmbeddingClassifierFactory(c.EMBEDDING_SIZE)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-env = Environment.ALStreamingGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-memory = Memory.NStepQMemory(env.stateSpace, c.N_STEPS, maxLength=c.MEMORY_CAP)
+dataset = load_cifar10_custom(return_tensors=True)
+classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+dataset = [d.to(device) for d in dataset]
 
-cp_callback = ModelCheckpoint(c.stateValueDir, verbose=0, save_freq=c.C, save_weights_only=False)
-agent = Agent.DDQN(env.stateSpace, env.actionSpace, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN, callbacks=[cp_callback])
+env = Environment.PALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+replay_buffer = PrioritizedReplayMemory(10000) # 2000
+agent = Agent.DDQN(env.stateSpace, env.actionSpace,
+                   lr=0.1, gamma=c.AGENT_GAMMA, nHidden=c.AGENT_NHIDDEN)
 
-# Load Past Train State
-trainState = Misc.loadTrainState(c)
-if trainState is None:
-    trainState = {
-        'eta':0, 'totalSteps': 0,
-        'lossCurve': [], 'rewardCurve': [],
-        'f1Curve': [], 'qCurve': [],
-        'lrCurve': [], 'greedCurve': []
-    }
+current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+log_dir = os.path.join('runs', f"pal_{current_time}")
+summary_writer = SummaryWriter(log_dir=log_dir)
+with open(os.path.join(log_dir, "config.txt"), "w") as f:
+    f.write(c.get_description())
 
-sessionSteps = 0; printCounter = 0
-startTime = time()
-seed = startTime
-nextTargetNetUpdate = c.WARMUP + c.C
-lr = 0.001
+total_epochs = 0
+with RLEnvLogger(summary_writer, env,
+                 print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
+    with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
+        while total_epochs < c.MAX_EPOCHS:
+            done = False
+            state = env.reset()
+            while not done:
+                greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
+                q, action = agent.predict(state, greed=greed)
+                action = action[0].item()
 
-try:
-    while trainState['totalSteps'] < c.MIN_INTERACTIONS:
-        epochLoss, epochRewards = 0, 0
-        steps, vStart = 0, 0
-        done = False
-        stateBuffer, rewardBuffer, actionBuffer = [], [], []
-        state = env.reset()
-        while not done:
-            greed = c.GREED[np.clip(trainState['totalSteps'], 0, len(c.GREED) - 1)]
-            Q, action = agent.predict(state, greed=greed)
-            action = action[0]
-            if steps == 0:
-                vStart = Q[0, action]
+                new_state, reward, done, _ = env.step(action)
+                replay_buffer.push( (state.squeeze(), [reward], new_state.squeeze(), done) )
 
-            statePrime, reward, done = env.step(action)
-
-            epochRewards += reward
-            stateBuffer.append(state[0])
-            rewardBuffer.append(reward)
-            actionBuffer.append(action)
-
-            if len(stateBuffer) >= c.N_STEPS:
-                memory.addMemory(stateBuffer.pop(0), actionBuffer.pop(0), rewardBuffer, statePrime[0], done)
-                rewardBuffer.pop(0)
-
-                lr = c.LR[np.clip(trainState['totalSteps'], 0, len(c.LR) - 1)]
-                updateTargetNet = trainState['totalSteps'] >= nextTargetNetUpdate
-                if updateTargetNet:
-                    nextTargetNetUpdate += c.C
-                memSample = memory.sampleMemory(c.BATCH_SIZE)
-                epochLoss += agent.fit(memSample, lr=lr)
-
-            if done:
-                break
-
-            sessionSteps += 1
-            printCounter += 1
-            trainState['totalSteps'] += 1
-            state = statePrime
-
-        trainState['lrCurve'].append(len(env.xLabeled));        trainState['greedCurve'].append(float(greed))
-        trainState['rewardCurve'].append(float(epochRewards));  trainState['lossCurve'].append(float(epochLoss))
-        trainState['f1Curve'].append(float(env.currentTestF1))
-        trainState['qCurve'].append(float(vStart))
-
-        if printCounter >= c.PRINT_FREQ:
-            printCounter = 0
-            timePerStep = (time()-startTime) / float(sessionSteps)
-            etaSec = timePerStep * (c.MIN_INTERACTIONS - trainState['totalSteps'] - 1)
-            etaH = etaSec / 60 / 60
-            print('ETA %1.2f h | total steps %d \t '
-                  '# images %d \t epoch reward %1.3f \t F1 %1.3f \t greed %1.3f \t lr %1.5f' % (
-                      etaH, trainState['totalSteps'], len(env.xLabeled), epochRewards, env.currentTestF1, greed, lr))
-            trainState['eta'] = etaH
-            reload(Plotting)
-            Plotting.plot(trainState, c, c.OUTPUT_FOLDER)
-            memory.writeToDisk(c.memDir)
-            Misc.saveTrainState(c, trainState)
-
-        if c.USE_STOPSWITCH and not Misc.checkStopSwitch():
-            break
-
-except KeyboardInterrupt:
-    print('training stopped by user')
-
-memory.writeToDisk(c.memDir)
-Misc.saveTrainState(c, trainState)
+                if total_epochs > c.WARMUP_EPOCHS:
+                    sample, idxs, weights = replay_buffer.sample(c.BATCH_SIZE)
+                    loss, prios = agent.fit(sample, weights, return_priorities=True)
+                    replay_buffer.update_priorities(idxs, prios)
+                state = new_state
+            total_epochs += 1
