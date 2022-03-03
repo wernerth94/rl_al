@@ -56,8 +56,8 @@ class RLEnvLogger:
     def step(self, action):
         new_state, reward, done, _ = self.env.step(action)
         if self.record_al_perf:
-            self.al_performance[self.env.added_images] = 0.95 * self.al_performance[self.env.added_images] + \
-                                                         0.05 * self.env.currentTestF1
+            self.al_performance[self.env.added_images-1] = 0.95 * self.al_performance[self.env.added_images-1] + \
+                                                           0.05 * self.env.currentTestF1
         self.total_steps += 1
         self.steps_in_epoch += 1
         self.current_reward += reward
