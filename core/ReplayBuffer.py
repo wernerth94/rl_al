@@ -95,9 +95,11 @@ class PrioritizedReplayMemory(object):
         s, r, s_p, d = [], [], [], []
         for i in encoded_sample:
             s.append(i[0])
-            r.append(torch.Tensor(i[1], device=device))
+            t = torch.Tensor(i[1]).to(device)
+            r.append(t)
             s_p.append(i[2])
-            d.append(torch.Tensor([i[3]], device=device))
+            t = torch.Tensor(i[3]).to(device)
+            d.append(t)
         encoded_sample = [
             torch.stack(s), torch.stack(r),
             torch.stack(s_p), torch.stack(d),
