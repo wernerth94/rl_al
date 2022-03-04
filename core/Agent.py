@@ -54,7 +54,7 @@ class DDVN:
         return v, action
 
 
-    def fit(self, memory_batch, weights=None, return_priorities=False):
+    def fit(self, memory_batch, weights=None, lr=None, return_priorities=False):
         state = memory_batch[0]
         rewards = memory_batch[1]
         next_states = memory_batch[2]
@@ -62,7 +62,7 @@ class DDVN:
 
         v_hat, _ = self.predict(state)
         if weights is None:
-            weights = torch.zeros(len(v_hat))
+            weights = torch.ones(len(v_hat))
 
         with torch.no_grad():
             v = v_hat.clone()
@@ -81,6 +81,9 @@ class DDVN:
         total_loss = torch.sum(weights * torch.squeeze(v_hat - v)**2)
         # total_loss = self.loss(v_hat, v)
 
+        if lr:
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = lr
         self.optimizer.zero_grad()
         total_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
@@ -148,7 +151,7 @@ class DDQN:
         return q, action
 
 
-    def fit(self, memory_batch, weights=None, return_priorities=False):
+    def fit(self, memory_batch, weights=None, lr=None, return_priorities=False):
         state = memory_batch[0]
         rewards = memory_batch[1]
         next_states = memory_batch[2]
@@ -156,7 +159,7 @@ class DDQN:
 
         q_hat, _ = self.predict(state)
         if weights is None:
-            weights = torch.zeros(len(q_hat))
+            weights = torch.ones(len(q_hat))
 
         with torch.no_grad():
             q = q_hat.clone()
@@ -175,6 +178,9 @@ class DDQN:
         total_loss = torch.sum(weights * torch.sum(q_hat - q, dim=1)**2)
         # total_loss = self.loss(v_hat, v)
 
+        if lr:
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = lr
         self.optimizer.zero_grad()
         total_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)

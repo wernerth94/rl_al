@@ -55,8 +55,9 @@ with RLEnvLogger(summary_writer, env,
                 replay_buffer.push( (state.squeeze(), [reward], new_state.squeeze(), done) )
 
                 if total_epochs > c.WARMUP_EPOCHS:
+                    lr = c.LR[min(total_epochs, len(c.GREED) - 1)]
                     sample, idxs, weights = replay_buffer.sample(c.BATCH_SIZE)
-                    loss, prios = agent.fit(sample, weights, return_priorities=True)
+                    loss, prios = agent.fit(sample, weights, lr=lr, return_priorities=True)
                     replay_buffer.update_priorities(idxs, prios)
                 state = new_state
             total_epochs += 1
