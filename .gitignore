@@ -17,3 +17,8 @@ core/__pycache__
 *.err
 *.sh
 /logutils/
+/doc/paper/rl_al_paper.aux
+/doc/paper/rl_al_paper.bbl
+/doc/paper/rl_al_paper.blg
+/doc/paper/rl_al_paper.out
+/doc/paper/rl_al_paper.synctex.gz
