@@ -224,12 +224,11 @@ class ALGame:
 
     def createState(self):
         alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
-        return alFeatures
-        # alFeatures = torch.from_numpy(alFeatures).float()
-        # poolFeatures = self.getPoolInfo()
-        # poolFeatures = poolFeatures.unsqueeze(0).repeat(len(alFeatures), 1)
-        # state = torch.cat([alFeatures, poolFeatures], dim=1)
-        # return state
+        # return alFeatures
+        poolFeatures = self.getPoolInfo()
+        poolFeatures = poolFeatures.unsqueeze(0).repeat(len(alFeatures), 1)
+        state = torch.cat([alFeatures, poolFeatures], dim=1)
+        return state
 
 
     def getClassifierFeatures(self, x):

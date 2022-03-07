@@ -39,7 +39,7 @@ def multi_norm(tensors, p = 2, q = 2, normalize = True) -> Tensor:
 
 class RLAgentLogger:
 
-    def __init__(self, writer, agent, log_interval=100, checkpoint_interval=-1):
+    def __init__(self, writer, agent, log_interval=300, checkpoint_interval=-1):
         self.agent = agent
         self.writer = writer
         self.log_interval = log_interval
@@ -67,6 +67,8 @@ class RLAgentLogger:
 
         if self.log_counter % self.log_interval == 0:
             self.log_counter = 1
+            if 'lr' in kwargs:
+                self.writer.add_scalar('agent/lr', kwargs['lr'], self.step)
             self.writer.add_scalar('agent/loss', loss, self.step)
             variables = list(self.agent.model.parameters())
             gradients = [w.grad for w in variables]

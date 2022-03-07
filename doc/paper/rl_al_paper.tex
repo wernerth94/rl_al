@@ -1,0 +1,50 @@
+\documentclass[]{article}
+\usepackage[a4paper, total={6.5in, 8.5in}]{geometry}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\title{Deep V-Learning for Pool-Based Active Learning}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Even though pool-based Active Learning (P-AL) is the more popular setting for Active Learning, it creates significant challenges when reinforcement learning is applied to it.
+The most prominent one is that both Q-Learning and Policy Gradient Methods require a fixed action space. 
+In the P-AL setting the action space has the same size as the pool of unlabeled images to choose from (or a subsample thereof).
+Even for simple datasets P-AL methods require a samplesize of $>$100 to work effectively, creating a large action space for the reinforcement learning agent. \\
+
+\subsection{Contribution}
+\begin{itemize}
+	\item First V-Learning Approach for P-AL
+	\item Variable sample sizes to fit every dataset
+	\item (Dataset and model agnostic state space) \textit{Probably not the first}
+\end{itemize}
+
+\section{Related Work}
+
+\section{Background}
+\subsection{V-Learning}
+V-Learning (\cite{rl_intro} p.119) is closely related to Q-Learning. It estimates the value of states rather that the value of all actions given a state (Q-Learning \cite{rl_intro} p.131) 
+This requires the environment to provide possible future states $s_{t+1} \in S_{t+1}$ given any state $s_t$.
+A policy $\pi_v$ typically chooses the most promising future state $argmax \hspace{1mm} V(s_{t+1})$ \\
+Temporal difference (TD) learning for a neural network parametrized by $\theta$ gives us a nearly identical update formula compared to Q-Learning
+\begin{equation}
+	\theta \leftarrow \theta + \eta \left( r_t + \gamma \hat V_\theta(s_{t+1}) \right)
+\end{equation} 
+
+\subsection{Active Learning as a MDP}
+
+
+
+\bibliographystyle{plain}
+\bibliography{main.bib} 
+
+
+\end{document}

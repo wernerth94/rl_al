@@ -30,10 +30,11 @@ MIN_INTERACTIONS = 1600000 # 1.6M
 MAX_EPOCHS = MIN_INTERACTIONS / BUDGET
 WARMUP_EPOCHS = 5
 
-CONVERSION_EPOCHS = 50
+CONVERSION_GREED = 50
+CONVERSION_LR = 400
 # CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
-GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
-LR = Misc.parameterPlan(0.001, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_EPOCHS)
+GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
+LR = Misc.parameterPlan(0.01, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths
@@ -50,9 +51,10 @@ def get_description():
     desc += f'LOADED CONFIG: {MODEL_NAME} \tDATASET: {DATASET}\n'
     desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}\n'
     desc += f'AGENT: batch size={BATCH_SIZE}, C={C}\n'
-    desc += f'AGENT: greed {GREED[0]} - {GREED[-1]} \t learningRate {LR[0]} - {LR[-1]}\n'
+    desc += f'AGENT: learningRate {LR[0]} - {LR[-1]} in {CONVERSION_LR} epochs\n'
+    desc += f'AGENT: greed {GREED[0]} - {GREED[-1]} in {CONVERSION_GREED} epochs\n'
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
-    desc += f'TRAINING: warmup={WARMUP_EPOCHS}, conversion={CONVERSION_EPOCHS}\n'
+    desc += f'TRAINING: warmup={WARMUP_EPOCHS}\n'
     desc += f'ENV: budget={BUDGET}, sample size={SAMPLE_SIZE}\n'
     return desc
 

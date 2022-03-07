@@ -24,7 +24,7 @@ class RLEnvLogger:
         if self.steps_in_epoch > 0:
             self.writer.add_scalar('env/reward', self.current_reward, self.current_epoch)
             self.writer.add_scalar('env/steps per epoch', self.steps_in_epoch, self.current_epoch)
-            auc = self.auc / self.env.budget
+            auc = self.auc / self.steps_in_epoch
             self.writer.add_scalar('env/auc', auc, self.current_epoch)
 
         if self.record_al_perf:
@@ -46,10 +46,11 @@ class RLEnvLogger:
 
     def _log_al_performance(self):
         for step in range(len(self.al_baseline)):
-            values = {"agent": self.al_performance[step], }
-            if self.record_al_perf:
-                values["baseline"] = self.al_baseline[step]
-                values["lower bound"] = self.al_lower_bound[step]
+            values = {
+                "agent": self.al_performance[step],
+                "baseline": self.al_baseline[step],
+                "lower bound": self.al_lower_bound[step]
+            }
             self.writer.add_scalars('env/al_performance', values, step)
 
 
@@ -74,7 +75,7 @@ class RLEnvLogger:
         self.epoch_reward_list = []
         self.epoch_time = -1
         if self.record_al_perf:
-            self.al_performance = self.al_baseline.copy() # initialize the moving average with sensible values
+            self.al_performance = self.al_lower_bound.copy() # initialize the moving average with sensible values
         print("this environment will be logged")
         print('== ENVIRONMENT CONFIG ==')
         env_conf = self._get_env_config()
