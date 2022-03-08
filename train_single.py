@@ -69,3 +69,4 @@ with RLEnvLogger(summary_writer, env,
                     replay_buffer.update_priorities(idxs, prios)
                 state = new_state
             total_epochs += 1
+            print("mem size", len(replay_buffer))
