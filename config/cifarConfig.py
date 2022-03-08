@@ -34,15 +34,15 @@ CONVERSION_GREED = 50
 CONVERSION_LR = 400
 # CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
 GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
-LR = Misc.parameterPlan(0.01, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+LR = Misc.parameterPlan(0.01, 0.0000625, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths
 #########################################
 # baselines
 RECORD_AL_PERFORMANCE = False
-BASELINE_FILE = f'baselines/cifar10_custom/bvssb_{BUDGET}.npy'
-LOWER_BOUND_FILE = f'baselines/cifar10_custom/random_{BUDGET}.npy'
+BASELINE_FILE = f'baselines/cifar10_custom/bvssb.npy'
+LOWER_BOUND_FILE = f'baselines/cifar10_custom/random.npy'
 if os.path.exists(BASELINE_FILE) and os.path.exists(LOWER_BOUND_FILE):
     RECORD_AL_PERFORMANCE = True
 

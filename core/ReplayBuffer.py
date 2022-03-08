@@ -184,3 +184,25 @@ class PrioritizedReplayMemory(object):
 
     def __len__(self):
         return len(self._storage)
+
+
+class DuelingPrioritizedReplay(PrioritizedReplayMemory):
+
+    def _reorganize(self, encoded_sample):
+        cntx, s, r, cntx_p, s_p, d = [], [], [], [], [], []
+        for i in encoded_sample:
+            cntx.append(i[0])
+            s.append(i[1])
+            r.append(i[2])
+            cntx_p.append(i[3])
+            s_p.append(i[4])
+            d.append(i[5])
+        encoded_sample = [
+            torch.stack(cntx),
+            torch.stack(s),
+            torch.Tensor(r).T.to(device),
+            torch.stack(cntx_p),
+            torch.stack(s_p),
+            torch.Tensor(d).to(device),
+        ]
+        return encoded_sample

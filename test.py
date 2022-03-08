@@ -18,15 +18,10 @@ from env_logger import RLEnvLogger
 from agent_logger import RLAgentLogger
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
-from ReplayBuffer import PrioritizedReplayMemory
+from ReplayBuffer import DuelingPrioritizedReplay
 
 import config.cifarConfig as c
 from Data import load_cifar10_custom
-
-# Used for Cluster vs Local settings
-parser = argparse.ArgumentParser()
-parser.add_argument('--record_al_perf', '-a', default=1, type=int)
-args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -36,16 +31,18 @@ classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 dataset = [d.to(device) for d in dataset]
 
 env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-                   weight_copy_interval=c.C)
+agent = Agent.DuelingAgent(state_space=3, context_space=256, lr=0.01, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
 
-replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP)
+replay_buffer = DuelingPrioritizedReplay(c.MEMORY_CAP)
 
 current_time = datetime.now().strftime('%b%d_%H-%M-%S')
-log_dir = os.path.join('runs', current_time)
+log_dir = os.path.join('runs', f"duel_{current_time}")
 summary_writer = SummaryWriter(log_dir=log_dir)
 with open(os.path.join(log_dir, "config.txt"), "w") as f:
     f.write(c.get_description())
+
+# Missing Things
+# State disentanglement
 
 total_epochs = 0
 with RLEnvLogger(summary_writer, env,

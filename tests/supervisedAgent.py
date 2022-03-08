@@ -19,7 +19,7 @@ print('memory size', len(memory))
 
 def trainAgent(dataset, lr, bs, nHidden, activation, callbacks=[], verbose=1, agent=None):
     if not agent:
-        agent = Agent.DDVN(STATE_SPACE, nHidden=nHidden, activation=activation, callbacks=callbacks, gamma=0.0)
+        agent = Agent.DDVN(STATE_SPACE, n_hidden=nHidden, activation=activation, callbacks=callbacks, gamma=0.0)
     for epoch in range(3):
         lastLoss = agent.fit(dataset, lr=lr, batchSize=bs, verbose=verbose)
     return lastLoss, agent

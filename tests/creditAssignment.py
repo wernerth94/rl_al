@@ -8,7 +8,7 @@ gameLength = 500
 nSteps = 3
 
 env = Environment.CreditAssignmentGame(gameLength)
-agent = Agent.DDVN(env.stateSpace, nHidden=10, lr=0.002, gamma=1)
+agent = Agent.DDVN(env.stateSpace, n_hidden=10, lr=0.002, gamma=1)
 memory = Memory.NStepVMemory(env.stateSpace, nSteps)
 
 startTime = time()
