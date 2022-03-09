@@ -37,7 +37,7 @@ dataset = [d.to(device) for d in dataset]
 
 env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
 agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-                   weight_copy_interval=c.C)
+                   weight_copy_interval=c.AGENT_C)
 
 replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP)
 
@@ -69,4 +69,4 @@ with RLEnvLogger(summary_writer, env,
                     replay_buffer.update_priorities(idxs, prios)
                 state = new_state
             total_epochs += 1
-            print("mem size", len(replay_buffer))
+            summary_writer.add_scalar('memory/length', len(replay_buffer), total_epochs)

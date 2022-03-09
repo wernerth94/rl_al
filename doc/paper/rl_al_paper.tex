@@ -58,6 +58,32 @@ For fitting the agent we use a target network $f_{\theta^-}$ \cite{double_q_lear
 
 
 \section{Dueling Networks for dynamic Action Spaces}
+\begin{minipage}{0.49\linewidth}
+	\begin{align*}
+		\mathcal{S} &:= \mathbb{R}^{b \times k \times 3+|Z|} \text{ ; with } b=1 \\
+		\mathcal{A} &:= \{ 0, \ldots, k \}^b \\
+		t &:= (s_t, a_t, r_t, s_{t+1}, d_t)
+	\end{align*}
+	\begin{align*}
+		Q^\pi(s, a) &:= \mathbb{E}[s_t, a_t, \pi] \\
+		V^\pi(s) &:= \mathbb{E}_{a \sim \pi(s)}[Q^\pi(s, a)] \\
+		A^\pi(s, a) &:= Q^\pi(s, a) - V^\pi(s)
+	\end{align*}
+\end{minipage}
+\begin{minipage}{0.49\linewidth}
+	\begin{align*}
+		\mathcal{S} &:= \{ \mathcal{T}, \mathcal{C} \}:= \{ \mathbb{R}^{k \times 3}, \mathbb{R}^{|Z|} \}  \\
+		t &:= (s_t, r_t, \bar{s}_{t+1}, d_t) \\
+		\text{with} &: s_t := \{ t_{a_t}, c_t \} \\
+		 &: \bar{s}_{t+1} := \{ \bar{t}, c_t \} \\
+	\end{align*}
+	\begin{align*}
+		Q^\pi(s, a) &:= \mathbb{E}[s_t, a_t, \pi] \\
+		V^\pi(s) &:= \mathbb{E}_{a \sim \pi(s)}[Q^\pi(s, a)] \\
+		A^\pi(s, a) &:= Q^\pi(s, a) - V^\pi(s)
+	\end{align*}
+\end{minipage}
+
 
 
 \bibliographystyle{plain}

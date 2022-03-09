@@ -10,9 +10,8 @@ PRINT_FREQ = 1
 
 # RL training
 BATCH_SIZE = 32
-C = 500 # TODO
-RL_UPDATES_PER_ENV_UPDATE = 1
-MEMORY_CAP = 200000
+MEMORY_CAP = 80000 # 80k due to memory issues 200000
+AGENT_C = 500
 AGENT_GAMMA = 0.99
 AGENT_NHIDDEN = 200
 
@@ -50,7 +49,7 @@ def get_description():
     desc = ""
     desc += f'LOADED CONFIG: {MODEL_NAME} \tDATASET: {DATASET}\n'
     desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}\n'
-    desc += f'AGENT: batch size={BATCH_SIZE}, C={C}\n'
+    desc += f'AGENT: batch size={BATCH_SIZE}, C={AGENT_C}\n'
     desc += f'AGENT: learningRate {LR[0]} - {LR[-1]} in {CONVERSION_LR} epochs\n'
     desc += f'AGENT: greed {GREED[0]} - {GREED[-1]} in {CONVERSION_GREED} epochs\n'
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
