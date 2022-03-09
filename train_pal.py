@@ -29,9 +29,9 @@ classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 dataset = [d.to(device) for d in dataset]
 
 env = Environment.PALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-replay_buffer = PrioritizedReplayMemory(10000) # 2000
+replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP)
 agent = Agent.DDQN(env.stateSpace, env.actionSpace,
-                   lr=0.1, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
+                   gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
 
 current_time = datetime.now().strftime('%b%d_%H-%M-%S')
 log_dir = os.path.join('runs', f"pal_{current_time}")

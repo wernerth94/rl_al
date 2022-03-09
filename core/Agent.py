@@ -28,6 +28,7 @@ class BaseAgent:
     def network(self, state_space, action_space, n_hidden):
         raise NotImplementedError()
 
+
     def _forward(self, inputs, model='main'):
         if type(inputs) is not torch.Tensor:
             inputs = torch.tensor(inputs)
@@ -91,23 +92,22 @@ class DDVN(BaseAgent):
         dones = memory_batch[3]
 
         v_hat, _ = self.predict(state)
-        if weights is None:
-            weights = torch.ones(len(v_hat))
 
         with torch.no_grad():
-            v = v_hat.clone()
             v_target, _ = self.predict(next_states, model='target')
-            next_action = torch.argmax(v_target, dim=1)  # .squeeze()
-
-            expected_rewards_c = v_target[:, next_action][0]
+            # next_action = torch.argmax(v_target, dim=1)
+            expected_rewards = v_target[:, 0]
 
             r_c = torch.zeros(len(state)).to(self.device)
             for i, rew in enumerate(rewards):
-                r_c += (self.gamma ** i) * rew # [:, 0]
+                r_c += (self.gamma ** i) * rew
 
+            v = torch.zeros_like(v_hat)
             for b, rew in enumerate(r_c):
-                v[b, 0] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
+                v[b, 0] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards[b]
 
+        if weights is None:
+            weights = torch.ones(len(v_hat))
         total_loss = torch.sum(weights * torch.squeeze(v_hat - v)**2)
         self._apply_update(total_loss, lr)
 
@@ -132,8 +132,9 @@ class DuelingAgent:
 
         def forward(self, inputs, *args, **kwargs):
             context_embedding, action_embedding = inputs
-            context_embedding = context_embedding.repeat(len(action_embedding), 1)
-            combined = torch.cat([context_embedding, action_embedding])
+            if context_embedding.shape[0] != action_embedding.shape[0]:
+                context_embedding = context_embedding.repeat_interleave(action_embedding.shape[0], dim=0)
+            combined = torch.cat([context_embedding, action_embedding], dim=1)
             return self.model(combined)
 
 
@@ -160,7 +161,7 @@ class DuelingAgent:
             cnxt_emb  = self.context_enc(context)
             state_emb = self.action_enc(state)
             v = self.v_head(cnxt_emb)
-            a = self.action_head(cnxt_emb, state_emb)
+            a = self.action_head((cnxt_emb, state_emb))
             a_mean = torch.mean(a, dim=0)
             q = v + (a - a_mean)
             return q
@@ -183,18 +184,18 @@ class DuelingAgent:
         self.loss = nn.SmoothL1Loss()
 
     def build_networks(self, state_space, context_space, n_hidden):
-        self.model = DuelingAgent.DuelingNetwork(state_space, context_space, n_hidden)
+        self.model = DuelingAgent.DuelingNetwork(context_space, state_space, n_hidden)
         self.model = self.model.to(self.device)
-        self.target_model = DuelingAgent.DuelingNetwork(state_space, context_space, n_hidden)
+        self.target_model = DuelingAgent.DuelingNetwork(context_space, state_space, n_hidden)
         self.target_model = self.target_model.to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())
 
 
     def _forward(self, inputs, model='main'):
         if model == 'target':
-            return self.model(inputs)
-        else:
             return self.target_model(inputs)
+        else:
+            return self.model(inputs)
 
 
     def predict(self, inputs, greed=1, model='main'):
@@ -225,34 +226,32 @@ class DuelingAgent:
 
     def fit(self, memory_batch, weights=None, lr=None, return_priorities=False):
         # TODO
-        state = memory_batch[0]
-        rewards = memory_batch[1]
-        next_states = memory_batch[2]
-        dones = memory_batch[3]
+        state = (memory_batch[0], memory_batch[1])
+        rewards = memory_batch[2]
+        next_states = (memory_batch[3], memory_batch[4])
+        dones = memory_batch[5]
 
-        q_hat, _ = self.predict(state)
-        if weights is None:
-            weights = torch.ones(len(q_hat))
+        v_hat, _ = self.predict(state)
 
         with torch.no_grad():
-            q = q_hat.clone()
-            q_target, _ = self.predict(next_states, model='target')
-            next_action = torch.argmax(q_target, dim=1)
+            v_target, _ = self.predict(next_states, model='target')
+            expected_rewards_c = v_target[:, 0]
 
-            expected_rewards_c = q_target[range(len(q_target)), next_action]
-
-            r_c = torch.zeros(len(state)).to(self.device)
+            r_c = torch.zeros(len(state[0])).to(self.device)
             for i, rew in enumerate(rewards):
-                r_c += (self.gamma ** i) * rew  # [:, 0]
+                r_c += (self.gamma ** i) * rew
 
+            v = torch.zeros_like(v_hat)
             for b, rew in enumerate(r_c):
-                q[b, next_action[b]] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
+                v[b, 0] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
 
-        total_loss = torch.sum(weights * torch.sum(q_hat - q, dim=1) ** 2)
+        if weights is None:
+            weights = torch.ones(len(v_hat))
+        total_loss = torch.sum(weights * torch.squeeze(v_hat - v)**2)
         self._apply_update(total_loss, lr)
 
         if return_priorities:
-            prios = torch.sum(torch.abs(q_hat - q), dim=1)
+            prios = torch.abs(v_hat - v)
             return total_loss, prios
         return total_loss
 

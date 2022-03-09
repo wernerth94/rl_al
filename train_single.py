@@ -9,7 +9,6 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
-import argparse
 import Classifier
 import Environment
 import Agent
@@ -22,11 +21,6 @@ from ReplayBuffer import PrioritizedReplayMemory
 
 import config.cifarConfig as c
 from Data import load_cifar10_custom
-
-# Used for Cluster vs Local settings
-parser = argparse.ArgumentParser()
-parser.add_argument('--record_al_perf', '-a', default=1, type=int)
-args = parser.parse_args()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -48,8 +42,7 @@ with open(os.path.join(log_dir, "config.txt"), "w") as f:
     f.write(c.get_description())
 
 total_epochs = 0
-with RLEnvLogger(summary_writer, env,
-                 print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
+with RLEnvLogger(summary_writer, env, print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
     with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
         while total_epochs < c.MAX_EPOCHS:
             done = False

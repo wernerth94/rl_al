@@ -30,8 +30,8 @@ dataset = load_cifar10_custom(return_tensors=True)
 classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 dataset = [d.to(device) for d in dataset]
 
-env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
-agent = Agent.DuelingAgent(state_space=3, context_space=256, lr=0.01, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
+env = Environment.DuelingALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+agent = Agent.DuelingAgent(state_space=2, context_space=769, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
 
 replay_buffer = DuelingPrioritizedReplay(c.MEMORY_CAP)
 
@@ -57,7 +57,9 @@ with RLEnvLogger(summary_writer, env,
                 action = action[0].item()
 
                 new_state, reward, done, _ = env.step(action)
-                replay_buffer.push( (state[action], [reward], torch.mean(new_state, dim=0), done) )
+                replay_buffer.push( (state[0][0], state[1][action], [reward],
+                                     new_state[0][0], torch.mean(new_state[1], dim=0),
+                                     done) )
 
                 if total_epochs > c.WARMUP_EPOCHS:
                     lr = c.LR[min(total_epochs, len(c.GREED) - 1)]
