@@ -40,24 +40,27 @@ Temporal difference (TD) learning for a neural network parametrized by $\theta$ 
 \end{equation} 
 
 \subsection{Active Learning as a V-Learning MDP}
-We change the usual MDP formulation from predecessing literature, which, based on a presented sample of unlabeled samples of size $k$, defines a state space $S := \mathbb{R}^{k \times f}$ with features $f$ and consequently an action space of $A := \{ 1, \ldots, k \}$. \\ [1mm]
-We instead define the state space to be 1-dimensional and use the batch dimension $b$ for a variable sample size.
-\begin{equation}
-	S := \mathbb{R}^{3+|Z|} := [\text{BvsSB, Entropy, F1, Z}]
-\end{equation}
-V-Learning does not defines an action space, since the actions are implicit, as defined by the policy $\pi_v$. \\
-This formulation poses a problem when storing transitions. The starting state $s_t$ inuitively will be choosen datapoint $s_{t, a_t}$, but since we don't want to store the full follow-up state $s_{t+1} \in \mathbb{R}^{b \times 3+|Z|}$ we use the average over the batch-dimension.
-This serves as a proxy of the impact of the implicit action $a_t$ on the follow-up state $s_{t+1}$.\\
+We change the usual MDP formulation from predecessing literature, which, based on a presented sample of unlabeled samples of size $k$, defines a state space $S := \mathbb{R}^{b \times k \times f}$ with features $f$ and consequently an action space of $A := \{ 1, \ldots, k \}^b$. Where $b$ is the batch dimension, which was made explicit for clarity. \\ [1mm]
+We instead define the state space to be 1-dimensional and use the batch dimension $b$ for a variable sample size $S := \mathbb{R}^{b \times f}$.
+V-Learning does not define an action space, since the actions are implicit as choosen by the policy $\pi_v$. \\
+This formulation poses a problem when storing transitions, however. The starting state $s_t$ inuitively will be the choosen datapoint $s_{t, \pi_t}$, but since we don't want to store the full follow-up state $s_{t+1} \in \mathbb{R}^{b \times f}$ we use the average over the batch-dimension.
+This serves as a proxy of the impact of the implicit action $\pi_t := \pi(V(s_t))$ on the follow-up state, which is usually covered by the full state $s_{t+1}$.\\
 This results in a stored transition $\phi_t := \{ s_{t, a_t}, r_t, \bar{s}_{t+1}, d_t \}$ where $\bar{s}_{t+1}$ is the average of the follow-up state and $d_t$ indicates wether a terminal state was reached.
 
 \section{Methodology}
+
+\subsection{State Space}
+\begin{equation}
+S := \mathbb{R}^{b \times (3+|Z|)} := [\text{BvsSB, Entropy, F1, Z}]^b
+\end{equation}
+
 \subsection{Model and Reinforcement Learning}
 We use a MLP with a single output neuron $f_\theta : \mathbb{R}^{3+|Z|} \rightarrow \mathbb{R}$ as agent network.
 As stated before, the sample of presented datapoints uses the batch dimension for sample size, resulting in $b$ point-wise predictions of the agent. \\
 For fitting the agent we use a target network $f_{\theta^-}$ \cite{double_q_learning}, an n-step return (\cite{rl_intro} p. 142) with $n=3$ and priorizited experience replay \cite{prioritized_replay}.
 
 
-\section{Dueling Networks for dynamic Action Spaces}
+\section{EXPERIMENTAL: Dueling Networks for dynamic Action Spaces}
 \begin{minipage}{0.49\linewidth}
 	\begin{align*}
 		\mathcal{S} &:= \mathbb{R}^{b \times k \times 3+|Z|} \text{ ; with } b=1 \\

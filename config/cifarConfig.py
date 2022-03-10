@@ -10,7 +10,7 @@ PRINT_FREQ = 1
 
 # RL training
 BATCH_SIZE = 32
-MEMORY_CAP = 80000 # 80k due to memory issues 200000
+MEMORY_CAP = 20000 # 20k due to memory issues
 AGENT_C = 500
 AGENT_GAMMA = 0.99
 AGENT_NHIDDEN = 200
