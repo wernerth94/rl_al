@@ -1,22 +1,24 @@
-import Memory, Environment, Data, Classifier
-import matplotlib.pyplot as plt
-from config import mnistConfig as c
+
+from ReplayBuffer import PrioritizedReplayMemory, DuelingPrioritizedReplay
 import numpy as np
+from numpy.random import rand
+from torch import ones
+from memory_profiler import profile
 
-env = Environment.BatchALGame(Data.loadMNIST(prefix='..'), Classifier.DenseClassifierMNIST, c)
-mem = Memory.NStepVMemory(env, 5)
-assert mem.loadFromDisk('../'+c.memDir)
+@profile
+def t1():
+    replay = PrioritizedReplayMemory(cap)
+    for _ in range(100):
+        replay.push( ( ones(int(cap/4)), ones(int(cap/4)), ones(int(cap/4)), ones(int(cap/4)) ) )
+    del replay
 
-state, rewardList, newState, done = mem.sampleMemory(len(mem))
+@profile
+def t2():
+    replay = PrioritizedReplayMemory(cap)
+    for _ in range(100):
+        replay.push((ones(cap)))
+    del replay
 
-allStates = np.concatenate([state, newState], axis=0)
-
-mean = np.mean(allStates, axis=0)
-std = np.std(allStates, axis=0)
-
-allRewards = np.concatenate(rewardList)
-
-rMean = np.mean(allRewards)
-rStd = np.std(allRewards)
-
-print()
+cap = 1000000
+t1()
+t2()

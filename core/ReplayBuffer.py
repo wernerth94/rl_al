@@ -28,7 +28,7 @@ class ExperienceReplayMemory:
 
 
 class PrioritizedReplayMemory(object):
-    def __init__(self, size, alpha=0.6, beta_start=0.4, beta_frames=100000):
+    def __init__(self, size, state_space, alpha=0.6, beta_start=0.4, beta_frames=100000):
         """Create Prioritized Replay buffer.
         Parameters
         ----------
@@ -42,8 +42,9 @@ class PrioritizedReplayMemory(object):
         --------
         ReplayBuffer.__init__
         """
-        super(PrioritizedReplayMemory, self).__init__()
+        super().__init__()
         self._storage = []
+        self.state_space = state_space
         self._maxsize = size
         self._next_idx = 0
 
@@ -66,7 +67,15 @@ class PrioritizedReplayMemory(object):
         return min(1.0, self.beta_start + frame_idx * (1.0 - self.beta_start) / self.beta_frames)
 
     def push(self, data):
-        """See ReplayBuffer.store_effect"""
+        if isinstance(data, tuple):
+            combined = torch.cat([
+                data[0],
+                torch.Tensor([data[1][0]]),
+                data[2],
+                torch.Tensor([data[3]]),
+            ], dim=0)
+            data = combined
+
         idx = self._next_idx
 
         if self._next_idx >= len(self._storage):
@@ -93,10 +102,12 @@ class PrioritizedReplayMemory(object):
     def _reorganize(self, encoded_sample):
         s, r, s_p, d = [], [], [], []
         for i in encoded_sample:
-            s.append(i[0])
-            r.append(i[1])
-            s_p.append(i[2])
-            d.append(i[3])
+            j = self.state_space
+            s.append(i[:j])
+            r.append(i[j])
+            j += 1
+            s_p.append(i[j:j+self.state_space])
+            d.append(i[-1])
         encoded_sample = [
             torch.stack(s),
             torch.Tensor(r).T.to(device),
@@ -187,15 +198,36 @@ class PrioritizedReplayMemory(object):
 
 class DuelingPrioritizedReplay(PrioritizedReplayMemory):
 
+    def __init__(self, size, context_space, state_space, alpha=0.6, beta_start=0.4, beta_frames=100000):
+        super().__init__(size, state_space, alpha, beta_start, beta_frames)
+        self.context_space = context_space
+
+    def push(self, data):
+        if isinstance(data, tuple):
+            combined = torch.cat([
+                data[0],
+                data[1],
+                torch.Tensor([data[2][0]]),
+                data[3],
+                data[4],
+                torch.Tensor([data[5]]),
+            ], dim=0)
+            data = combined
+        super().push(data)
+
     def _reorganize(self, encoded_sample):
         cntx, s, r, cntx_p, s_p, d = [], [], [], [], [], []
         for i in encoded_sample:
-            cntx.append(i[0])
-            s.append(i[1])
-            r.append(i[2])
-            cntx_p.append(i[3])
-            s_p.append(i[4])
-            d.append(i[5])
+            j = self.context_space
+            cntx.append(i[:j])
+            s.append(i[j:j+self.state_space])
+            j += self.state_space
+            r.append(i[j])
+            j += 1
+            cntx_p.append(i[j:j+self.context_space])
+            j += self.context_space
+            s_p.append(i[j:j+self.state_space])
+            d.append(i[-1])
         encoded_sample = [
             torch.stack(cntx),
             torch.stack(s),
