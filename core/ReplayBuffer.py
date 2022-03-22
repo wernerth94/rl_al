@@ -70,9 +70,9 @@ class PrioritizedReplayMemory(object):
         if isinstance(data, tuple):
             combined = torch.cat([
                 data[0],
-                torch.Tensor([data[1][0]]),
+                torch.Tensor([data[1][0]], device=device),
                 data[2],
-                torch.Tensor([data[3]]),
+                torch.Tensor([data[3]], device=device),
             ], dim=0)
             data = combined
 
@@ -207,10 +207,10 @@ class DuelingPrioritizedReplay(PrioritizedReplayMemory):
             combined = torch.cat([
                 data[0],
                 data[1],
-                torch.Tensor([data[2][0]]),
+                torch.Tensor([data[2][0]], device=device),
                 data[3],
                 data[4],
-                torch.Tensor([data[5]]),
+                torch.Tensor([data[5]], device=device),
             ], dim=0)
             data = combined
         super().push(data)

@@ -56,10 +56,8 @@ folder = '..'
 sns.set()
 
 
-plot(np.load('../baselines/cifar10_custom/random_800.npy'), 'gray', displayName='random', window=5)
-plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'navy', displayName='BvsSB', window=5)
-# plot(np.load('../baselines/cifar10_custom/random_2000.npy'), 'gray', displayName='random', window=5)
-# plot(np.load('../baselines/cifar10_custom/bvssb_2000.npy'), 'navy', displayName='BvsSB', window=5)
+plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
+plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
 
 # plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'blue', displayName='BvsSB', window=1)
 # plot(np.load('../baselines/eval.npy'), 'red', displayName='rainbow', window=1)
