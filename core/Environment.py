@@ -75,6 +75,7 @@ class ALGame:
         alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
         # return alFeatures
         poolFeatures = self.getPoolInfo()
+        # copy pool features for each sample
         poolFeatures = poolFeatures.unsqueeze(0).repeat(len(alFeatures), 1)
         state = torch.cat([alFeatures, poolFeatures], dim=1)
         return state
@@ -83,15 +84,23 @@ class ALGame:
     def getClassifierFeatures(self, x):
         eps = 1e-7
         # prediction metrics
-        pred = self.classifier(x).detach()
-        two_highest, _ = pred.topk(2, dim=1)
+        with torch.no_grad():
+            pred = self.classifier(x).detach()
+            two_highest, _ = pred.topk(2, dim=1)
 
-        f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
-        entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
-        bVsSB = 1 - (two_highest[:, -2] - two_highest[:, -1])
+            f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
+            entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
+            bVsSB = 1 - (two_highest[:, -2] - two_highest[:, -1])
+            hist_list = [torch.histogram(p, bins=10, range=(0, 1), density=True)[0] for p in pred]
+            hist = torch.stack(hist_list, dim=0)
 
-        f1 = f1.to(self.device)
-        state = torch.stack([f1, bVsSB, entropy], dim=-1)
+            f1 = f1.to(self.device)
+            state = torch.cat([
+                f1.unsqueeze(1),
+                bVsSB.unsqueeze(1),
+                entropy.unsqueeze(1),
+                hist
+            ], dim=1)
         return state
 
 

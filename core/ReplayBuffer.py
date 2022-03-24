@@ -28,7 +28,7 @@ class ExperienceReplayMemory:
 
 
 class PrioritizedReplayMemory(object):
-    def __init__(self, size, state_space, alpha=0.6, beta_start=0.4, beta_frames=100000):
+    def __init__(self, size, state_space, n_step, alpha=0.6, beta_start=0.4, beta_frames=100000):
         """Create Prioritized Replay buffer.
         Parameters
         ----------
@@ -45,6 +45,7 @@ class PrioritizedReplayMemory(object):
         super().__init__()
         self._storage = []
         self.state_space = state_space
+        self.n_step = n_step
         self._maxsize = size
         self._next_idx = 0
 
@@ -63,14 +64,16 @@ class PrioritizedReplayMemory(object):
         self._it_min = MinSegmentTree(it_capacity)
         self._max_priority = 1.0
 
+
     def beta_by_frame(self, frame_idx):
         return min(1.0, self.beta_start + frame_idx * (1.0 - self.beta_start) / self.beta_frames)
+
 
     def push(self, data):
         if isinstance(data, tuple):
             combined = torch.cat([
                 data[0],
-                torch.Tensor([data[1][0]]).to(device),
+                torch.Tensor(data[1]).to(device),
                 data[2],
                 torch.Tensor([data[3]]).to(device),
             ], dim=0)
@@ -87,8 +90,10 @@ class PrioritizedReplayMemory(object):
         self._it_sum[idx] = self._max_priority ** self._alpha
         self._it_min[idx] = self._max_priority ** self._alpha
 
+
     def _encode_sample(self, idxes):
         return [self._storage[i] for i in idxes]
+
 
     def _sample_proportional(self, batch_size):
         res = []
@@ -99,18 +104,19 @@ class PrioritizedReplayMemory(object):
             res.append(idx)
         return res
 
+
     def _reorganize(self, encoded_sample):
         s, r, s_p, d = [], [], [], []
         for i in encoded_sample:
             j = self.state_space
             s.append(i[:j])
-            r.append(i[j])
-            j += 1
+            r.append(i[j:j+self.n_step])
+            j += self.n_step
             s_p.append(i[j:j+self.state_space])
             d.append(i[-1])
         encoded_sample = [
             torch.stack(s),
-            torch.Tensor(r).T.to(device),
+            torch.stack(r).T.to(device),
             torch.stack(s_p),
             torch.Tensor(d).to(device),
         ]
@@ -198,8 +204,8 @@ class PrioritizedReplayMemory(object):
 
 class DuelingPrioritizedReplay(PrioritizedReplayMemory):
 
-    def __init__(self, size, context_space, state_space, alpha=0.6, beta_start=0.4, beta_frames=100000):
-        super().__init__(size, state_space, alpha, beta_start, beta_frames)
+    def __init__(self, size, context_space, state_space, n_step, alpha=0.6, beta_start=0.4, beta_frames=100000):
+        super().__init__(size, state_space, n_step, alpha, beta_start, beta_frames)
         self.context_space = context_space
 
     def push(self, data):
@@ -207,7 +213,7 @@ class DuelingPrioritizedReplay(PrioritizedReplayMemory):
             combined = torch.cat([
                 data[0],
                 data[1],
-                torch.Tensor([data[2][0]]).to(device),
+                torch.Tensor(data[2]).to(device),
                 data[3],
                 data[4],
                 torch.Tensor([data[5]]).to(device),
@@ -220,18 +226,18 @@ class DuelingPrioritizedReplay(PrioritizedReplayMemory):
         for i in encoded_sample:
             j = self.context_space
             cntx.append(i[:j])
-            s.append(i[j:j+self.state_space])
+            s.append(i[j:j + self.state_space])
             j += self.state_space
-            r.append(i[j])
-            j += 1
-            cntx_p.append(i[j:j+self.context_space])
+            r.append(i[j:j + self.n_step])
+            j += self.n_step
+            cntx_p.append(i[j:j + self.context_space])
             j += self.context_space
-            s_p.append(i[j:j+self.state_space])
+            s_p.append(i[j:j + self.state_space])
             d.append(i[-1])
         encoded_sample = [
             torch.stack(cntx),
             torch.stack(s),
-            torch.Tensor(r).T.to(device),
+            torch.stack(r).T.to(device),
             torch.stack(cntx_p),
             torch.stack(s_p),
             torch.Tensor(d).to(device),

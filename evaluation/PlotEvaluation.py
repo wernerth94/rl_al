@@ -58,6 +58,9 @@ sns.set()
 
 plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
 plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
+plot(np.load('../baselines/bvssb_10.npy'), 'blue', displayName='BvsSB_10', window=5)
+plot(np.load('../baselines/bvssb_5.npy'), 'yellow', displayName='BvsSB_5', window=5)
+plot(np.load('../baselines/bvssb_3.npy'), 'red', displayName='BvsSB_3', window=5)
 
 # plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'blue', displayName='BvsSB', window=1)
 # plot(np.load('../baselines/eval.npy'), 'red', displayName='rainbow', window=1)

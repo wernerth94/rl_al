@@ -3,20 +3,20 @@ import Misc
 
 # general
 DATASET = 'cifar_custom'
-N_STEPS = 3
+N_STEPS = 5
 MODEL_NAME = 'CIFAR10'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 
 # RL training
 BATCH_SIZE = 32
-MEMORY_CAP = 200000 # 20k due to memory issues
+MEMORY_CAP = 200000
 AGENT_C = 500
 AGENT_GAMMA = 0.99
 AGENT_NHIDDEN = 200
 
 # Env config
-SAMPLE_SIZE = 50
+SAMPLE_SIZE = 3
 BUDGET = 2000
 MAX_INTERACTIONS = BUDGET * 10
 REWARD_SCALE = 1
@@ -46,8 +46,7 @@ if os.path.exists(BASELINE_FILE) and os.path.exists(LOWER_BOUND_FILE):
     RECORD_AL_PERFORMANCE = True
 
 def get_description():
-    desc = ""
-    desc += f'LOADED CONFIG: {MODEL_NAME} \tDATASET: {DATASET}\n'
+    desc = f'LOADED CONFIG: {MODEL_NAME} \tDATASET: {DATASET}\n'
     desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}\n'
     desc += f'AGENT: batch size={BATCH_SIZE}, C={AGENT_C}\n'
     desc += f'AGENT: learningRate {LR[0]} - {LR[-1]} in {CONVERSION_LR} epochs\n'

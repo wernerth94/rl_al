@@ -36,7 +36,7 @@ def run():
     agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                        weight_copy_interval=c.AGENT_C)
 
-    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace)
+    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
 
     current_time = datetime.now().strftime('%b%d_%H-%M-%S')
     log_dir = os.path.join('runs', current_time)
@@ -50,19 +50,28 @@ def run():
             while total_epochs < c.MAX_EPOCHS:
                 done = False
                 state = env.reset()
+                state_buffer = [state]
+                reward_buffer = []
                 while not done:
                     greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                     q, action = agent.predict(state, greed=greed)
                     action = action[0].item()
 
                     new_state, reward, done, _ = env.step(action)
-                    replay_buffer.push( (state[action], [reward], torch.mean(new_state, dim=0), done) )
+                    state_buffer.append(new_state)
+                    reward_buffer.append(reward)
+
+                    if len(reward_buffer) >= c.N_STEPS:
+                        replay_buffer.push( (state_buffer.pop(0)[action], reward_buffer,
+                                             torch.mean(state_buffer[-1], dim=0), done) )
+                        reward_buffer.pop(0)
 
                     if total_epochs > c.WARMUP_EPOCHS:
                         lr = c.LR[min(total_epochs, len(c.GREED) - 1)]
                         sample, idxs, weights = replay_buffer.sample(c.BATCH_SIZE)
                         loss, prios = agent.fit(sample, weights, lr=lr, return_priorities=True)
                         replay_buffer.update_priorities(idxs, prios)
+
                     state = new_state
                 total_epochs += 1
                 summary_writer.add_scalar('memory/length', len(replay_buffer), total_epochs)
