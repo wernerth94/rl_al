@@ -3,7 +3,7 @@ import Misc
 
 # general
 DATASET = 'cifar_custom'
-N_STEPS = 5
+N_STEPS = 10
 MODEL_NAME = 'CIFAR10'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
@@ -16,7 +16,7 @@ AGENT_GAMMA = 0.99
 AGENT_NHIDDEN = 200
 
 # Env config
-SAMPLE_SIZE = 3
+SAMPLE_SIZE = 20
 BUDGET = 2000
 MAX_INTERACTIONS = BUDGET * 10
 REWARD_SCALE = 1
@@ -33,7 +33,7 @@ CONVERSION_GREED = 50
 CONVERSION_LR = 400
 # CONVERSION_EPOCHS = int(MAX_EPOCHS / 4.0)
 GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
-LR = Misc.parameterPlan(0.01, 0.0000625, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+LR = Misc.parameterPlan(0.01, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths
@@ -53,6 +53,7 @@ def get_description():
     desc += f'AGENT: greed {GREED[0]} - {GREED[-1]} in {CONVERSION_GREED} epochs\n'
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
     desc += f'TRAINING: warmup={WARMUP_EPOCHS}\n'
+    desc += f'TRAINING: n-steps={N_STEPS}\n'
     desc += f'ENV: budget={BUDGET}, sample size={SAMPLE_SIZE}\n'
     return desc
 

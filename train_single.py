@@ -67,7 +67,7 @@ def run():
                         reward_buffer.pop(0)
 
                     if total_epochs > c.WARMUP_EPOCHS:
-                        lr = c.LR[min(total_epochs, len(c.GREED) - 1)]
+                        lr = c.LR[min(total_epochs, len(c.LR) - 1)]
                         sample, idxs, weights = replay_buffer.sample(c.BATCH_SIZE)
                         loss, prios = agent.fit(sample, weights, lr=lr, return_priorities=True)
                         replay_buffer.update_priorities(idxs, prios)
