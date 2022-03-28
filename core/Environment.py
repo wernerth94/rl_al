@@ -91,8 +91,8 @@ class ALGame:
             f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
             entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
             bVsSB = 1 - (two_highest[:, -2] - two_highest[:, -1])
-            hist_list = [torch.histogram(p, bins=10, range=(0, 1), density=True)[0] for p in pred]
-            hist = torch.stack(hist_list, dim=0)
+            hist_list = [torch.histc(p, bins=10, min=0, max=1) for p in pred]
+            hist = torch.stack(hist_list, dim=0) / self.nClasses
 
             f1 = f1.to(self.device)
             state = torch.cat([
