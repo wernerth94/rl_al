@@ -13,9 +13,10 @@ from core.Evaluation import scoreAgent
 from core.Misc import saveNumpyFile
 import numpy as np
 import os, time
-import Classifier, Agent, Environment
-
 import argparse
+import Classifier, Agent, Environment
+import torch
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', '-n', default='bvssb', type=str)
 parser.add_argument('--iterations', '-i', default=20, type=int)
@@ -34,8 +35,11 @@ from Data import load_cifar10_pytorch as load_data
 print(f"overwrite sample size to {args.samplesize}")
 c.SAMPLE_SIZE = args.samplesize
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 envFunc = Environment.ALGame
 dataset = load_data()
+dataset = [d.to(device) for d in dataset]
 classifier = Classifier.Cifar10ClassifierFactory()
 # classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 
