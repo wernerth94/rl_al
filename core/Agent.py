@@ -322,7 +322,7 @@ class Baseline_Entropy:
 
     def predict(self, state, greed=0):
         if isinstance(state, torch.Tensor):
-            state = state.numpy()
+            state = state.cpu().numpy()
         scores = state[:, 2]
         if greed <= 0 or np.random.rand() > greed:
             a = np.expand_dims(np.argmax(scores), axis=-1)
@@ -338,7 +338,7 @@ class Baseline_BvsSB:
 
     def predict(self, state, greed=0):
         if isinstance(state, torch.Tensor):
-            state = state.numpy()
+            state = state.cpu().numpy()
         scores = state[:, 1]
         if greed <= 0 or np.random.rand() > greed:
             a = np.expand_dims(np.argmax(scores), axis=-1)
