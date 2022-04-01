@@ -19,6 +19,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', '-n', default='bvssb', type=str)
 parser.add_argument('--iterations', '-i', default=20, type=int)
+parser.add_argument('--samplesize', '-s', default=20, type=int)
 args = parser.parse_args()
 
 ##################################
@@ -27,11 +28,16 @@ all_baselines = ['random', 'bvssb', 'entropy']
 baselineName = str(args.name)
 
 from config import cifarConfig as c
-from Data import load_cifar10_custom
+from Data import load_cifar10_pytorch as load_data
+
+# overwrite usual config
+print(f"overwrite sample size to {args.samplesize}")
+c.SAMPLE_SIZE = args.samplesize
 
 envFunc = Environment.ALGame
-dataset = load_cifar10_custom(return_tensors=True)
-classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+dataset = load_data()
+classifier = Classifier.Cifar10ClassifierFactory()
+# classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 
 
 print('#########################################################')

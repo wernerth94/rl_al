@@ -73,12 +73,12 @@ class ALGame:
 
     def createState(self):
         alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
-        # return alFeatures
-        poolFeatures = self.getPoolInfo()
+        return alFeatures # TODO
+        # poolFeatures = self.getPoolInfo()
         # copy pool features for each sample
-        poolFeatures = poolFeatures.unsqueeze(0).repeat(len(alFeatures), 1)
-        state = torch.cat([alFeatures, poolFeatures], dim=1)
-        return state
+        # poolFeatures = poolFeatures.unsqueeze(0).repeat(len(alFeatures), 1)
+        # state = torch.cat([alFeatures, poolFeatures], dim=1)
+        # return state
 
 
     def getClassifierFeatures(self, x):
@@ -130,12 +130,8 @@ class ALGame:
             self.classifier.load_state_dict(self.initialWeights)
 
         #batch_size = min(batch_size, int(len(self.xLabeled)/5))
-        self.xLabeled = self.xLabeled
-        self.yLabeled = self.yLabeled
-        self.x_test = self.x_test
-        self.y_test = self.y_test
         train_dataloader = DataLoader(TensorDataset(self.xLabeled, self.yLabeled), batch_size=batch_size)
-        test_dataloader = DataLoader(TensorDataset(self.x_test, self.y_test), batch_size=batch_size)
+        # test_dataloader = DataLoader(TensorDataset(self.x_test, self.y_test), batch_size=batch_size)
 
         # run_test(train_dataloader, test_dataloader, self.classifier, self.loss, self.optimizer)
 

@@ -3,6 +3,9 @@ import sys, os
 import torch
 from scipy.io import arff
 import pandas as pd
+from tensorflow import keras
+from torchvision import transforms
+import torchvision
 
 CLUSTER = False
 if sys.prefix.startswith('/home/werner/miniconda3'):
@@ -11,7 +14,7 @@ if sys.prefix.startswith('/home/werner/miniconda3'):
 def to_categorical(labels, num_classes=None):
     if not num_classes:
         num_classes = max(labels)
-    return np.eye(num_classes, dtype='uint8')[np.argmax(labels, axis=1)]
+    return np.eye(num_classes, dtype='uint8')[labels]
 
 def loadTrafficSigns():
     print('loading traffic signs')
@@ -114,15 +117,27 @@ def _post_process(x_train, y_train, x_test, y_test, return_tensors=False, channe
     return (x_train, y_train, x_test, y_test)
 
 
-# def loadCifar(numTest=1000, numLabels=10, return_tensors=False, channelFirst=False):
-#     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
-#     y_train = to_categorical(y_train, numLabels)
-#     x_train = np.array(x_train, dtype=float) / 255
-#     y_test = to_categorical(y_test[:numTest], numLabels)
-#     x_test = np.array(x_test, dtype=float)[:numTest] / 255
-#     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
-#     return _post_process(x_train, y_train, x_test, y_test,
-#                          return_tensors=return_tensors, channelFirst=channelFirst)
+def load_cifar10_pytorch(numTest=1000, img_size=32, prefix="", return_tensors=True):
+    trans = transforms.Compose([transforms.Resize([img_size, img_size]),
+                                transforms.ToTensor(),
+                                transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                     std=[0.229, 0.224, 0.225])])
+    folder = os.path.join(prefix, "../datasets")
+    trainset = torchvision.datasets.CIFAR10(root=folder, train=True, download=True, transform=trans)
+    testset = torchvision.datasets.CIFAR10(root=folder, train=False, download=True, transform=trans)
+    return _post_process(trainset.data, to_categorical(np.array(trainset.targets), 10),
+                         testset.data, to_categorical(np.array(testset.targets), 10),
+                         return_tensors=return_tensors, channelFirst=True)
+
+def load_cifar10(numTest=1000, numLabels=10, return_tensors=False, channelFirst=False):
+    (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+    y_train = to_categorical(y_train, numLabels)
+    x_train = np.array(x_train, dtype=float) / 255
+    y_test = to_categorical(y_test[:numTest], numLabels)
+    x_test = np.array(x_test, dtype=float)[:numTest] / 255
+    print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    return _post_process(x_train, y_train, x_test, y_test,
+                         return_tensors=return_tensors, channelFirst=channelFirst)
 
 
 def load_cifar10_mobilenet(numTest=1000, prefix='', return_tensors=False, channelFirst=False):
