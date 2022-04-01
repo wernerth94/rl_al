@@ -80,7 +80,7 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, baselineName + '_' + str(c.BUDGET))
+file = os.path.join(folder, f"{baselineName}_b{c.BUDGET}_s{c.SAMPLE_SIZE}")
 saveNumpyFile(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')
