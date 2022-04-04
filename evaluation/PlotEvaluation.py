@@ -55,21 +55,16 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
+# plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
+# plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
+# plot(np.load('../baselines/bvssb_10.npy'), 'blue', displayName='BvsSB_10', window=5)
+# plot(np.load('../baselines/bvssb_5.npy'), 'yellow', displayName='BvsSB_5', window=5)
+# plot(np.load('../baselines/bvssb_3.npy'), 'red', displayName='BvsSB_3', window=5)
 
-plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
-plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
-plot(np.load('../baselines/bvssb_10.npy'), 'blue', displayName='BvsSB_10', window=5)
-plot(np.load('../baselines/bvssb_5.npy'), 'yellow', displayName='BvsSB_5', window=5)
-plot(np.load('../baselines/bvssb_3.npy'), 'red', displayName='BvsSB_3', window=5)
+plot(np.load('../baselines/bvssb_b2000_s20.npy'), 'red', displayName='BvsSB_20', window=5)
+plot(np.load('../baselines/bvssb_b2000_s1000.npy'), 'orange', displayName='BvsSB_1000', window=5)
+plot(np.load('../baselines/random_b2000_s20.npy'), 'black', displayName='random', window=5)
 
-# plot(np.load('../baselines/cifar10_custom/bvssb_800.npy'), 'blue', displayName='BvsSB', window=1)
-# plot(np.load('../baselines/eval.npy'), 'red', displayName='rainbow', window=1)
-
-# plot(collect(os.path.join(folder, 'out_MNIST_BVSSB'), curvesFolder='curves', maskingThreshold=0.0), 'red', displayName='ddvn', window=1)
-
-# plt.ylim(0.5, 1)
-# plt.yticks(np.arange(0.5, 1, 0.1))
-# plt.axhline(y=0.965, label='upper bound', c='black', linestyle='dashed')
 plt.legend(fontsize='x-small')
 plt.savefig('plot_'+c.MODEL_NAME+'.png')
 plt.show()

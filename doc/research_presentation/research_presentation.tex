@@ -63,10 +63,10 @@
 		\end{column}
 		\begin{column}{.4\linewidth}
 			\begin{align*}
-				\mathcal{S} &\in \mathbb{R}^{k \times \sigma} \hspace{3mm}\text{State Space} \\
-				\mathcal{A} &\in [0, \ldots, k] \hspace{3mm}\text{Action Space} \\
-				\mathcal{R} &:= \mathcal{S} \times \mathcal{A} \rightarrow \mathbb{R} \hspace{3mm}\text{Reward Function} \\
-				\tau &:= \{ \mathcal{S}, \mathcal{A}, \mathcal{S}, \mathcal{R}, \mathbb{R} \} \hspace{3mm}\text{Transition} \\
+				\mathcal{S} &\in \mathbb{R}^{b \times k \times \sigma} \hspace{3mm}\text{State Space} \\
+				\mathcal{A} &\in [0, \ldots, k]^b \hspace{3mm}\text{Action Space} \\
+				\mathcal{R} &:= \mathcal{S} \times \mathcal{A} \rightarrow \mathbb{R}^b \hspace{3mm}\text{Reward Function} \\
+				\tau &:= \{ \mathcal{S}, \mathcal{A}, \mathcal{S}, \mathcal{R}, \mathbb{R}^b \} \hspace{3mm}\text{Transition} \\
 			\end{align*}
 		\end{column}
 	\end{columns}
@@ -92,7 +92,38 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]{Active Learning with V-Learning}
-some
+	\begin{columns}
+		\begin{column}{.4\linewidth}
+			\textbf{Adaptations}
+			\begin{itemize}
+				\item We use the batch dimension for representing the sample size $k$
+				\item No action space needed
+				
+			\end{itemize}
+		\end{column}
+		\begin{column}{.4\linewidth}
+			\begin{align*}
+			\mathcal{S} &\in \mathbb{R}^{b \times \sigma} \hspace{3mm}\text{State Space} \\
+			\mathcal{R} &:= \mathcal{S} \rightarrow \mathbb{R} \hspace{3mm}\text{Reward Function} \\
+			\end{align*}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Storing Transitions in Memory}
+	Q-Learning:
+	\begin{align*}
+		O(\tau) &= \mathcal{S} \times \mathcal{A} \times \mathcal{S} \times \mathcal{R} \times \mathbb{R} \\
+		O(\tau) &= k^2 \times \sigma^2 + 3
+	\end{align*}
+	V-Learning:
+	\begin{align*}
+		O(\tau) &= \mathcal{S} \times \mathcal{A} \times \mathcal{S} \times \mathcal{R} \times \mathbb{R} \\
+		O(\tau) &= 2 \times \sigma^2 + 3
+	\end{align*}
 \end{frame}
 
 

@@ -18,25 +18,33 @@
 \headcommand {\slideentry {0}{0}{5}{5/5}{}{0}}
 \defcounter {refsection}{0}\relax 
 \headcommand {\beamer@framepages {5}{5}}
-\headcommand {\gdef \insertmainframenumber {4}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\slideentry {0}{0}{6}{6/6}{}{0}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\beamer@framepages {6}{6}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\slideentry {0}{0}{7}{7/7}{}{0}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\beamer@framepages {7}{7}}
+\headcommand {\gdef \insertmainframenumber {6}}
 \defcounter {refsection}{0}\relax 
 \headcommand {\partentry {Appendix}{1}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@partpages {1}{5}}
+\headcommand {\beamer@partpages {1}{7}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@sectionpages {1}{5}}
+\headcommand {\beamer@sectionpages {1}{7}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@subsectionpages {1}{5}}
+\headcommand {\beamer@subsectionpages {1}{7}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@appendixpages {6}}
+\headcommand {\beamer@appendixpages {8}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\slideentry {0}{0}{6}{6/6}{}{1}}
+\headcommand {\slideentry {0}{0}{8}{8/8}{}{1}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@framepages {6}{6}}
-\headcommand {\beamer@partpages {6}{6}}
-\headcommand {\beamer@subsectionpages {6}{6}}
-\headcommand {\beamer@sectionpages {6}{6}}
-\headcommand {\beamer@documentpages {6}}
+\headcommand {\beamer@framepages {8}{8}}
+\headcommand {\beamer@partpages {8}{8}}
+\headcommand {\beamer@subsectionpages {8}{8}}
+\headcommand {\beamer@sectionpages {8}{8}}
+\headcommand {\beamer@documentpages {8}}
 \headcommand {\gdef \inserttotalframenumber {1}}
-\headcommand {\gdef \inserttotalframenumber {4}}
+\headcommand {\gdef \inserttotalframenumber {6}}
 \headcommand {\gdef \appendixtotalframenumber {1}}
