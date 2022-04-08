@@ -58,6 +58,10 @@ class BaseAgent:
         self.training_steps += 1
 
 
+    def to(self, device):
+        self.model = self.model.to(device)
+        self.target_model = self.target_model.to(device)
+
 
 class DDVN(BaseAgent):
 
@@ -69,8 +73,13 @@ class DDVN(BaseAgent):
     def network(self, state_space, action_space, n_hidden):
         return nn.Sequential(nn.Linear(state_space, 64),
                              nn.LeakyReLU(),
+                             nn.Dropout(),
                              nn.Linear(64, n_hidden),
                              nn.LeakyReLU(),
+                             nn.Dropout(),
+                             nn.Linear(n_hidden, n_hidden),
+                             nn.LeakyReLU(),
+                             nn.Dropout(),
                              nn.Linear(n_hidden, 1)
                              )
 

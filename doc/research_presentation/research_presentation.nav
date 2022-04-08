@@ -26,25 +26,37 @@
 \headcommand {\slideentry {0}{0}{7}{7/7}{}{0}}
 \defcounter {refsection}{0}\relax 
 \headcommand {\beamer@framepages {7}{7}}
-\headcommand {\gdef \insertmainframenumber {6}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\slideentry {0}{0}{8}{8/8}{}{0}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\beamer@framepages {8}{8}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\slideentry {0}{0}{9}{9/9}{}{0}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\beamer@framepages {9}{9}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\slideentry {0}{0}{10}{10/10}{}{0}}
+\defcounter {refsection}{0}\relax 
+\headcommand {\beamer@framepages {10}{10}}
+\headcommand {\gdef \insertmainframenumber {9}}
 \defcounter {refsection}{0}\relax 
 \headcommand {\partentry {Appendix}{1}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@partpages {1}{7}}
+\headcommand {\beamer@partpages {1}{10}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@sectionpages {1}{7}}
+\headcommand {\beamer@sectionpages {1}{10}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@subsectionpages {1}{7}}
+\headcommand {\beamer@subsectionpages {1}{10}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@appendixpages {8}}
+\headcommand {\beamer@appendixpages {11}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\slideentry {0}{0}{8}{8/8}{}{1}}
+\headcommand {\slideentry {0}{0}{11}{11/11}{}{1}}
 \defcounter {refsection}{0}\relax 
-\headcommand {\beamer@framepages {8}{8}}
-\headcommand {\beamer@partpages {8}{8}}
-\headcommand {\beamer@subsectionpages {8}{8}}
-\headcommand {\beamer@sectionpages {8}{8}}
-\headcommand {\beamer@documentpages {8}}
+\headcommand {\beamer@framepages {11}{11}}
+\headcommand {\beamer@partpages {11}{11}}
+\headcommand {\beamer@subsectionpages {11}{11}}
+\headcommand {\beamer@sectionpages {11}{11}}
+\headcommand {\beamer@documentpages {11}}
 \headcommand {\gdef \inserttotalframenumber {1}}
-\headcommand {\gdef \inserttotalframenumber {6}}
+\headcommand {\gdef \inserttotalframenumber {9}}
 \headcommand {\gdef \appendixtotalframenumber {1}}

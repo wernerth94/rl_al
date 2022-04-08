@@ -1,2 +1,11 @@
-\frametitle{Pool-Based Active Learning}
-some
+\frametitle{Storing Transitions in Memory}
+Q-Learning:
+	\begin{align*}
+		O(\tau) &= \mathcal{S} \times \mathcal{A} \times \mathcal{S} \times \mathcal{R} \times \mathbb{R} \\
+		O(\tau) &= k^2 \times \sigma^2 + 3
+	\end{align*}
+	V-Learning:
+	\begin{align*}
+		O(\tau) &= \mathcal{S} \times \mathcal{A} \times \mathcal{S} \times \mathcal{R} \times \mathbb{R} \\
+		O(\tau) &= 2 \times \sigma^2 + 3
+	\end{align*}

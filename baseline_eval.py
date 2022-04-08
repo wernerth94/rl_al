@@ -31,7 +31,7 @@ all_baselines = ['random', 'bvssb', 'entropy']
 baselineName = str(args.name)
 
 from config import cifarConfig as c
-from Data import load_cifar10_pytorch as load_data
+from Data import load_cifar10_custom as load_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -46,10 +46,10 @@ if args.budget > 0:
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 envFunc = Environment.ALGame
-dataset = load_data()
+dataset = load_data(return_tensors=True)
 dataset = [d.to(device) for d in dataset]
-classifier = Classifier.Cifar10ClassifierFactory()
-# classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+# classifier = Classifier.Cifar10ClassifierFactory()
+classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 
 
 print('#########################################################')
@@ -78,6 +78,8 @@ for run in range(args.iterations):
         #                    weight_copy_interval=c.AGENT_C)
         path = os.path.join("runs", args.chkpt, "agent.pt")
         agent = torch.load(path, map_location=device)
+        agent.device = device
+        agent.to(device)
     else:
         raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
 
