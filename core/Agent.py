@@ -73,13 +73,13 @@ class DDVN(BaseAgent):
     def network(self, state_space, action_space, n_hidden):
         return nn.Sequential(nn.Linear(state_space, 64),
                              nn.LeakyReLU(),
-                             nn.Dropout(),
+                             nn.Dropout(p=0.2),
                              nn.Linear(64, n_hidden),
                              nn.LeakyReLU(),
-                             nn.Dropout(),
+                             nn.Dropout(p=0.2),
                              nn.Linear(n_hidden, n_hidden),
                              nn.LeakyReLU(),
-                             nn.Dropout(),
+                             nn.Dropout(p=0.2),
                              nn.Linear(n_hidden, 1)
                              )
 
