@@ -72,12 +72,16 @@ class ALGame:
 
 
     def createState(self):
-        alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
-        # return alFeatures # TODO
-        poolFeatures = self.getPoolInfo()
-        # copy pool features for each sample
-        poolFeatures = poolFeatures.unsqueeze(0).repeat(len(alFeatures), 1)
-        state = torch.cat([alFeatures, poolFeatures], dim=1)
+        sample_x = self.xUnlabeled[self.stateIds]
+        alFeatures = self.getClassifierFeatures(sample_x)
+        mean_labeled = torch.mean(self.xLabeled, dim=0)
+        mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
+        mean_labeled = mean_labeled.unsqueeze(0).repeat(len(alFeatures), 1)
+        mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(alFeatures), 1)
+        # compute difference of the labeled pool and the sample
+        diff_labeled = sample_x - mean_labeled
+        diff_unlabeled = sample_x - mean_unlabeled
+        state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
         return state
 
 
@@ -103,11 +107,6 @@ class ALGame:
             ], dim=1)
         return state
 
-
-    def getPoolInfo(self):
-        labeled = torch.mean(self.xLabeled, dim=0)
-        unlabeled = torch.mean(self.xUnlabeled, dim=0)
-        return torch.cat([labeled, unlabeled])
 
 
     def step(self, action):
