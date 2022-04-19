@@ -6,6 +6,7 @@ memoryBacklog
 backup_*
 
 out*/
+/archive
 /runs/
 evaluation/*.png
 tests

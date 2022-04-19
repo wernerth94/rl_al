@@ -109,7 +109,8 @@ class RLAgentLogger:
         for attr in dir(self.agent):
             if not attr.startswith('__'):
                 value = getattr(self.agent, attr)
-                if not callable(value):
+                if isinstance(value, torch.nn.Module) or \
+                   not callable(value):
                     if type(value) == np.ndarray:
                         value = F'ndarray {value.shape}'
                     res += F'{attr}: {value} \n'
