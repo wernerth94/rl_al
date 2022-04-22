@@ -8,6 +8,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 class MockALGame:
     def __init__(self, config, *args, **kwargs):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.config = config
         self.budget = config.BUDGET
         self.sample_size = config.SAMPLE_SIZE
@@ -41,6 +42,7 @@ class MockALGame:
             sample.append(dp)
 
         sample = torch.Tensor(sample)
+        sample = sample.to(self.device)
         self.current_qualities = qualities
         return sample
 
