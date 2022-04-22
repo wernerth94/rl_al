@@ -152,6 +152,8 @@ def load_cifar10_custom(numTest=1000, prefix='', return_tensors=False, channelFi
     with np.load(os.path.join(prefix, '../datasets/cifar10_custom.npz'), allow_pickle=True) as f:
         x_train, y_train = f['x_train'], f['y_train']
         x_test, y_test = f['x_test'][:numTest], f['y_test'][:numTest]
+    x_train = (x_train - np.mean(x_train, axis=0)) / np.std(x_train, axis=0)
+    x_test = (x_test - np.mean(x_test, axis=0)) / np.std(x_test, axis=0)
     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
     return _post_process(x_train, y_train, x_test, y_test,
                          return_tensors=return_tensors, channelFirst=channelFirst)

@@ -85,6 +85,7 @@ class ALGame:
         self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
         self.loss = nn.CrossEntropyLoss()
 
+        self.currentTestF1 = 0
         self.reset()
         self._set_state_shape()
 
@@ -126,9 +127,13 @@ class ALGame:
         mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
         mean_labeled = mean_labeled.unsqueeze(0).repeat(len(alFeatures), 1)
         mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(alFeatures), 1)
+        # Last working version:
+        # no data normalization
+        # state = torch.cat([alFeatures, mean_labeled, mean_unlabeled], dim=1)
+
         # compute difference of the labeled pool and the sample
-        diff_labeled = sample_x - mean_labeled
-        diff_unlabeled = sample_x - mean_unlabeled
+        diff_labeled = torch.abs(sample_x - mean_labeled)
+        diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
         state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
         return state
 
