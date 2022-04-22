@@ -1,12 +1,61 @@
 import torch
 import numpy as np
-from PoolManagement import resetALPool, sampleNewBatch, addDatapointToPool
+from PoolManagement import resetALPool, addDatapointToPool
 from sklearn.metrics import f1_score
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-from Misc import accuracy
-# from tests.class_sanity_check import run_test
+
+class MockALGame:
+    def __init__(self, config, *args, **kwargs):
+        self.config = config
+        self.budget = config.BUDGET
+        self.sample_size = config.SAMPLE_SIZE
+        self.max_reward = config.MAX_REWARD
+        self.reset()
+        self._set_state_shape()
+
+
+    def _set_state_shape(self):
+        state = self.create_state()
+        self.stateSpace = state.shape[1]
+
+
+    def reset(self):
+        self.added_images = 0
+        self.currentTestF1 = 0.4
+        return self.create_state()
+
+
+    def create_state(self):
+        qualities = np.random.rand(self.sample_size) * 0.9
+        bvssb_noise = np.random.normal(0, 0.1, size=self.sample_size)
+        entr_noise = np.random.normal(0, 0.5, size=self.sample_size)
+        sample = []
+        for i in range(len(qualities)):
+            dp = [self.currentTestF1]
+            dp.append(qualities[i] + bvssb_noise[i])              # BvsSB
+            dp.append(2 + (qualities[i] - 0.6)*2 + entr_noise[i]) # entropy
+            # Hist of class outputs
+            # internal state
+            sample.append(dp)
+
+        sample = torch.Tensor(sample)
+        self.current_qualities = qualities
+        return sample
+
+    def step(self, action):
+        self.added_images += 1
+        reward = self.current_qualities[action] * self.max_reward
+        noise = np.random.normal(0, 0.5 * self.max_reward)
+        reward += noise
+        self.currentTestF1 += reward
+        done = self.added_images >= self.budget
+        return self.create_state(), reward, done, {}
+
+
+
+
 
 
 class ALGame:
@@ -35,8 +84,7 @@ class ALGame:
         self.classifier = self.classifier.to(self.device)
         self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
         self.loss = nn.CrossEntropyLoss()
-        self.initialF1 = 0
-        self.currentTestF1 = 0
+
         self.reset()
         self._set_state_shape()
 

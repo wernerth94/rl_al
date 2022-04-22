@@ -1,5 +1,5 @@
 
-def scoreAgent(agent, env, printInterval=100, greed=0):
+def scoreAgent(agent, env, printInterval=1000, greed=0):
 
     #memory = Memory.NStepVMemory(env.stateSpace, nSteps=1)
 

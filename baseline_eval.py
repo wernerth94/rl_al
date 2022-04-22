@@ -30,7 +30,8 @@ args = parser.parse_args()
 all_baselines = ['random', 'bvssb', 'entropy']
 baselineName = str(args.name)
 
-from config import cifarConfig as c
+from config import mockConfig as c
+# from config import cifarConfig as c
 from Data import load_cifar10_custom as load_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,7 +46,8 @@ if args.budget > 0:
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-envFunc = Environment.ALGame
+envFunc = Environment.MockALGame
+# envFunc = Environment.ALGame
 dataset = load_data(return_tensors=True)
 dataset = [d.to(device) for d in dataset]
 # classifier = Classifier.Cifar10ClassifierFactory()

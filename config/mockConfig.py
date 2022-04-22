@@ -2,9 +2,8 @@ import os
 import Misc
 
 # general
-DATASET = 'cifar_custom'
 N_STEPS = 10
-MODEL_NAME = 'CIFAR10'
+MODEL_NAME = 'MOCK'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
 
@@ -13,14 +12,12 @@ BATCH_SIZE = 32
 MEMORY_CAP = 200000
 AGENT_C = 500
 AGENT_GAMMA = 0.99
-AGENT_NHIDDEN = 200
+AGENT_NHIDDEN = 10
 
 # Env config
+MAX_REWARD = 0.0005
 SAMPLE_SIZE = 20
 BUDGET = 2000
-MAX_INTERACTIONS = BUDGET * 10
-INIT_POINTS_PER_CLASS = 1
-CLASS_FROM_SCRATCH = True
 REWARD_SCALE = 1
 REWARD_SHAPING = True
 
@@ -39,13 +36,13 @@ LR = Misc.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSI
 #########################################
 # baselines
 RECORD_AL_PERFORMANCE = False
-BASELINE_FILE = f'baselines/cifar10_custom/bvssb.npy'
-LOWER_BOUND_FILE = f'baselines/cifar10_custom/random.npy'
+BASELINE_FILE = f'baselines/mock/bvssb.npy'
+LOWER_BOUND_FILE = f'baselines/mock/random.npy'
 if os.path.exists(BASELINE_FILE) and os.path.exists(LOWER_BOUND_FILE):
     RECORD_AL_PERFORMANCE = True
 
 def get_description():
-    desc  = f'LOADED CONFIG: {MODEL_NAME} \tDATASET: {DATASET}\n'
+    desc  = f'LOADED CONFIG: {MODEL_NAME}\n'
     desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}\n'
     desc += f'AGENT: batch size={BATCH_SIZE}, C={AGENT_C}\n'
     desc += f'AGENT: learningRate {LR[0]} - {LR[-1]} in {CONVERSION_LR} epochs\n'
