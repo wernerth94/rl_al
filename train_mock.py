@@ -35,11 +35,17 @@ def run():
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:
         f.write(c.get_description())
+    best_model_file = os.path.join(log_dir, 'best_agent.pt')
 
+    moving_reward = 0
+    best_reward = 0
+    epoch_treshold = 30
+    weight = 1.0 / epoch_treshold
     total_epochs = 0
     with RLEnvLogger(summary_writer, env, print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
         with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
             while total_epochs < c.MAX_EPOCHS:
+                epoch_reward = 0
                 done = False
                 state = env.reset()
                 state_buffer = [state]
@@ -52,6 +58,7 @@ def run():
                     new_state, reward, done, _ = env.step(action)
                     state_buffer.append(new_state)
                     reward_buffer.append(reward)
+                    epoch_reward += reward
 
                     if len(reward_buffer) >= c.N_STEPS:
                         replay_buffer.push( (state_buffer.pop(0)[action], reward_buffer,
@@ -67,6 +74,14 @@ def run():
                     state = new_state
                 total_epochs += 1
                 summary_writer.add_scalar('memory/length', len(replay_buffer), total_epochs)
+
+                moving_reward = weight * epoch_reward + (1-weight) * moving_reward
+                if total_epochs > epoch_treshold:
+                    if moving_reward > best_reward:
+                        best_reward = moving_reward
+                        if os.path.exists(best_model_file):
+                            os.remove(best_model_file)
+                        torch.save(agent.agent, best_model_file)
 
 if __name__ == '__main__':
     run()
