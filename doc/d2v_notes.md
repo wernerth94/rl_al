@@ -1,9 +1,0 @@
-- start with dataset
-- feature extractor
-- flatten the dataset
-- feed into D2v Line 423 (watch the multipliers, Hadi is feeding 3 datasets at a time)
-- 
-- build testcase:
-	- don't split MNIST by classes
-	- sample maybe subsets of classes 
-	- build a classifier on top 

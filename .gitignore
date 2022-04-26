@@ -3,9 +3,7 @@ venv/
 
 config/stopSwitch
 memoryBacklog
-backup_*
 
-out*/
 /archive
 /runs/
 evaluation/*.png
@@ -17,9 +15,16 @@ core/__pycache__
 *.log
 *.err
 *.sh
-/logutils/
-/doc/paper/rl_al_paper.aux
-/doc/paper/rl_al_paper.bbl
-/doc/paper/rl_al_paper.blg
-/doc/paper/rl_al_paper.out
-/doc/paper/rl_al_paper.synctex.gz
+
+# Latex temp files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
