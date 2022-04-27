@@ -1,4 +1,4 @@
-from Data import loadCifar
+from Data import load_cifar10_pytorch
 import numpy as np
 import matplotlib.pyplot as plt
 import random, os
@@ -9,36 +9,45 @@ from torch.utils.data import TensorDataset, DataLoader
 from Misc import accuracy
 
 encoder = nn.Sequential(
-    nn.Conv2d(3, 32, (3,3)),
+    nn.Conv2d(3, 32, (3,3), stride=2),
     nn.BatchNorm2d(32),
     nn.LeakyReLU(),
     nn.Conv2d(32, 64, (3,3)),
     nn.BatchNorm2d(64),
     nn.Dropout2d(p=0.05),
     nn.LeakyReLU(),
-    nn.Conv2d(64, 128, (3,3), stride=2),
+    nn.Conv2d(64, 128, (3,3)),
     nn.LeakyReLU(),
-    nn.Conv2d(128, 64, (3,3), stride=2),
+    nn.Conv2d(128, 64, (3,3)),
     nn.BatchNorm2d(64),
     nn.Dropout2d(p=0.05),
     nn.LeakyReLU(),
-    nn.Conv2d(64, 24, (3,3)),
+    nn.Conv2d(64, 12, (2,2)),
+    nn.MaxPool2d(3, stride=2),
     nn.Flatten()
 )
-HIDDEN_DIM = 384
-head = nn.Sequential(
-    # nn.Linear(400, 64),
-    # nn.LeakyReLU(),
-    # nn.Linear(64, 10),
+HIDDEN_DIM = 108
+class_head = nn.Sequential(
     nn.Linear(HIDDEN_DIM, 10),
     nn.Softmax(dim=1)
+)
+recon_head = nn.Sequential(
+    nn.Unflatten(1, (12, 3, 3)),
+    nn.ConvTranspose2d(12, 24, (3,3)),
+    nn.BatchNorm2d(24),
+    nn.ConvTranspose2d(24, 32, (2,2)),
+    nn.BatchNorm2d(32),
+    nn.ConvTranspose2d(32, 64, (3,3)),
+    nn.ConvTranspose2d(64, 64, (3,3)),
+    nn.ConvTranspose2d(64, 32, (3,3), stride=2),
+    nn.ConvTranspose2d(32, 3, (3,3), stride=2)
 )
 
 MODEL_FILE = "encoder_model/encoder.pt"
 
 
 def convert_dataset():
-    x_train, y_train, x_test, y_test = loadCifar(return_tensors=False, channelFirst=True)
+    x_train, y_train, x_test, y_test = load_cifar10_pytorch(return_tensors=False, channelFirst=True)
     encoder = torch.load(MODEL_FILE)
     encoder.eval()
     with torch.no_grad():
@@ -62,11 +71,12 @@ def convert_dataset():
 
 
 def train_new_model():
-    model = nn.Sequential(encoder, head)
-    optimizer = optim.Adam(model.parameters(), lr=0.0005)
+    class_model = nn.Sequential(encoder, class_head)
+    recon_model = nn.Sequential(encoder, recon_head)
+    optimizer = optim.Adam(class_model.parameters(), lr=0.0005)
     loss = nn.CrossEntropyLoss()
 
-    x_train, y_train, x_test, y_test = loadCifar(return_tensors=True, channelFirst=True)
+    x_train, y_train, x_test, y_test = load_cifar10_pytorch(return_tensors=True)
     VAL_SIZE = int(len(x_train) * 0.2)
     val_ids = np.random.choice(len(x_train), size=VAL_SIZE, replace=False)
     val_mask = [ v not in val_ids for v in np.arange(len(x_train)) ]
@@ -88,7 +98,7 @@ def train_new_model():
     try:
         for epoch in range(EPOCHS):
             for batch_x, batch_y in train_dataloader:
-                yHat = model(batch_x)
+                yHat = class_model(batch_x)
                 loss_val = loss(yHat, batch_y)
                 optimizer.zero_grad()
                 loss_val.backward()
@@ -98,7 +108,7 @@ def train_new_model():
             acc = 0.0
             counter = 0
             for batch_x, batch_y in val_dataloader:
-                yHat = model(batch_x)
+                yHat = class_model(batch_x)
                 acc += accuracy(yHat.detach(), batch_y)
                 loss_val = loss(yHat, batch_y)
                 sum += loss_val.detach().cpu().numpy()
@@ -115,9 +125,9 @@ def train_new_model():
     except KeyboardInterrupt as ex:
         pass
 
-    if os.path.exists(MODEL_FILE):
-        os.remove(MODEL_FILE)
-    torch.save(encoder, MODEL_FILE)
+    # if os.path.exists(MODEL_FILE):
+    #     os.remove(MODEL_FILE)
+    # torch.save(encoder, MODEL_FILE)
 
     plt.plot(val_accs, label="Accuracy")
     plt.plot(val_errors, label="Loss")
@@ -127,5 +137,5 @@ def train_new_model():
 
 if __name__ == '__main__':
     #convert_dataset()
-    #train_new_model()
+    train_new_model()
     pass

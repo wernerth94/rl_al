@@ -40,7 +40,7 @@ def run():
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
                                             alpha=0.3)
 
-    current_time = datetime.now().strftime('%b%d_%H-%M-%S')
+    current_time = datetime.now().strftime('%m-%d_%H:%M:%S')
     log_dir = os.path.join('runs', current_time)
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:
