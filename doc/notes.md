@@ -24,6 +24,10 @@
 | Sentiment Class.     | CNN        | 100    | 5           |
 
 ## Further Ideas
+### Reducing noise in the Environment
+For each added sample, we generate augmentation and also add them to the pool <br>
+
+
 ### Dueling Networks
 Disentangling Internal State and Sample-Dependent state <br>
 Serving them as two independent inputs <br>

@@ -36,7 +36,8 @@ class RLEnvLogger:
             self.epoch_reward_list.append(self.current_reward)
             if self.current_epoch % self.print_interval == 0:
                 meanReward = float(np.mean(self.epoch_reward_list[-self.smoothing_window:]))
-                print('%d - reward %1.4f steps %d'%(self.current_epoch, meanReward, self.steps_in_epoch))
+                print('(%d/%d) - reward %1.4f steps %d'%(self.current_epoch, self.env.config.MAX_EPOCHS,
+                                                         meanReward, self.steps_in_epoch))
         self.current_epoch += 1
         self.current_reward = 0
         self.auc = 0

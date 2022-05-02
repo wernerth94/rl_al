@@ -1,3 +1,5 @@
+import torchvision.transforms
+
 from Data import load_cifar10_pytorch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +8,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
+from torchvision.transforms import *
 from Misc import accuracy
 
 encoder = nn.Sequential(
@@ -37,13 +40,27 @@ recon_head = nn.Sequential(
     nn.BatchNorm2d(24),
     nn.ConvTranspose2d(24, 32, (2,2)),
     nn.BatchNorm2d(32),
-    nn.ConvTranspose2d(32, 64, (3,3)),
+    nn.ConvTranspose2d(32, 64, (3,3), stride=2),
     nn.ConvTranspose2d(64, 64, (3,3)),
     nn.ConvTranspose2d(64, 32, (3,3), stride=2),
-    nn.ConvTranspose2d(32, 3, (3,3), stride=2)
+    nn.ConvTranspose2d(32, 3, (3,3)),
+    torchvision.transforms.Resize((32, 32))
 )
 
 MODEL_FILE = "encoder_model/encoder.pt"
+
+
+class AugDataset(TensorDataset):
+    transform = Compose([
+        RandomHorizontalFlip(p=0.3),
+        RandomVerticalFlip(p=0.3),
+        #RandomCrop(25, padding=0),
+        RandomRotation(20)
+    ])
+    def __getitem__(self, idx):
+        x, y = super().__getitem__(idx)
+        x = AugDataset.transform(x)
+        return (x, y)
 
 
 def convert_dataset():
@@ -71,10 +88,13 @@ def convert_dataset():
 
 
 def train_new_model():
+    lr = 0.0001
     class_model = nn.Sequential(encoder, class_head)
     recon_model = nn.Sequential(encoder, recon_head)
-    optimizer = optim.Adam(class_model.parameters(), lr=0.0005)
-    loss = nn.CrossEntropyLoss()
+    optimizer_class = optim.Adam(class_model.parameters(), lr=lr)
+    optimizer_recon = optim.Adam(recon_model.parameters(), lr=lr)
+    loss_ce = nn.CrossEntropyLoss()
+    loss_recon = nn.MSELoss()
 
     x_train, y_train, x_test, y_test = load_cifar10_pytorch(return_tensors=True)
     VAL_SIZE = int(len(x_train) * 0.2)
@@ -85,43 +105,58 @@ def train_new_model():
     x_train = x_train[val_mask]
     y_train = y_train[val_mask]
 
-    train_dataset = TensorDataset(x_train, y_train) # create your datset
-    train_dataloader = DataLoader(train_dataset, batch_size=128) # create your dataloader
-    val_dataloader = DataLoader(TensorDataset(x_val, y_val), batch_size=128) # create your dataloader
+    BATCH_SIZE = 128
+    train_dataloader = DataLoader(AugDataset(x_train, y_train), batch_size=BATCH_SIZE)
+    val_dataloader = DataLoader(AugDataset(x_val, y_val), batch_size=BATCH_SIZE)
 
     EPOCHS = 100
-    BATCH_SIZE = 128
-
-    val_errors = []
+    recon_multiplier = 0.00025
+    class_errors = []
+    recon_errors = []
     val_accs = []
-    best_val = np.inf
     try:
         for epoch in range(EPOCHS):
-            for batch_x, batch_y in train_dataloader:
-                yHat = class_model(batch_x)
-                loss_val = loss(yHat, batch_y)
-                optimizer.zero_grad()
-                loss_val.backward()
-                optimizer.step()
+            if epoch == 20:
+                for param_group in optimizer_recon.param_groups:
+                    param_group['lr'] = lr / 2.0
+                for param_group in optimizer_class.param_groups:
+                    param_group['lr'] = lr / 2.0
+            elif epoch == 40:
+                for param_group in optimizer_recon.param_groups:
+                    param_group['lr'] = lr / 4.0
+                for param_group in optimizer_class.param_groups:
+                    param_group['lr'] = lr / 4.0
 
-            sum = 0.0
+            for batch_x, batch_y in train_dataloader:
+                z = encoder(batch_x)
+                yHat = class_head(z)
+                recon = recon_head(z)
+                loss_val = loss_ce(yHat, batch_y) + recon_multiplier * loss_recon(recon, batch_x)
+                optimizer_class.zero_grad()
+                optimizer_recon.zero_grad()
+                loss_val.backward()
+                optimizer_class.step()
+                optimizer_recon.step()
+
+            sum_class = 0.0
+            sum_recon = 0.0
             acc = 0.0
             counter = 0
             for batch_x, batch_y in val_dataloader:
-                yHat = class_model(batch_x)
+                z = encoder(batch_x)
+                yHat = class_head(z)
+                recon = recon_head(z)
                 acc += accuracy(yHat.detach(), batch_y)
-                loss_val = loss(yHat, batch_y)
-                sum += loss_val.detach().cpu().numpy()
+                class_loss = loss_ce(yHat, batch_y)
+                recon_loss = recon_multiplier * loss_recon(recon, batch_x)
+                sum_class += class_loss.detach().cpu().numpy()
+                sum_recon += recon_loss.detach().cpu().numpy()
                 counter += 1
-            sum /= counter; val_errors.append(sum)
+            sum_class /= counter; class_errors.append(sum_class)
+            sum_recon /= counter; recon_errors.append(sum_recon)
             acc /= counter; val_accs.append(acc)
-            print("%d: %1.4f - %1.3f"%(epoch, sum, acc))
-            if sum < best_val:
-                best_val = sum
-            else:
-                pass
-                # print("Early stop")
-                # break
+            print("%d: class %1.4f recon %1.4f - Acc %1.3f"%(epoch, sum_class, sum_recon, acc))
+
     except KeyboardInterrupt as ex:
         pass
 
@@ -130,7 +165,8 @@ def train_new_model():
     # torch.save(encoder, MODEL_FILE)
 
     plt.plot(val_accs, label="Accuracy")
-    plt.plot(val_errors, label="Loss")
+    plt.plot(class_errors, label="Class. Loss")
+    plt.plot(recon_errors, label="Recon. Loss")
     plt.legend(); plt.grid()
     plt.show()
 

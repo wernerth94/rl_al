@@ -7,8 +7,9 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 
 class MockALGame:
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, noise_level=1, *args, **kwargs):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.noise_level = noise_level
         self.config = config
         self.budget = config.BUDGET
         self.sample_size = config.SAMPLE_SIZE
@@ -35,8 +36,10 @@ class MockALGame:
         sample = []
         for i in range(len(qualities)):
             dp = [self.currentTestF1]
-            dp.append(qualities[i] + bvssb_noise[i])              # BvsSB
-            dp.append(2 + (qualities[i] - 0.6)*2 + entr_noise[i]) # entropy
+            dp.append(qualities[i] +
+                      self.noise_level * bvssb_noise[i]) # BvsSB
+            dp.append(2 + (qualities[i] - 0.6)*2 +
+                      self.noise_level * entr_noise[i])  # entropy
             # Hist of class outputs
             # internal state
             sample.append(dp)

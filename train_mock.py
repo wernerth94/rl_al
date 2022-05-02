@@ -9,7 +9,8 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
-import Classifier
+
+import argparse
 import Environment
 import Agent
 from Misc import *
@@ -21,10 +22,16 @@ from ReplayBuffer import PrioritizedReplayMemory
 
 import config.mockConfig as c
 
-# from memory_profiler import profile
-# @profile
+arg_parse = argparse.ArgumentParser()
+arg_parse.add_argument("--budget", "-b", type=int, default=1000)
+arg_parse.add_argument("--noise", "-n", type=float, default=1)
+
 def run():
-    env = Environment.MockALGame(config=c)
+    args = arg_parse.parse_args()
+    c.BUDGET = args.budget
+    c.MAX_EPOCHS = int(c.MIN_INTERACTIONS / args.budget)
+
+    env = Environment.MockALGame(config=c, noise_level=args.noise)
     agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                        weight_copy_interval=c.AGENT_C)
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
@@ -83,6 +90,13 @@ def run():
                         if os.path.exists(best_model_file):
                             os.remove(best_model_file)
                         torch.save(agent.agent, best_model_file)
+
+    baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET]
+    regret = baseline_perf - moving_reward
+    with open(os.path.join(log_dir, "regret.txt"), "w") as f:
+        f.write(f"Budget: {c.BUDGET}\n")
+        f.write(f"Noise: {args.noise}\n")
+        f.write(f"Regret: {regret}")
 
 if __name__ == '__main__':
     run()
