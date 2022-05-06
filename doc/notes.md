@@ -1,5 +1,5 @@
 ## State Spaces
-----Paper------------------------ **Internal State** ------------------------------------------------------------- **Sample-Dependent** ----------
+--------------------------------------------------- **Internal State** ------------------------------------------------- **Sample-Dependent** ----------
 
 | Paper                                             | Domain                                                    | Pools                                                                                      | Other      |     | Datapoint                                                                                      | Classifier                                                                                             | Prediction                              |
 |---------------------------------------------------|-----------------------------------------------------------|--------------------------------------------------------------------------------------------|------------|-----|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|-----------------------------------------|
@@ -27,6 +27,10 @@
 ### Reducing noise in the Environment
 For each added sample, we generate augmentation and also add them to the pool <br>
 
+### Batch Mode
+Sorting the V-values and taking the Top-K. <br>
+The env can take multiple actions <br>
+The replay buffer receives duplicate transitions for each action a_k
 
 ### Dueling Networks
 Disentangling Internal State and Sample-Dependent state <br>

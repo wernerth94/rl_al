@@ -123,6 +123,14 @@ class DDVN(BaseAgent):
         return total_loss
 
 
+class LinearVN(DDVN):
+
+    def network(self, state_space, action_space, n_hidden):
+        return nn.Sequential(nn.Linear(state_space, n_hidden),
+                             nn.LeakyReLU(),
+                             nn.Linear(n_hidden, 1)
+                             )
+
 
 class DuelingAgent:
     class ActionHead(nn.Module):

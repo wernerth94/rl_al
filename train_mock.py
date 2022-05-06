@@ -32,12 +32,13 @@ def run():
     c.MAX_EPOCHS = int(c.MIN_INTERACTIONS / args.budget)
 
     env = Environment.MockALGame(config=c, noise_level=args.noise)
-    agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-                       weight_copy_interval=c.AGENT_C)
-    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
-                                            alpha=0.3)
+    # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
+    #                    weight_copy_interval=c.AGENT_C)
+    agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=24,
+                           weight_copy_interval=c.AGENT_C)
+    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
 
-    current_time = datetime.now().strftime('%m-%d_%H:%M:%S')
+    current_time = datetime.now().strftime('%m-%d_%H:%M:%S.%f')
     log_dir = f"{c.MODEL_NAME}_{current_time}"
     log_dir = os.path.join('runs', log_dir)
     summary_writer = SummaryWriter(log_dir=log_dir)
@@ -91,7 +92,7 @@ def run():
                             os.remove(best_model_file)
                         torch.save(agent.agent, best_model_file)
 
-    baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET]
+    baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
     regret = baseline_perf - moving_reward
     with open(os.path.join(log_dir, "regret.txt"), "w") as f:
         f.write(f"Budget: {c.BUDGET}\n")
