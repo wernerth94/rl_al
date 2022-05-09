@@ -20,7 +20,7 @@ FOLDER = "encoder_gs"
 os.makedirs(FOLDER, exist_ok=True)
 MODEL_FILE = f"{FOLDER}/encoder_{args.reconmult}.pt"
 
-TRAIN_EPOCHS = 1
+TRAIN_EPOCHS = 100
 
 encoder = nn.Sequential(
     nn.Conv2d(3, 32, (3,3), stride=2),
