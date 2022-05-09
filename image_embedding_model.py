@@ -10,6 +10,17 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 from torchvision.transforms import *
 from Misc import accuracy
+import argparse
+
+arg_parse = argparse.ArgumentParser()
+arg_parse.add_argument("--reconmult", "-r", type=float, default=0.00025)
+args = arg_parse.parse_args()
+
+FOLDER = "encoder_gs"
+os.makedirs(FOLDER, exist_ok=True)
+MODEL_FILE = f"{FOLDER}/encoder_{args.reconmult}.pt"
+
+TRAIN_EPOCHS = 1
 
 encoder = nn.Sequential(
     nn.Conv2d(3, 32, (3,3), stride=2),
@@ -47,7 +58,6 @@ recon_head = nn.Sequential(
     torchvision.transforms.Resize((32, 32))
 )
 
-MODEL_FILE = "encoder_model/encoder.pt"
 
 
 class AugDataset(TensorDataset):
@@ -109,13 +119,11 @@ def train_new_model():
     train_dataloader = DataLoader(AugDataset(x_train, y_train), batch_size=BATCH_SIZE)
     val_dataloader = DataLoader(AugDataset(x_val, y_val), batch_size=BATCH_SIZE)
 
-    EPOCHS = 100
-    recon_multiplier = 0.00025
     class_errors = []
     recon_errors = []
     val_accs = []
     try:
-        for epoch in range(EPOCHS):
+        for epoch in range(TRAIN_EPOCHS):
             if epoch == 20:
                 for param_group in optimizer_recon.param_groups:
                     param_group['lr'] = lr / 2.0
@@ -131,7 +139,7 @@ def train_new_model():
                 z = encoder(batch_x)
                 yHat = class_head(z)
                 recon = recon_head(z)
-                loss_val = loss_ce(yHat, batch_y) + recon_multiplier * loss_recon(recon, batch_x)
+                loss_val = loss_ce(yHat, batch_y) + args.reconmult * loss_recon(recon, batch_x)
                 optimizer_class.zero_grad()
                 optimizer_recon.zero_grad()
                 loss_val.backward()
@@ -148,7 +156,7 @@ def train_new_model():
                 recon = recon_head(z)
                 acc += accuracy(yHat.detach(), batch_y)
                 class_loss = loss_ce(yHat, batch_y)
-                recon_loss = recon_multiplier * loss_recon(recon, batch_x)
+                recon_loss = loss_recon(recon, batch_x)
                 sum_class += class_loss.detach().cpu().numpy()
                 sum_recon += recon_loss.detach().cpu().numpy()
                 counter += 1
@@ -160,15 +168,15 @@ def train_new_model():
     except KeyboardInterrupt as ex:
         pass
 
-    # if os.path.exists(MODEL_FILE):
-    #     os.remove(MODEL_FILE)
-    # torch.save(encoder, MODEL_FILE)
+    if os.path.exists(MODEL_FILE):
+        os.remove(MODEL_FILE)
+    torch.save(encoder, MODEL_FILE)
 
-    plt.plot(val_accs, label="Accuracy")
-    plt.plot(class_errors, label="Class. Loss")
-    plt.plot(recon_errors, label="Recon. Loss")
-    plt.legend(); plt.grid()
-    plt.show()
+    # plt.plot(val_accs, label="Accuracy")
+    # plt.plot(class_errors, label="Class. Loss")
+    # plt.plot(recon_errors, label="Recon. Loss")
+    # plt.legend(); plt.grid()
+    # plt.show()
 
 
 if __name__ == '__main__':

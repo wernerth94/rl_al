@@ -92,12 +92,13 @@ def run():
                             os.remove(best_model_file)
                         torch.save(agent.agent, best_model_file)
 
-    baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
-    regret = baseline_perf - moving_reward
-    with open(os.path.join(log_dir, "regret.txt"), "w") as f:
-        f.write(f"Budget: {c.BUDGET}\n")
-        f.write(f"Noise: {args.noise}\n")
-        f.write(f"Regret: {regret}")
+    if c.RECORD_AL_PERFORMANCE:
+        baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
+        regret = baseline_perf - moving_reward
+        with open(os.path.join(log_dir, "regret.txt"), "w") as f:
+            f.write(f"Budget: {c.BUDGET}\n")
+            f.write(f"Noise: {args.noise}\n")
+            f.write(f"Regret: {regret}")
 
 if __name__ == '__main__':
     run()
