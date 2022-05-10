@@ -23,8 +23,9 @@ from ReplayBuffer import PrioritizedReplayMemory
 import config.mockConfig as c
 
 arg_parse = argparse.ArgumentParser()
-arg_parse.add_argument("--budget", "-b", type=int, default=1000)
-arg_parse.add_argument("--noise", "-n", type=float, default=1)
+arg_parse.add_argument("--budget", "-b", type=int, default=50)
+arg_parse.add_argument("--noise", "-n", type=float, default=0)
+arg_parse.add_argument("--alpha", "-a", type=float, default=0.6)
 
 def run():
     args = arg_parse.parse_args()
@@ -36,7 +37,8 @@ def run():
     #                    weight_copy_interval=c.AGENT_C)
     agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=24,
                            weight_copy_interval=c.AGENT_C)
-    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
+    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
+                                            alpha=args.alpha)
 
     current_time = datetime.now().strftime('%m-%d_%H:%M:%S.%f')
     log_dir = f"{c.MODEL_NAME}_{current_time}"
@@ -98,6 +100,7 @@ def run():
         with open(os.path.join(log_dir, "regret.txt"), "w") as f:
             f.write(f"Budget: {c.BUDGET}\n")
             f.write(f"Noise: {args.noise}\n")
+            f.write(f"Alpha: {args.alpha}\n")
             f.write(f"Regret: {regret}")
 
 if __name__ == '__main__':

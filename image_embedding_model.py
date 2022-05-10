@@ -14,7 +14,6 @@ import torchvision.transforms
 
 from Data import load_cifar10_pytorch
 import numpy as np
-import matplotlib.pyplot as plt
 import random, os
 import torch
 import torch.optim as optim
@@ -184,6 +183,7 @@ def train_new_model():
         os.remove(MODEL_FILE)
     torch.save(encoder, MODEL_FILE)
 
+    # import matplotlib.pyplot as plt
     # plt.plot(val_accs, label="Accuracy")
     # plt.plot(class_errors, label="Class. Loss")
     # plt.plot(recon_errors, label="Recon. Loss")
