@@ -119,5 +119,5 @@ if __name__ == '__main__':
         f.write(f"Alpha: {args.alpha}\n")
         f.write(f"C: {args.c}\n")
         f.write(f"N-Steps: {args.nsteps}\n")
-        f.write(f"Regret mean: {np.mean(regrets)}+-{np.std(regrets)}\n\n")
+        f.write("Regret: %1.4f +- %1.4f\n\n"%(np.mean(regrets), np.std(regrets)))
         f.write(f"Values: \n{regrets}")
