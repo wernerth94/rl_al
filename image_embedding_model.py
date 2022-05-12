@@ -196,8 +196,8 @@ def train_new_triplet(x_train, y_train, x_test, y_test, train_epochs=100):
 
 def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
     lr = 0.0001
-    class_model = nn.Sequential(encoder, class_head)
-    recon_model = nn.Sequential(encoder, recon_head)
+    class_model = nn.Sequential(encoder, class_head).to(device)
+    recon_model = nn.Sequential(encoder, recon_head).to(device)
     optimizer_class = optim.Adam(class_model.parameters(), lr=lr)
     optimizer_recon = optim.Adam(recon_model.parameters(), lr=lr)
     loss_ce = nn.CrossEntropyLoss()
