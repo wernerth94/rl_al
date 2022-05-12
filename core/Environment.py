@@ -134,12 +134,12 @@ class ALGame:
         mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(alFeatures), 1)
         # Last working version:
         # no data normalization
-        # state = torch.cat([alFeatures, mean_labeled, mean_unlabeled], dim=1)
+        state = torch.cat([alFeatures, mean_labeled, mean_unlabeled], dim=1)
 
         # compute difference of the labeled pool and the sample
-        diff_labeled = torch.abs(sample_x - mean_labeled)
-        diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
-        state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
+        # diff_labeled = torch.abs(sample_x - mean_labeled)
+        # diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
+        # state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
         return state
 
 

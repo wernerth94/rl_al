@@ -28,9 +28,9 @@ import config.mockConfig as c
 
 arg_parse = argparse.ArgumentParser()
 arg_parse.add_argument("--budget", "-b", type=int, default=50)
-arg_parse.add_argument("--noise", "-n", type=float, default=0)
-arg_parse.add_argument("--alpha", "-a", type=float, default=0.6)
-arg_parse.add_argument("--c", "-c", type=int, default=500)
+arg_parse.add_argument("--noise",  "-n", type=float, default=0)
+arg_parse.add_argument("--alpha",  "-a", type=float, default=0.6)
+arg_parse.add_argument("--c",      "-c", type=int, default=500)
 arg_parse.add_argument("--nsteps", "-s", type=int, default=10)
 args = arg_parse.parse_args()
 
