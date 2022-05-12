@@ -167,8 +167,8 @@ def train_new_triplet(x_train, y_train, x_test, y_test, train_epochs=100):
             epoch_error = 0
             for batch_x, batch_y in train_dataloader:
                 z = encoder(batch_x)
-                pos_sample = torch.zeros(torch.Size([0]) + img_size)
-                neg_sample = torch.zeros(torch.Size([0]) + img_size)
+                pos_sample = torch.zeros(torch.Size([0]) + img_size).to(device)
+                neg_sample = torch.zeros(torch.Size([0]) + img_size).to(device)
                 for i, label in enumerate(batch_y):
                     label = int(torch.argmax(label))
                     s = sample_point(label)
