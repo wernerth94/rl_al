@@ -88,7 +88,7 @@ class AugDataset(TensorDataset):
         return (x, y)
 
 class EarlyStop:
-    def __init__(self, threshold=0.005, patience=3):
+    def __init__(self, threshold=0.001, patience=5):
         self.threshold = threshold
         self.loss_multiplier = 1.0 + threshold
         self.patience = patience
