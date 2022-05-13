@@ -28,6 +28,9 @@ arg_parse.add_argument("--reconmult", "-r", type=float, default=0.0)
 arg_parse.add_argument("--triplet", "-t", type=bool, default=False)
 args = arg_parse.parse_args()
 
+print(f"--triplet training: {args.triplet}")
+print(f"--reconmult: {args.reconmult}")
+
 FOLDER = "encoder_gs"
 os.makedirs(FOLDER, exist_ok=True)
 MODEL_FILE = f"{FOLDER}/encoder_{args.triplet}_{args.reconmult}.pt"
