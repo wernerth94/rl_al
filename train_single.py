@@ -51,7 +51,7 @@ def run():
     epoch_treshold = 30
     weight = 1.0 / epoch_treshold
     total_epochs = 0
-    with RLEnvLogger(summary_writer, env, print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
+    with RLEnvLogger(summary_writer, env, c, print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
         with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
             while total_epochs < c.MAX_EPOCHS:
                 epoch_reward = 0

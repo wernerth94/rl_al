@@ -298,27 +298,29 @@ class DDQN(BaseAgent):
 
     def fit(self, memory_batch, weights=None, lr=None, return_priorities=False):
         state = memory_batch[0]
-        rewards = memory_batch[1]
-        next_states = memory_batch[2]
-        dones = memory_batch[3]
+        actions = memory_batch[1]
+        rewards = memory_batch[2]
+        next_states = memory_batch[3]
+        dones = memory_batch[4]
 
         q_hat, _ = self.predict(state)
         if weights is None:
             weights = torch.ones(len(q_hat))
+        q_hat = q_hat.gather(1, actions.unsqueeze(1))
 
         with torch.no_grad():
             q = q_hat.clone()
             q_target, _ = self.predict(next_states, model='target')
             next_action = torch.argmax(q_target, dim=1)
 
-            expected_rewards_c = q_target[range(len(q_target)), next_action]
+            expected_rewards_c = q_target.gather(1, next_action.unsqueeze(1))
 
             r_c = torch.zeros(len(state)).to(self.device)
             for i, rew in enumerate(rewards):
                 r_c += (self.gamma ** i) * rew # [:, 0]
 
             for b, rew in enumerate(r_c):
-                q[b, next_action[b]] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b]
+                q[b, 0] = rew + (1 - dones[b]) * (self.gamma ** len(rewards)) * expected_rewards_c[b, 0]
 
         total_loss = torch.sum(weights * torch.sum(q_hat - q, dim=1)**2)
         self._apply_update(total_loss, lr)

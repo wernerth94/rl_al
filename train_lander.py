@@ -1,9 +1,6 @@
 import os
 import sys
 import getpass
-
-import numpy as np
-
 print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
 
@@ -13,42 +10,28 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
-
-import argparse
-import Environment
+import gym
 import Agent
 from Misc import *
 from env_logger import RLEnvLogger
 from agent_logger import RLAgentLogger
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
-from ReplayBuffer import PrioritizedReplayMemory
+from ReplayBuffer import *
 
-import config.mockConfig as c
+import config.landerConfig as c
 
-arg_parse = argparse.ArgumentParser()
-arg_parse.add_argument("--budget", "-b", type=int, default=50)
-arg_parse.add_argument("--noise",  "-n", type=float, default=0)
-arg_parse.add_argument("--alpha",  "-a", type=float, default=0.6)
-arg_parse.add_argument("--c",      "-c", type=int, default=500)
-arg_parse.add_argument("--nsteps", "-s", type=int, default=10)
-args = arg_parse.parse_args()
+def run():
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def run(log_dir):
-    c.BUDGET = args.budget
-    c.MAX_EPOCHS = int(c.MIN_INTERACTIONS / args.budget)
-    c.AGENT_C = args.c
-    c.N_STEPS = args.nsteps
+    env = gym.make('LunarLander-v2')
+    agent = Agent.DDQN(env.observation_space.shape[0], env.action_space.n,
+                       gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN, weight_copy_interval=c.AGENT_C)
 
-    env = Environment.MockALGame(config=c, noise_level=args.noise)
-    # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-    #                    weight_copy_interval=c.AGENT_C)
-    agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=24,
-                           weight_copy_interval=c.AGENT_C)
-    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
-                                            alpha=args.alpha)
+    replay_buffer = PrioritizedQReplay(c.MEMORY_CAP, env.observation_space.shape[0], c.N_STEPS)
 
-
+    current_time = datetime.now().strftime('%m-%d_%H:%M:%S')
+    log_dir = os.path.join('runs', f"lander_{current_time}")
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:
         f.write(c.get_description())
@@ -59,27 +42,31 @@ def run(log_dir):
     epoch_treshold = 30
     weight = 1.0 / epoch_treshold
     total_epochs = 0
-    with RLEnvLogger(summary_writer, env, c, print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
+    with RLEnvLogger(summary_writer, env, c, print_interval=1, record_al_perf=False) as env:
         with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
             while total_epochs < c.MAX_EPOCHS:
                 epoch_reward = 0
                 done = False
                 state = env.reset()
+                state = torch.from_numpy(state).to(device)
                 state_buffer = [state]
+                action_buffer = []
                 reward_buffer = []
                 while not done:
                     greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                     q, action = agent.predict(state, greed=greed)
                     action = action[0].item()
+                    action_buffer.append(action)
 
                     new_state, reward, done, _ = env.step(action)
+                    new_state = torch.from_numpy(new_state).to(device)
                     state_buffer.append(new_state)
                     reward_buffer.append(reward)
                     epoch_reward += reward
 
                     if len(reward_buffer) >= c.N_STEPS:
-                        replay_buffer.push( (state_buffer.pop(0)[action], reward_buffer,
-                                             torch.mean(state_buffer[-1], dim=0), done) )
+                        replay_buffer.push( (state_buffer.pop(0), action_buffer.pop(0), reward_buffer,
+                                             state_buffer[-1], done) )
                         reward_buffer.pop(0)
 
                     if total_epochs > c.WARMUP_EPOCHS:
@@ -103,21 +90,9 @@ def run(log_dir):
     if c.RECORD_AL_PERFORMANCE:
         baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
         regret = baseline_perf - moving_reward
-        return regret
+        with open(os.path.join(log_dir, "regret.txt"), "w") as f:
+            f.write(f"Regret: {regret}\n=========================\n")
+            f.write(f"{c.get_description()}")
 
 if __name__ == '__main__':
-    current_time = datetime.now().strftime('%m-%d_%H:%M:%S.%f')
-    log_dir = f"{c.MODEL_NAME}_{current_time}"
-    log_dir = os.path.join('runs', log_dir)
-    regrets = list()
-    for r in range(3):
-        current_log_dir = os.path.join(log_dir, str(r))
-        regrets.append(run(current_log_dir))
-    with open(os.path.join(log_dir, "result.txt"), "w") as f:
-        f.write(f"Budget: {c.BUDGET}\n")
-        f.write(f"Noise: {args.noise}\n")
-        f.write(f"Alpha: {args.alpha}\n")
-        f.write(f"C: {args.c}\n")
-        f.write(f"N-Steps: {args.nsteps}\n")
-        f.write("Regret: %1.4f +- %1.4f\n\n"%(np.mean(regrets), np.std(regrets)))
-        f.write(f"Values: \n{regrets}")
+    run()

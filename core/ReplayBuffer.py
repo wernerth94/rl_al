@@ -68,16 +68,18 @@ class PrioritizedReplayMemory(object):
     def beta_by_frame(self, frame_idx):
         return min(1.0, self.beta_start + frame_idx * (1.0 - self.beta_start) / self.beta_frames)
 
+    def _combine(self, data):
+        combined = torch.cat([
+            data[0],
+            torch.Tensor(data[1]).to(device),
+            data[2],
+            torch.Tensor([data[3]]).to(device),
+        ], dim=0)
+        return combined
 
     def push(self, data):
         if isinstance(data, tuple):
-            combined = torch.cat([
-                data[0],
-                torch.Tensor(data[1]).to(device),
-                data[2],
-                torch.Tensor([data[3]]).to(device),
-            ], dim=0)
-            data = combined
+            data = self._combine(data)
 
         idx = self._next_idx
 
@@ -105,7 +107,7 @@ class PrioritizedReplayMemory(object):
         return res
 
 
-    def _reorganize(self, encoded_sample):
+    def _split(self, encoded_sample):
         s, r, s_p, d = [], [], [], []
         for i in encoded_sample:
             j = self.state_space
@@ -174,7 +176,7 @@ class PrioritizedReplayMemory(object):
             weights.append(weight / max_weight)
         weights = torch.tensor(weights, device=device, dtype=torch.float)
         encoded_sample = self._encode_sample(idxes)
-        encoded_sample = self._reorganize(encoded_sample)
+        encoded_sample = self._split(encoded_sample)
         return encoded_sample, idxes, weights
 
     def update_priorities(self, idxes, priorities):
@@ -202,6 +204,38 @@ class PrioritizedReplayMemory(object):
         return len(self._storage)
 
 
+class PrioritizedQReplay(PrioritizedReplayMemory):
+    def _combine(self, data):
+        combined = torch.cat([
+            data[0],
+            torch.Tensor([data[1]]).to(device),
+            torch.Tensor(data[2]).to(device),
+            data[3],
+            torch.Tensor([data[4]]).to(device),
+        ], dim=0)
+        return combined
+
+    def _split(self, encoded_sample):
+        s, a, r, s_p, d = [], [], [], [], []
+        for i in encoded_sample:
+            j = self.state_space
+            s.append(i[:j])
+            a.append(i[j])
+            j += 1
+            r.append(i[j:j + self.n_step])
+            j += self.n_step
+            s_p.append(i[j:j + self.state_space])
+            d.append(i[-1])
+        encoded_sample = [
+            torch.stack(s),
+            torch.stack(a).type(torch.LongTensor).to(device),
+            torch.stack(r).T.to(device),
+            torch.stack(s_p),
+            torch.Tensor(d).to(device),
+        ]
+        return encoded_sample
+
+
 class DuelingPrioritizedReplay(PrioritizedReplayMemory):
 
     def __init__(self, size, context_space, state_space, n_step, alpha=0.6, beta_start=0.4, beta_frames=100000):
@@ -221,7 +255,7 @@ class DuelingPrioritizedReplay(PrioritizedReplayMemory):
             data = combined
         super().push(data)
 
-    def _reorganize(self, encoded_sample):
+    def _split(self, encoded_sample):
         cntx, s, r, cntx_p, s_p, d = [], [], [], [], [], []
         for i in encoded_sample:
             j = self.context_space

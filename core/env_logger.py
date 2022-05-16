@@ -5,15 +5,16 @@ from collections import OrderedDict
 
 class RLEnvLogger:
 
-    def __init__(self, writer, env, print_interval, smoothing_window=100, record_al_perf=True):
+    def __init__(self, writer, env, config, print_interval, smoothing_window=100, record_al_perf=True):
         self.env = env
+        self.config = config
         self.print_interval = print_interval
         self.smoothing_window = smoothing_window
         self.writer = writer
         self.record_al_perf = record_al_perf
         if record_al_perf:
-            self.al_baseline = np.load(env.config.BASELINE_FILE)[0,:env.budget] # select the mean performance
-            self.al_lower_bound = np.load(env.config.LOWER_BOUND_FILE)[0,:env.budget] # select the mean performance
+            self.al_baseline = np.load(config.BASELINE_FILE)[0,:env.budget] # select the mean performance
+            self.al_lower_bound = np.load(config.LOWER_BOUND_FILE)[0,:env.budget] # select the mean performance
 
     def reset(self):
         end = time.time()
@@ -36,7 +37,7 @@ class RLEnvLogger:
             self.epoch_reward_list.append(self.current_reward)
             if self.current_epoch % self.print_interval == 0:
                 meanReward = float(np.mean(self.epoch_reward_list[-self.smoothing_window:]))
-                print('(%d/%d) - reward %1.4f steps %d'%(self.current_epoch, self.env.config.MAX_EPOCHS,
+                print('(%d/%d) - reward %1.4f steps %d'%(self.current_epoch, self.config.MAX_EPOCHS,
                                                          meanReward, self.steps_in_epoch))
         self.current_epoch += 1
         self.current_reward = 0
@@ -66,7 +67,8 @@ class RLEnvLogger:
         self.total_steps += 1
         self.steps_in_epoch += 1
         self.current_reward += reward
-        self.auc += self.env.currentTestF1
+        if hasattr(self.env, "currentTestF1"):
+            self.auc += self.env.currentTestF1
         return new_state, reward, done, _
 
 
