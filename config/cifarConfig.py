@@ -3,7 +3,7 @@ import Misc
 
 # general
 DATASET = 'cifar_custom'
-N_STEPS = 10
+N_STEPS = 1
 MODEL_NAME = 'CIFAR10'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1

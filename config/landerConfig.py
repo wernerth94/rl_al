@@ -17,10 +17,8 @@ AGENT_NHIDDEN = 200
 MAX_EPOCHS = 10000
 WARMUP_EPOCHS = 20
 
-# 50 epochs with 2k budget = 100000
-CONVERSION_GREED = 1000
-# 400 epochs with 2k budget
-CONVERSION_LR = 1000
+CONVERSION_GREED = 3000
+CONVERSION_LR = 4000
 GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
 LR = Misc.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 

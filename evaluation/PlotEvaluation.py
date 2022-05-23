@@ -55,12 +55,12 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
-# plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
-# plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
-# plot(np.load('../baselines/cifar10_custom/agent_b2000_s20.npy'), 'red', displayName='Agent', window=5)
-plot(np.load('../baselines/mock/random.npy'), 'gray', displayName='random', window=5)
-plot(np.load('../baselines/mock/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
-#plot(np.load('../baselines/cifar10_custom/agent_b2000_s20.npy'), 'red', displayName='Agent', window=5)
+plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
+plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
+plot(np.load('../baselines/cifar10_custom/agent_b2000_s20.npy'), 'red', displayName='Agent Old', window=5)
+# plot(np.load('../baselines/mock/random.npy'), 'gray', displayName='random', window=5)
+# plot(np.load('../baselines/mock/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
+plot(np.load('../baselines/agent_b2000_s20.npy'), 'orange', displayName='Agent New', window=5)
 
 # plot(np.load('../baselines/bvssb_b5000_s10.npy'), 'red', displayName='BvsSB_10', window=5)
 # plot(np.load('../baselines/bvssb_b5000_s100.npy'), 'orange', displayName='BvsSB_100', window=5)

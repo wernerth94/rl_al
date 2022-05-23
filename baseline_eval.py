@@ -27,11 +27,10 @@ args = parser.parse_args()
 
 ##################################
 ### MAIN
-all_baselines = ['random', 'bvssb', 'entropy']
 baselineName = str(args.name)
 
-from config import mockConfig as c
-# from config import cifarConfig as c
+# from config import mockConfig as c
+from config import cifarConfig as c
 from Data import load_cifar10_custom as load_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,8 +45,8 @@ if args.budget > 0:
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-envFunc = Environment.MockALGame
-# envFunc = Environment.ALGame
+# envFunc = Environment.MockALGame
+envFunc = Environment.ALGame
 dataset = load_data(return_tensors=True)
 dataset = [d.to(device) for d in dataset]
 # classifier = Classifier.Cifar10ClassifierFactory()
@@ -78,7 +77,7 @@ for run in range(args.iterations):
         assert args.chkpt != ''
         # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
         #                    weight_copy_interval=c.AGENT_C)
-        path = os.path.join("runs", args.chkpt, "agent.pt")
+        path = os.path.join("runs", args.chkpt, "best_agent.pt")
         agent = torch.load(path, map_location=device)
         agent.device = device
         agent.to(device)

@@ -43,7 +43,7 @@ def run():
     weight = 1.0 / epoch_treshold
     total_epochs = 0
     with RLEnvLogger(summary_writer, env, c, print_interval=1, record_al_perf=False) as env:
-        with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
+        with RLAgentLogger(summary_writer, agent, checkpoint_interval=1000) as agent:
             while total_epochs < c.MAX_EPOCHS:
                 epoch_reward = 0
                 done = False
@@ -87,12 +87,27 @@ def run():
                             os.remove(best_model_file)
                         torch.save(agent.agent, best_model_file)
 
-    if c.RECORD_AL_PERFORMANCE:
-        baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
-        regret = baseline_perf - moving_reward
-        with open(os.path.join(log_dir, "regret.txt"), "w") as f:
-            f.write(f"Regret: {regret}\n=========================\n")
-            f.write(f"{c.get_description()}")
+def test(log_dir):
+    env = gym.make('LunarLander-v2')
+    best_model_file = os.path.join(log_dir, 'agent.pt')
+    agent = torch.load(best_model_file)
+    total_epochs = 0
+    while total_epochs < 100:
+        epoch_reward = 0
+        done = False
+        state = env.reset()
+        while not done:
+            env.render()
+            q, action = agent.predict(state, greed=0.0)
+            action = action[0].item()
+            new_state, reward, done, _ = env.step(action)
+            epoch_reward += reward
+            state = new_state
+
+        total_epochs += 1
+        print(f"{total_epochs}/100: %1.4f"%epoch_reward)
 
 if __name__ == '__main__':
-    run()
+    # run()
+    test("runs/lander_05-16_10:00:22")
+    pass
