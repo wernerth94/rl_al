@@ -40,6 +40,9 @@ def run(log_dir):
     c.AGENT_C = args.c
     c.N_STEPS = args.nsteps
 
+    if c.RECORD_AL_PERFORMANCE:
+        baseline_perf = np.load(c.BASELINE_FILE)[0]
+
     env = Environment.MockALGame(config=c, noise_level=args.noise)
     # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
     #                    weight_copy_interval=c.AGENT_C)
@@ -54,10 +57,9 @@ def run(log_dir):
         f.write(c.get_description())
     best_model_file = os.path.join(log_dir, 'best_agent.pt')
 
-    moving_reward = 0
-    best_reward = 0
-    epoch_treshold = 30
-    weight = 1.0 / epoch_treshold
+    moving_performance = -1
+    best_performance = 0
+    weight = 0.99 # Tensorboard style averaging
     total_epochs = 0
     with RLEnvLogger(summary_writer, env, c, print_interval=1, record_al_perf=c.RECORD_AL_PERFORMANCE) as env:
         with RLAgentLogger(summary_writer, agent, checkpoint_interval=1) as agent:
@@ -89,20 +91,23 @@ def run(log_dir):
                         replay_buffer.update_priorities(idxs, prios)
 
                     state = new_state
-                total_epochs += 1
-                summary_writer.add_scalar('memory/length', len(replay_buffer), total_epochs)
 
-                moving_reward = weight * epoch_reward + (1-weight) * moving_reward
-                if total_epochs > epoch_treshold:
-                    if moving_reward > best_reward:
-                        best_reward = moving_reward
+                if total_epochs == 0:
+                    moving_performance = env.env.currentTestF1
+                moving_performance = weight * moving_performance + (1 - weight) * env.env.currentTestF1
+                if total_epochs > c.CONVERSION_GREED:
+                    # only save best agents after the greed is reduced
+                    if moving_performance > best_performance:
+                        best_performance = moving_performance
                         if os.path.exists(best_model_file):
                             os.remove(best_model_file)
                         torch.save(agent.agent, best_model_file)
 
+                total_epochs += 1
+                summary_writer.add_scalar('memory/length', len(replay_buffer), total_epochs)
+
     if c.RECORD_AL_PERFORMANCE:
-        baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
-        regret = baseline_perf - moving_reward
+        regret = baseline_perf[c.BUDGET -1] - moving_performance
         return regret
 
 if __name__ == '__main__':

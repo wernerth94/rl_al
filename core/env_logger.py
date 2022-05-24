@@ -36,9 +36,8 @@ class RLEnvLogger:
         if self.current_epoch > 0:
             self.epoch_reward_list.append(self.current_reward)
             if self.current_epoch % self.print_interval == 0:
-                meanReward = float(np.mean(self.epoch_reward_list[-self.smoothing_window:]))
                 print('(%d/%d) - reward %1.4f steps %d'%(self.current_epoch, self.config.MAX_EPOCHS,
-                                                         meanReward, self.steps_in_epoch))
+                                                         self.current_reward, self.steps_in_epoch))
         self.current_epoch += 1
         self.current_reward = 0
         self.auc = 0
@@ -61,7 +60,7 @@ class RLEnvLogger:
     def step(self, action):
         new_state, reward, done, _ = self.env.step(action)
         if self.record_al_perf:
-            # record the performance as a moving average
+            # record the performance in Tensorboard style moving average
             self.al_performance[self.env.added_images-1] = 0.95 * self.al_performance[self.env.added_images-1] + \
                                                            0.05 * self.env.currentTestF1
         self.total_steps += 1
