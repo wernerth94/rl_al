@@ -9,6 +9,7 @@ print(F"The virtualenv is: {sys.prefix}")
 
 # path additions for the cluster
 sys.path.append("core")
+sys.path.append("rl_core")
 sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
