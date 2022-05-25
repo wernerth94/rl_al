@@ -37,5 +37,9 @@ Disentangling Internal State and Sample-Dependent state <br>
 Serving them as two independent inputs <br>
 Dueling networks compute the advantage between internal state (context) and the sample (C51, Rainbow)
 
+### Imitation Learning
+Imitation Learning optimizes the likelyhood of the policy recreating the best known solutiuon (BvsSB) <br>
+This possibly guides the model through the complex state stace with image embeddings
+
 ### Meta Features for the Pools
 Dataset to Vec
