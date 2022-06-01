@@ -28,16 +28,18 @@ from ReplayBuffer import PrioritizedReplayMemory
 import config.mockConfig as c
 
 arg_parse = argparse.ArgumentParser()
-arg_parse.add_argument("--budget", "-b", type=int, default=50)
-arg_parse.add_argument("--noise",  "-n", type=float, default=0)
+arg_parse.add_argument("--budget", "-b", type=int, default=200)
+arg_parse.add_argument("--noise",  "-n", type=float, default=0.0)
 arg_parse.add_argument("--alpha",  "-a", type=float, default=0.6)
 arg_parse.add_argument("--c",      "-c", type=int, default=500)
-arg_parse.add_argument("--nsteps", "-s", type=int, default=10)
+arg_parse.add_argument("--nsteps", "-s", type=int, default=1)
+arg_parse.add_argument("--interactions", "-i", type=int, default=500000)
 args = arg_parse.parse_args()
 
 def run(log_dir):
     c.BUDGET = args.budget
-    c.MAX_EPOCHS = int(c.MIN_INTERACTIONS / args.budget)
+    c.MIN_INTERACTIONS = args.interactions
+    c.MAX_EPOCHS = int(args.interactions / args.budget)
     c.AGENT_C = args.c
     c.N_STEPS = args.nsteps
 
@@ -125,5 +127,7 @@ if __name__ == '__main__':
         f.write(f"Alpha: {args.alpha}\n")
         f.write(f"C: {args.c}\n")
         f.write(f"N-Steps: {args.nsteps}\n")
+        f.write(f"LR: {c.LR[0]}\n")
+        f.write(f"Interactions: {args.interactions}\n")
         f.write("Regret: %1.4f +- %1.4f\n\n"%(np.mean(regrets), np.std(regrets)))
         f.write(f"Values: \n{regrets}")

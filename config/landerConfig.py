@@ -1,4 +1,4 @@
-import Misc
+import util
 
 # general
 N_STEPS = 10
@@ -19,8 +19,8 @@ WARMUP_EPOCHS = 20
 
 CONVERSION_GREED = 3000
 CONVERSION_LR = 4000
-GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
-LR = Misc.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
+LR = util.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths

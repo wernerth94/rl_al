@@ -1,8 +1,8 @@
 import os
-import Misc
+import util
 
 # general
-N_STEPS = 10
+N_STEPS = 1
 MODEL_NAME = 'MOCK'
 USE_STOPSWITCH = True
 PRINT_FREQ = 1
@@ -28,8 +28,8 @@ WARMUP_EPOCHS = 5
 
 CONVERSION_GREED = 50 * BUDGET # 50 epochs
 CONVERSION_LR = 200 * BUDGET # 200 epochs
-GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
-LR = Misc.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
+LR = util.parameterPlan(0.01, 0.001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths

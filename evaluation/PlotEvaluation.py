@@ -32,7 +32,7 @@ def plot(curve, color, displayName, window=5):
     auc = round(sum(avrgCurve) / len(avrgCurve), 3)
     fullName = f"{displayName} improv. {improvement} auc {auc}"
     x = np.arange(len(avrgCurve))
-    plt.fill_between(x, avrgCurve-stdCurve, avrgCurve+stdCurve, alpha=0.3, facecolor=color)
+    plt.fill_between(x, avrgCurve-stdCurve, avrgCurve+stdCurve, alpha=0.5, facecolor=color)
     plt.plot(x, avrgCurve, label=fullName, linewidth=LINE_WIDTH, c=color)
 
 
@@ -57,10 +57,9 @@ sns.set()
 
 plot(np.load('../baselines/cifar10_custom/random.npy'), 'gray', displayName='random', window=5)
 plot(np.load('../baselines/cifar10_custom/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
-plot(np.load('../baselines/cifar10_custom/agent_b2000_s20.npy'), 'red', displayName='Agent Old', window=5)
 # plot(np.load('../baselines/mock/random.npy'), 'gray', displayName='random', window=5)
 # plot(np.load('../baselines/mock/bvssb.npy'), 'navy', displayName='BvsSB', window=5)
-plot(np.load('../baselines/agent_b2000_s20.npy'), 'orange', displayName='Agent New', window=5)
+plot(np.load('../baselines/cifar10_custom/agent_b2000_s20.npy'), 'orange', displayName='Agent', window=5)
 
 # plot(np.load('../baselines/bvssb_b5000_s10.npy'), 'red', displayName='BvsSB_10', window=5)
 # plot(np.load('../baselines/bvssb_b5000_s100.npy'), 'orange', displayName='BvsSB_100', window=5)
@@ -68,5 +67,6 @@ plot(np.load('../baselines/agent_b2000_s20.npy'), 'orange', displayName='Agent N
 # plot(np.load('../baselines/random_b5000_s10.npy'), 'black', displayName='random', window=5)
 
 plt.legend(fontsize='x-small')
+plt.ylim(0.5, 0.8)
 plt.savefig('plot_'+c.MODEL_NAME+'.png')
 plt.show()

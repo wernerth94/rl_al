@@ -1,5 +1,5 @@
 import os
-import Misc
+import util
 
 # general
 DATASET = 'mnist_mobileNet'
@@ -40,12 +40,12 @@ WARMUP = 1000
 ##################################################################
 N_EXPLORE = 220000
 N_CONVERSION = 70000
-GREED = Misc.parameterPlan(0.1, 0.1, warmup=N_EXPLORE, conversion=N_CONVERSION)
-LR = Misc.parameterPlan(0.001, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
+GREED = util.parameterPlan(0.1, 0.1, warmup=N_EXPLORE, conversion=N_CONVERSION)
+LR = util.parameterPlan(0.001, 0.001, warmup=N_EXPLORE, conversion=N_CONVERSION)
 ##################################################################
 
 # Game Length
-GL = Misc.asympParameterPlan(BUDGET, BUDGET, warmup=WARMUP + int(0.1*MIN_INTERACTIONS), conversion=int(0.6*MIN_INTERACTIONS))
+GL = util.asympParameterPlan(BUDGET, BUDGET, warmup=WARMUP + int(0.1*MIN_INTERACTIONS), conversion=int(0.6*MIN_INTERACTIONS))
 
 # file paths
 OUTPUT_FOLDER = 'out_'+MODEL_NAME

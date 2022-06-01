@@ -1,5 +1,5 @@
 import os
-import Misc
+import util
 
 # general
 DATASET = 'cifar_custom'
@@ -33,8 +33,8 @@ WARMUP_EPOCHS = 5
 CONVERSION_GREED = int(100000 / BUDGET)
 # 400 epochs with 2k budget
 CONVERSION_LR = int(800000 / BUDGET)
-GREED = Misc.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
-LR = Misc.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
+LR = util.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths
