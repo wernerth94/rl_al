@@ -1,3 +1,3 @@
 [submodule "rl_core"]
 	path = rl_core
-	url = git@software.ismll.uni-hildesheim.de:ISMLL-internal/rl-core.git
+	url = https://software.ismll.uni-hildesheim.de/werner/rl_al.git
