@@ -60,8 +60,8 @@ def run():
                 state = env.reset()
                 state_buffer = [state]
                 reward_buffer = []
+                greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                 while not done:
-                    greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                     q, action = agent.predict(state, greed=greed)
                     action = action[0].item()
 

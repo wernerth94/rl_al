@@ -28,23 +28,31 @@ from ReplayBuffer import PrioritizedReplayMemory
 import config.mockConfig as c
 
 arg_parse = argparse.ArgumentParser()
-arg_parse.add_argument("--budget", "-b", type=int, default=200)
 arg_parse.add_argument("--noise",  "-n", type=float, default=0.0)
-arg_parse.add_argument("--alpha",  "-a", type=float, default=0.6)
-arg_parse.add_argument("--c",      "-c", type=int, default=500)
-arg_parse.add_argument("--nsteps", "-s", type=int, default=1)
-arg_parse.add_argument("--interactions", "-i", type=int, default=500000)
+arg_parse.add_argument("--alpha",  "-a", type=float)
+arg_parse.add_argument("--budget", "-b", type=int)
+arg_parse.add_argument("--c",      "-c", type=int)
+arg_parse.add_argument("--nsteps", "-s", type=int)
+arg_parse.add_argument("--interactions", "-i", type=int)
 args = arg_parse.parse_args()
 
 def run(log_dir):
-    c.BUDGET = args.budget
-    c.MIN_INTERACTIONS = args.interactions
-    c.MAX_EPOCHS = int(args.interactions / args.budget)
-    c.AGENT_C = args.c
-    c.N_STEPS = args.nsteps
+    if args.budget: c.BUDGET = args.budget
+    if args.interactions:
+        c.MIN_INTERACTIONS = args.interactions
+        c.MAX_EPOCHS = int(args.interactions / args.budget)
+    if args.c: c.AGENT_C = args.c
+    if args.nsteps: c.N_STEPS = args.nsteps
+    if args.alpha: c.MEMORY_ALPHA = args.alpha
+
+    print("\n\nUPDATED CONFIG \n===============")
+    print(c.get_description())
 
     if c.RECORD_AL_PERFORMANCE:
         baseline_perf = np.load(c.BASELINE_FILE)[0]
+
+    early_stop_patience = int(0.1 * c.MAX_EPOCHS)
+    early_stop_counter = 0
 
     env = Environment.MockALGame(config=c, noise_level=args.noise)
     # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
@@ -52,8 +60,7 @@ def run(log_dir):
     agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=24,
                            weight_copy_interval=c.AGENT_C)
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
-                                            alpha=args.alpha)
-
+                                            alpha=c.MEMORY_ALPHA)
 
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:
@@ -72,8 +79,8 @@ def run(log_dir):
                 state = env.reset()
                 state_buffer = [state]
                 reward_buffer = []
+                greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                 while not done:
-                    greed = c.GREED[min(total_epochs, len(c.GREED)-1)]
                     q, action = agent.predict(state, greed=greed)
                     action = action[0].item()
 
@@ -99,8 +106,12 @@ def run(log_dir):
                     moving_performance = env.env.currentTestF1
                 moving_performance = weight * moving_performance + (1 - weight) * env.env.currentTestF1
                 if total_epochs > c.CONVERSION_GREED:
-                    # only save best agents after the greed is reduced
+                    # only save best agents / early stop after the greed is reduced
+                    early_stop_counter += 1
+                    if early_stop_counter > early_stop_patience:
+                        print(f"Early stop after {early_stop_patience} epochs of no improvement")
                     if moving_performance > best_performance:
+                        early_stop_counter = 0
                         best_performance = moving_performance
                         if os.path.exists(best_model_file):
                             os.remove(best_model_file)
@@ -110,7 +121,7 @@ def run(log_dir):
                 summary_writer.add_scalar('memory/length', len(replay_buffer), total_epochs)
 
     if c.RECORD_AL_PERFORMANCE:
-        regret = baseline_perf[c.BUDGET -1] - moving_performance
+        regret = baseline_perf[c.BUDGET-1] - best_performance
         return regret
 
 if __name__ == '__main__':

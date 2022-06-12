@@ -16,16 +16,17 @@
   - 
 
 ## Domains:
-| Domain               | Classifier | Budget | Sample Size |
-|----------------------|------------|--------|-------------|
-| Image Classification | CNN        | 2000   | 20          |
-| NER                  | CRF        | 200    | 5-10        |
-| Author Profiling     | CNN        | 100    | 5           |
-| Sentiment Class.     | CNN        | 100    | 5           |
+| Domain           | Classifier | Budget | Sample Size |
+|------------------|------------|--------|-------------|
+| Image Embedding  | CNN        | 2000   | 20          |
+| Cifar-10         | CNN        | 5000   | 20          |
+| NER              | CRF        | 200    | 5-10        |
+| Author Profiling | CNN        | 100    | 5           |
+| Sentiment Class. | CNN        | 100    | 5           |
 
 ## Further Ideas
 ### Reducing noise in the Environment
-For each added sample, we generate augmentation and also add them to the pool <br>
+For each added image, we generate augmentations and also add them to the pool <br>
 
 ### Batch Mode
 Sorting the V-values and taking the Top-K. <br>
@@ -43,3 +44,7 @@ This possibly guides the model through the complex state stace with image embedd
 
 ### Meta Features for the Pools
 Dataset to Vec
+
+### Model-Based RL
+- s' would be averages of the sample (like in the memory buffer)
+- contrastive Loss for Encoder model?

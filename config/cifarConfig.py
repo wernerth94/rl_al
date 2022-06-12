@@ -29,10 +29,8 @@ MIN_INTERACTIONS = 2400000 # 2.4M
 MAX_EPOCHS = int(MIN_INTERACTIONS / BUDGET)
 WARMUP_EPOCHS = 5
 
-# 50 epochs with 2k budget = 100000
-CONVERSION_GREED = int(100000 / BUDGET)
-# 400 epochs with 2k budget
-CONVERSION_LR = int(800000 / BUDGET)
+CONVERSION_GREED = int(MIN_INTERACTIONS*0.2 / BUDGET)
+CONVERSION_LR = int(MIN_INTERACTIONS*0.5 / BUDGET)
 GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
 LR = util.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
@@ -55,7 +53,7 @@ def get_description():
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
     desc += f'TRAINING: warmup={WARMUP_EPOCHS}\n'
     desc += f'TRAINING: n-steps={N_STEPS}\n'
-    desc += f'ENV: budget={BUDGET}, sample size={SAMPLE_SIZE}\n'
+    desc += f'ENV: budget={BUDGET}, sample size={SAMPLE_SIZE}, Classifier from scratch={CLASS_FROM_SCRATCH}\n'
     return desc
 
 print('#########################################################')

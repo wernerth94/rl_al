@@ -37,6 +37,9 @@
 \maketitle
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+\section{Methodology}
+
 \begin{frame}[fragile]{Pool-Based Active Learning}
 	\begin{columns}
 		\begin{column}{.3\linewidth}
@@ -64,10 +67,10 @@
 \begin{frame}[fragile]{Active Learning with Q-Learning}
 	\textbf{State Space:} \\ [2mm]
 	\begin{enumerate}
-		\item Internal state of the environment: content of labeled pool $\mathcal{L}$, state of the classifier $\theta$, remaining budget, current F1-Score, etc. $\rightarrow \mathbb{R}^{a}$
-		\item Information about the unlabeled sample $\mathcal{K}$: Output of the classifier $\phi_\theta(k_t)$, the datapoints themselves, other metrics, etc. $\rightarrow \mathbb{R}^{k \times b}$
+		\item Internal state of the environment: content of labeled pool $\mathcal{L}$, state of the classifier $\theta$, remaining budget, current F1-Score, etc. $\rightarrow \mathbb{R}^{i}$
+		\item Information about the unlabeled sample $\mathcal{K}$: Output of the classifier $\phi_\theta(k_t)$, the datapoints themselves, other metrics, etc. $\rightarrow \mathbb{R}^{k \times j}$
 	\end{enumerate}
-	Results in a flattened state space of $\mathcal{S} \in \mathbb{R}^{a + k \times b}$ \\
+	Results in a flattened state space of $\mathcal{S} \in \mathbb{R}^{i + k \times j}$ \\
 	\includegraphics[width=.9\linewidth]{pics/state_space}
 \end{frame}
 
@@ -78,6 +81,7 @@
 \begin{columns}
 	\begin{column}{.4\linewidth}
 		\begin{align*}
+		\mathcal{S} &\in \mathbb{R}^{i + k \times j} \hspace{3mm}\text{State Space} \\
 		\mathcal{A} &\in [0, \ldots, k] \hspace{3mm}\text{Action Space} \\
 		\mathcal{R} &:= \mathcal{S} \times \mathcal{A} \rightarrow \mathbb{R} \hspace{3mm}\text{Reward Function} \\
 		\tau &:= \{ \mathcal{S}, \mathcal{A}, \mathcal{S}, \mathcal{R}, \mathbb{R} \} \hspace{3mm}\text{Transition} \\
@@ -97,6 +101,24 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{frame}[fragile]{Example: Pick a Card}
+\begin{columns}
+	\begin{column}{.6\linewidth}
+		Consider a cardgame where the agent needs to collect cards with high value \\[1mm]
+		Each card is worth a certain number of points, and the goal is to collect the maximum amount of points \\ [1mm]
+		At each iteration the agent is presented two cards to choose from \\ [1mm]
+		Q-Learning is not the correct choice of agent here
+	\end{column}
+	\begin{column}{.3\linewidth}
+		\includegraphics[width=\linewidth]{pics/skat}
+	\end{column}
+\end{columns}
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}[fragile]{Active Learning with Q-Learning}
 	\begin{columns}
 		\begin{column}{.5\linewidth}
@@ -110,7 +132,6 @@
 		\end{column}
 	\end{columns}
 \end{frame}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -141,22 +162,28 @@
 	\begin{columns}
 		\begin{column}{.5\linewidth}
 			\textbf{Q-Learning:} \\ [1mm]
-			$Q(s_t, a) = \mathbb{R}^4$
+			$Q(s_t) = \mathbb{R}^4$
 			\begin{figure}
 				\centering
-				\includegraphics[width=.5\linewidth]{pics/maze_q}
+				\includegraphics[width=.4\linewidth]{pics/maze_q}
 			\end{figure}
 		\end{column}
 		\begin{column}{.5\linewidth}
 			\textbf{V-Learning:} \\ [1mm]
-			$V(s_{t+1}) = \mathbb{R}$
+			$V(s_{t+1}(a)) = \mathbb{R} \hspace{2mm} \text{ with } \hspace{2mm} a = [1, \ldots, 4]$
 			\begin{figure}
 				\centering
-				\includegraphics[width=.5\linewidth]{pics/maze_v}
+				\includegraphics[width=.4\linewidth]{pics/maze_v}
 			\end{figure}
 		\end{column}
 	\end{columns}
-	Nonetheless, both functions learn the value of a field in the maze under the current policy. 
+	$Q(s_t) = \begin{bmatrix}
+	V(s_{t+1}(\text{up}) \\
+	V(s_{t+1}(\text{down}) \\
+	V(s_{t+1}(\text{left}) \\
+	V(s_{t+1}(\text{right}) 
+	\end{bmatrix}$ \hspace{5mm}
+	$Q(s_t, a) = V(s_{t+1}(a))$
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -166,14 +193,14 @@
 		\begin{column}{.4\linewidth}
 			\textbf{Adaptations}
 			\begin{itemize}
-				\item We use the batch dimension for representing the sample size $k$
+				\item We use the batch dimension $\phi$ for representing the sample size $k$
 				\item No action space needed
 				
 			\end{itemize}
 		\end{column}
 		\begin{column}{.4\linewidth}
 			\begin{align*}
-			\mathcal{S} &\in \mathbb{R}^{\sigma} \hspace{3mm}\text{State Space} \\
+			\mathcal{S} &\in \mathbb{R}^{i+j} \hspace{3mm}\text{State Space} \\
 			\mathcal{R} &:= \mathcal{S} \rightarrow \mathbb{R} \hspace{3mm}\text{Reward Function} \\
 			V_\theta &:= \mathcal{S} \rightarrow \mathbb{R} \hspace{3mm}\text{Agent Network} \\
 			\end{align*}
@@ -187,13 +214,13 @@
 \begin{frame}[fragile]{Active Learning with V-Learning}
 	Example:
 	\begin{align*}
-		\text{State is generated} &: s \in \mathbb{R}^{b \times \sigma} \\
+		\text{State is generated} &: s \in \mathbb{R}^{\phi \times (i+j)} \\
 		\text{Agents makes prediction} &: v = V_\theta(s) \\
-		\text{\textbf{Policy selects a point}} &: a = \underset{b}{\text{argmax }} v_{b} \\
+		\text{\textbf{Policy selects a point}} &: a = \underset{\phi}{\text{argmax }} v_{\phi} \\
 		\text{Action is applied} &: s' = \text{env}(a) \\
 		\text{Reward is observed} &: r = \mathcal{R}(s') \\
 		\text{Transition is stored} &: \tau = \{ s_{a}, r, \bar s', \text{done} \} \\
-		\text{\textbf{with}} &: \bar s' = \frac{1}{b} \sum\limits_{i=0}^b s'_{i}
+		\text{\textbf{with}} &: \bar s' = \frac{1}{\phi} \sum\limits_{p=0}^\phi s'_{p}
 	\end{align*}
 \end{frame}
 
@@ -213,6 +240,92 @@
 	\end{align*}
 \end{frame}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]{Storing Transitions in Memory}
+	Q-Learning:
+	\begin{align*}
+	O(\tau) &= s \times a \times s' \times r \times \mathbb{R} \\
+	O(\tau) &= k^2 \times \sigma^2 + 3
+	\end{align*}
+	V-Learning:
+	\begin{align*}
+	O(\tau) &= s_a \times a \times \bar s' \times r \times \mathbb{R} \\
+	O(\tau) &= 2 \times \sigma^2 + 3
+	\end{align*}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Current Status}
+
+\begin{frame}[fragile]{Agent Performance}
+	\begin{columns}
+		\begin{column}{.3\linewidth}
+			\textbf{V-Learning} \\ [1mm]
+			CIFAR-10 (Custom Embedding) \\ [1mm]
+			Samplesize: 20 \\ [1mm]
+			Interactions: 2.4M \\ [1mm]
+		\end{column}
+		\begin{column}{.65\linewidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=\linewidth]{pics/eval_CIFAR10.png}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}[fragile]{Problems}
+	\begin{itemize}
+		\item Extremely hard to train a sequence of 2000 interactions
+		\item Seemingly sensible state spaces collapse the performance
+		\item Agent is overly sensitive
+	\end{itemize}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}[fragile]{Mock Environment}
+	\begin{columns}
+		\begin{column}{.6\linewidth}
+			To test different agents and perform a quasi-gridsearch in feasible time I created a mock environment \\ [1mm]
+			Internal state is a fictional F1-Score \\ [1mm]
+			Each sample is a collection of random "quality" values that govern mock Entropy and BvsSB scores \\ [1mm]
+			A choosen sample add its "quality" value to the internal F1-Score 
+		\end{column}
+		\begin{column}{.4\linewidth}
+			\begin{figure}
+				\centering
+				\includegraphics[width=\linewidth]{pics/eval_mock}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{frame}[fragile]{Grid Search}
+	Hand-picked combinations of "Budget", "Interactions", "LR", etc. \\ [1mm]
+	3-fold cross validation \\ [1mm]
+	Measuring regret with respect to BvsSB baseline \\ [1mm]
+	\textbf{Preleminary results:}
+	\begin{itemize}
+		\item Large Budgets ($>$200) need excessive training of $>$2M. The current result might be overperformance
+		\item N-Steps seem not to work in this environment. (Accumulating noise?)
+		
+	\end{itemize}
+\end{frame}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
