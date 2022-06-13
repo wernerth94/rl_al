@@ -73,7 +73,7 @@ for e in range(MAX_EPOCHS):
     print(f"\n{e}/{MAX_EPOCHS} - test\n")
     with torch.no_grad():
         epoch_loss = 0.0
-        full_y_hat = torch.zeros(size=(0, 10))
+        full_y_hat = torch.zeros(size=(0, 10)).to(device)
         iterator = tqdm(test_dataloader, disable=None)
         i = 0
         for batch_x, batch_y in iterator:
