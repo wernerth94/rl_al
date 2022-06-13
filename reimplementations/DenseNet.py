@@ -11,7 +11,7 @@ from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from torchvision import transforms
 from torchvision.models.densenet import DenseNet
-from core.Data import load_cifar10_pytorch
+from Data import load_cifar10_pytorch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
