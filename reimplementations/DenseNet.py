@@ -23,11 +23,11 @@ optimizer = SGD(model.parameters(), lr=0.1)
 loss = CrossEntropyLoss()
 
 x_train, y_train, x_test, y_test = load_cifar10_pytorch()
-x_train = x_train[:256].to(device)
-y_train = y_train[:256].to(device)
-x_test = x_test[:256].to(device)
-y_test = y_test[:256].to(device)
-y_test_cpu = y_test.cpu()
+# x_train = x_train.to(device)
+# y_train = y_train.to(device)
+# x_test = x_test.to(device)
+# y_test = y_test.to(device)
+y_test_cpu = y_test.clone().cpu()
 
 preprocess = transforms.Compose([
     transforms.Resize(224),
@@ -55,6 +55,8 @@ for e in range(MAX_EPOCHS):
     iterator = tqdm(train_dataloader, disable=None)
     i = 0
     for batch_x, batch_y in iterator:
+        batch_x = batch_x.to(device)
+        batch_y = batch_y.to(device)
         i += 1
         iterator.set_postfix(loss=epoch_loss/i, refresh=True)
         batch_x = preprocess(batch_x)
@@ -74,6 +76,8 @@ for e in range(MAX_EPOCHS):
         iterator = tqdm(test_dataloader, disable=None)
         i = 0
         for batch_x, batch_y in iterator:
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
             i += 1
             iterator.set_postfix(loss=epoch_loss/i, refresh=True)
             batch_x = preprocess(batch_x)
