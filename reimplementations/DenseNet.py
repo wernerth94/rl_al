@@ -33,8 +33,9 @@ preprocess = transforms.Compose([
     transforms.Resize(224),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
-train_dataloader = DataLoader(TensorDataset(x_train, y_train), batch_size=256)
-test_dataloader = DataLoader(TensorDataset(x_test, y_test), batch_size=256)
+BATCH_SIZE = 64
+train_dataloader = DataLoader(TensorDataset(x_train, y_train), batch_size=BATCH_SIZE)
+test_dataloader = DataLoader(TensorDataset(x_test, y_test), batch_size=BATCH_SIZE)
 
 train_losses = list()
 test_losses = list()
