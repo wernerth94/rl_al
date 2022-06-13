@@ -1,9 +1,9 @@
-import torch, sys
-
-sys.path.append("../core")
-sys.path.append("../rl_core")
+import sys, os
+sys.path.append(os.path.abspath("../core"))
+sys.path.append(os.path.abspath("../rl_core"))
 print(F"updated path is {sys.path}")
 
+import torch
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, TensorDataset
