@@ -5,7 +5,7 @@ print(F"updated path is {sys.path}")
 
 import torch
 from tqdm import tqdm
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 from torch.utils.data import DataLoader, TensorDataset
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
@@ -23,20 +23,23 @@ optimizer = SGD(model.parameters(), lr=0.1)
 loss = CrossEntropyLoss()
 
 x_train, y_train, x_test, y_test = load_cifar10_pytorch()
-x_train = x_train.to(device)
-y_train = y_train.to(device)
-x_test = x_test.to(device)
-y_test = y_test.to(device)
+x_train = x_train[:256].to(device)
+y_train = y_train[:256].to(device)
+x_test = x_test[:256].to(device)
+y_test = y_test[:256].to(device)
+y_test_cpu = y_test.cpu()
+
 preprocess = transforms.Compose([
     transforms.Resize(224),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
-train_dataloader = DataLoader(TensorDataset(x_train, y_train), batch_size=64)
-test_dataloader = DataLoader(TensorDataset(x_test, y_test), batch_size=64)
+train_dataloader = DataLoader(TensorDataset(x_train, y_train), batch_size=256)
+test_dataloader = DataLoader(TensorDataset(x_test, y_test), batch_size=256)
 
 train_losses = list()
 test_losses = list()
 test_f1 = list()
+test_accs = list()
 
 MAX_EPOCHS = 40
 for e in range(MAX_EPOCHS):
@@ -48,8 +51,8 @@ for e in range(MAX_EPOCHS):
             param_group['lr'] = 0.001
 
     epoch_loss = 0.0
-    print(f"{e}/{MAX_EPOCHS} - train")
-    iterator = tqdm(train_dataloader)
+    print(f"\n{e}/{MAX_EPOCHS} - train\n")
+    iterator = tqdm(train_dataloader, disable=None)
     i = 0
     for batch_x, batch_y in iterator:
         i += 1
@@ -62,27 +65,31 @@ for e in range(MAX_EPOCHS):
         optimizer.step()
         epoch_loss += loss_value.detach().item()
 
-    train_losses.append(epoch_loss)
+    train_losses.append(epoch_loss/len(iterator))
     # early stopping on test
-    print(f"{e}/{MAX_EPOCHS} - test")
+    print(f"\n{e}/{MAX_EPOCHS} - test\n")
     with torch.no_grad():
         epoch_loss = 0.0
-        with tqdm(test_dataloader) as iterator:
-            i = 0
-            for batch_x, batch_y in iterator:
-                i += 1
-                iterator.set_postfix(loss=epoch_loss/i, refresh=True)
-                batch_x = preprocess(batch_x)
-                yHat_test = model(batch_x)
-                test_loss = loss(yHat_test, batch_y)
-                epoch_loss += test_loss.detach().item()
+        full_y_hat = torch.zeros(size=(0, 10))
+        iterator = tqdm(test_dataloader, disable=None)
+        i = 0
+        for batch_x, batch_y in iterator:
+            i += 1
+            iterator.set_postfix(loss=epoch_loss/i, refresh=True)
+            batch_x = preprocess(batch_x)
+            yHat_test = model(batch_x)
+            test_loss = loss(yHat_test, batch_y)
+            epoch_loss += test_loss.detach().item()
+            full_y_hat = torch.cat([full_y_hat, yHat_test], dim=0)
         if test_loss >= epoch_loss:
             # print(f"labeled {len(self.xLabeled)}: stopped after {e} epochs")
             break
         lastLoss = epoch_loss
-        one_hot_y_hat = torch.eye(10)[torch.argmax(yHat_test, dim=1).cpu()]
-        newTestF1 = f1_score(y_test.cpu(), one_hot_y_hat.cpu(), average="samples")
+        one_hot_y_hat = torch.eye(10)[torch.argmax(full_y_hat, dim=1).cpu()].cpu()
+        newTestF1 = f1_score(y_test_cpu, one_hot_y_hat, average="samples")
+        test_acc = accuracy_score(y_test_cpu, one_hot_y_hat)
 
-        test_losses.append(epoch_loss)
+        test_losses.append(epoch_loss/len(iterator))
         test_f1.append(newTestF1)
-        print(f"train_loss: {epoch_loss}, test_loss: {test_loss.item()}, f1: {newTestF1}")
+        test_accs.append(test_acc)
+        print(f"train_loss: {epoch_loss}, test_loss: {test_loss.item()}, f1: {newTestF1}, acc: {test_acc}")
