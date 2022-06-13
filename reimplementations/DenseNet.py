@@ -1,4 +1,9 @@
 import torch, sys
+
+sys.path.append("../core")
+sys.path.append("../rl_core")
+print(F"updated path is {sys.path}")
+
 from tqdm import tqdm
 from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader, TensorDataset
@@ -7,10 +12,6 @@ from torch.optim import SGD
 from torchvision import transforms
 from torchvision.models.densenet import DenseNet
 from core.Data import load_cifar10_pytorch
-
-sys.path.append("../core")
-sys.path.append("../rl_core")
-print(F"updated path is {sys.path}")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
