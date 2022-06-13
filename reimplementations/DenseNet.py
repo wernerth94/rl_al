@@ -22,7 +22,7 @@ model = model.to(device)
 optimizer = SGD(model.parameters(), lr=0.1)
 loss = CrossEntropyLoss()
 
-x_train, y_train, x_test, y_test = load_cifar10_pytorch(prefix="..")
+x_train, y_train, x_test, y_test = load_cifar10_pytorch()
 x_train = x_train.to(device)
 y_train = y_train.to(device)
 x_test = x_test.to(device)
