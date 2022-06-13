@@ -1,6 +1,6 @@
 import sys, os
-sys.path.append(os.path.abspath("../core"))
-sys.path.append(os.path.abspath("../rl_core"))
+sys.path.append(os.path.abspath("core"))
+sys.path.append(os.path.abspath("rl_core"))
 print(F"updated path is {sys.path}")
 
 import torch
