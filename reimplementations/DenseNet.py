@@ -23,17 +23,22 @@ optimizer = SGD(model.parameters(), lr=0.1)
 loss = CrossEntropyLoss()
 
 x_train, y_train, x_test, y_test = load_cifar10_pytorch()
-# x_train = x_train.to(device)
-# y_train = y_train.to(device)
-# x_test = x_test.to(device)
-# y_test = y_test.to(device)
+BATCH_SIZE = 64
+if not sys.prefix.startswith('/home/werner/miniconda3'):
+    # laptop testing
+    x_train = x_train[:BATCH_SIZE*2]
+    y_train = y_train[:BATCH_SIZE*2]
+    x_test = x_test[:BATCH_SIZE*2]
+    y_test = y_test[:BATCH_SIZE*2]
+
 y_test_cpu = y_test.clone().cpu()
 
 preprocess = transforms.Compose([
     transforms.Resize(224),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
-BATCH_SIZE = 64
+
+
 train_dataloader = DataLoader(TensorDataset(x_train, y_train), batch_size=BATCH_SIZE)
 test_dataloader = DataLoader(TensorDataset(x_test, y_test), batch_size=BATCH_SIZE)
 
@@ -52,7 +57,8 @@ for e in range(MAX_EPOCHS):
             param_group['lr'] = 0.001
 
     epoch_loss = 0.0
-    print(f"\n{e}/{MAX_EPOCHS} - train\n")
+    print(f"{e}/{MAX_EPOCHS} - train\n")
+    model.train()
     iterator = tqdm(train_dataloader, disable=None)
     i = 0
     for batch_x, batch_y in iterator:
@@ -70,7 +76,8 @@ for e in range(MAX_EPOCHS):
 
     train_losses.append(epoch_loss/len(iterator))
     # early stopping on test
-    print(f"\n{e}/{MAX_EPOCHS} - test\n")
+    print(f"{e}/{MAX_EPOCHS} - test\n")
+    model.eval()
     with torch.no_grad():
         epoch_loss = 0.0
         full_y_hat = torch.zeros(size=(0, 10)).to(device)
@@ -91,7 +98,7 @@ for e in range(MAX_EPOCHS):
             break
         lastLoss = epoch_loss
         one_hot_y_hat = torch.eye(10)[torch.argmax(full_y_hat, dim=1).cpu()].cpu()
-        newTestF1 = f1_score(y_test_cpu, one_hot_y_hat, average="samples")
+        newTestF1 = f1_score(y_test_cpu, one_hot_y_hat, average="weighted")
         test_acc = accuracy_score(y_test_cpu, one_hot_y_hat)
 
         test_losses.append(epoch_loss/len(iterator))

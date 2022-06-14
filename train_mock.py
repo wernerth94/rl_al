@@ -29,6 +29,7 @@ import config.mockConfig as c
 
 arg_parse = argparse.ArgumentParser()
 arg_parse.add_argument("--noise",  "-n", type=float, default=0.0)
+arg_parse.add_argument("--runs",  "-r", type=int, default=3)
 arg_parse.add_argument("--alpha",  "-a", type=float)
 arg_parse.add_argument("--budget", "-b", type=int)
 arg_parse.add_argument("--c",      "-c", type=int)
@@ -129,7 +130,7 @@ if __name__ == '__main__':
     log_dir = f"{c.MODEL_NAME}_{current_time}"
     log_dir = os.path.join('runs', log_dir)
     regrets = list()
-    for r in range(3):
+    for r in range(args.runs):
         current_log_dir = os.path.join(log_dir, str(r))
         regrets.append(run(current_log_dir))
     with open(os.path.join(log_dir, "result.txt"), "w") as f:
