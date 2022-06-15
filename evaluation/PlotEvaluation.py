@@ -59,17 +59,20 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
-plot('../baselines/cifar10_custom/random.npy', 'gray', displayName='random', weight=0.8)
-plot('../baselines/cifar10_custom/bvssb.npy', 'navy', displayName='BvsSB', weight=0.8)
-plot('../baselines/cifar10_custom/ensemble.npy', 'red', displayName='Ensemble', weight=0.97)
-plot('../baselines/cifar10_custom/ensemble_b2.npy', 'purple', displayName='Ensemble B2', weight=0.97)
-plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='Agent', weight=0.8, alpha=1.0)
+# plot('../baselines/cifar10_custom/random.npy', 'gray', displayName='random', weight=0.8)
+# plot('../baselines/cifar10_custom/bvssb.npy', 'navy', displayName='BvsSB', weight=0.8)
+# plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='Agent', weight=0.8, alpha=1.0)
 
-# plot('../baselines/mock/random.npy', 'gray', displayName='random', weight=0.0)
-# plot('../baselines/mock/entropy.npy', 'green', displayName='Entropy', weight=0.0)
-# plot('../baselines/mock/bvssb.npy', 'navy', displayName='BvsSB', weight=0.0)
+# plot('../baselines/cifar10_custom/ensemble.npy', 'red', displayName='Ensemble', weight=0.99)
+# plot('../baselines/cifar10_custom/ensemble_b2.npy', 'purple', displayName='Ensemble B2', weight=0.99)
+# plot('../baselines/cifar10_custom/ensemble_b4.npy', 'green', displayName='Ensemble BB', weight=0.99)
+
+plot('../baselines/mock/random.npy', 'gray', displayName='random', weight=0.0)
+plot('../baselines/mock/entropy.npy', 'green', displayName='Entropy', weight=0.0)
+plot('../baselines/mock/bvssb.npy', 'navy', displayName='BvsSB', weight=0.0)
+plot('../baselines/mock/truth.npy', 'red', displayName='GroundTruth', weight=0.0)
 
 plt.legend(fontsize='x-small')
-plt.ylim(0.55, 0.8)
+# plt.ylim(0.55, 0.8)
 plt.savefig('plot_'+c.MODEL_NAME+'.png')
 plt.show()

@@ -14,11 +14,12 @@ MEMORY_ALPHA = 0.6
 AGENT_C = 500
 AGENT_GAMMA = 0.0 # TODO
 AGENT_NHIDDEN = 10
+AGENT_REG = 0.0
 
 # Env config
 MAX_REWARD = 0.0005
 SAMPLE_SIZE = 20
-BUDGET = 400
+BUDGET = 2000
 REWARD_SCALE = 1
 REWARD_SHAPING = True
 
@@ -45,7 +46,7 @@ if os.path.exists(BASELINE_FILE) and os.path.exists(LOWER_BOUND_FILE):
 
 def get_description():
     desc  = f'LOADED CONFIG: {MODEL_NAME}\n'
-    desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}\n'
+    desc += f'AGENT: gamma={AGENT_GAMMA}, nHidden={AGENT_NHIDDEN}, weight_decay={AGENT_REG}\n'
     desc += f'AGENT: batch size={BATCH_SIZE}, C={AGENT_C}\n'
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
     desc += f'TRAINING: warmup={WARMUP_EPOCHS}\n'

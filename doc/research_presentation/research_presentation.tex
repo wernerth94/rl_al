@@ -240,23 +240,6 @@
 	\end{align*}
 \end{frame}
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}[fragile]{Storing Transitions in Memory}
-	Q-Learning:
-	\begin{align*}
-	O(\tau) &= s \times a \times s' \times r \times \mathbb{R} \\
-	O(\tau) &= k^2 \times \sigma^2 + 3
-	\end{align*}
-	V-Learning:
-	\begin{align*}
-	O(\tau) &= s_a \times a \times \bar s' \times r \times \mathbb{R} \\
-	O(\tau) &= 2 \times \sigma^2 + 3
-	\end{align*}
-\end{frame}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Current Status}
@@ -321,9 +304,8 @@
 	Measuring regret with respect to BvsSB baseline \\ [1mm]
 	\textbf{Preleminary results:}
 	\begin{itemize}
-		\item Large Budgets ($>$200) need excessive training of $>$2M. The current result might be overperformance
-		\item N-Steps seem not to work in this environment. (Accumulating noise?)
-		
+		\item N-Steps have seemingly no benefit
+		\item Budget is more important than noise in the environment
 	\end{itemize}
 \end{frame}
 

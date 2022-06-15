@@ -35,6 +35,8 @@ arg_parse.add_argument("--budget", "-b", type=int)
 arg_parse.add_argument("--c",      "-c", type=int)
 arg_parse.add_argument("--nsteps", "-s", type=int)
 arg_parse.add_argument("--interactions", "-i", type=int)
+arg_parse.add_argument("--nhidden", "-x", type=int)
+arg_parse.add_argument("--regularization", "-z", type=float)
 args = arg_parse.parse_args()
 
 def run(log_dir):
@@ -45,6 +47,8 @@ def run(log_dir):
     if args.c: c.AGENT_C = args.c
     if args.nsteps: c.N_STEPS = args.nsteps
     if args.alpha: c.MEMORY_ALPHA = args.alpha
+    if args.nhidden: c.AGENT_NHIDDEN = args.nhidden
+    if args.regularization: c.AGENT_REG = args.regularization
 
     print("\n\nUPDATED CONFIG \n===============")
     print(c.get_description())
@@ -59,7 +63,7 @@ def run(log_dir):
     # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
     #                    weight_copy_interval=c.AGENT_C)
     agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=24,
-                           weight_copy_interval=c.AGENT_C)
+                           weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
                                             alpha=c.MEMORY_ALPHA)
 
@@ -141,5 +145,7 @@ if __name__ == '__main__':
         f.write(f"N-Steps: {c.N_STEPS}\n")
         f.write(f"LR: {c.LR[0]}\n")
         f.write(f"Interactions: {c.MIN_INTERACTIONS}\n")
+        f.write(f"N-Hidden: {c.AGENT_NHIDDEN}\n")
+        f.write(f"Regularization: {c.AGENT_REG}\n")
         f.write("Regret: %1.4f +- %1.4f\n\n"%(np.mean(regrets), np.std(regrets)))
         f.write(f"Values: \n{regrets}")

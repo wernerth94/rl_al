@@ -1,9 +1,9 @@
 import os
 import numpy as np
 
-in_folder = "cifar10_custom/ens_c3_b2"
-out_file = "cifar10_custom/ensemble_b2.npy"
-repeats = 2
+in_folder = "cifar10_custom/ens_c3_b4"
+out_file = "cifar10_custom/ensemble_b4.npy"
+repeats = 4
 
 experiments = []
 for in_file in os.listdir(in_folder):

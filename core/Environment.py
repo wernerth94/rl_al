@@ -31,8 +31,8 @@ class MockALGame:
 
     def create_state(self):
         qualities = np.random.rand(self.sample_size) * 0.9
-        bvssb_noise = np.random.normal(0, 0.1, size=self.sample_size)
-        entr_noise = np.random.normal(0, 0.5, size=self.sample_size)
+        bvssb_noise = np.random.normal(0, 0.2, size=self.sample_size)
+        entr_noise = np.random.normal(0, 1.0, size=self.sample_size)
         sample = []
         for i in range(len(qualities)):
             dp = [self.currentTestF1]
@@ -40,6 +40,7 @@ class MockALGame:
                       self.noise_level * bvssb_noise[i]) # BvsSB
             dp.append(2 + (qualities[i] - 0.6)*2 +
                       self.noise_level * entr_noise[i])  # entropy
+            dp.append(qualities[i])
             # Hist of class outputs
             # internal state
             sample.append(dp)
