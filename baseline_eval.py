@@ -17,6 +17,28 @@ import argparse
 import Classifier, Agent, Environment
 import torch
 
+def get_linear_agent(conf):
+    env = Environment.MockALGame(conf)
+    X = np.zeros(shape=(0, 2))
+    Y = np.zeros(shape=(0, 1))
+    for _ in range(100):
+        state = env.reset()
+        X = np.concatenate([X, state[:, 1:3]])
+        Y = np.concatenate([Y, state[:, 3:4]])
+    from sklearn.linear_model import LinearRegression
+    model = LinearRegression()
+    model.fit(X, Y)
+
+    class LinearAgent():
+        def __init__(self, model:LinearRegression):
+            self.model = model
+        def predict(self, inputs, *args, **kwargs):
+            y_hat = self.model.predict(inputs[:, 1:3])
+            action = np.argmax(y_hat)
+            return y_hat[action], torch.Tensor([int(action)]).int()
+
+    return LinearAgent(model)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', '-n', default='bvssb', type=str)
 parser.add_argument('--chkpt', '-c', default='', type=str)
@@ -78,6 +100,8 @@ for run in range(args.iterations):
         agent = Agent.Baseline_Random()
     elif baselineName == 'truth':
         agent = Agent.Baseline_Heuristic(m=3)
+    elif baselineName == 'linear':
+        agent = get_linear_agent(c)
     elif baselineName == 'agent':
         assert args.chkpt != ''
         # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
