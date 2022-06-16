@@ -51,8 +51,8 @@ args = parser.parse_args()
 ### MAIN
 baselineName = str(args.name)
 
-from config import mockConfig as c
-# from config import cifarConfig as c
+# from config import mockConfig as c
+from config import cifarConfig as c
 from Data import load_cifar10_custom as load_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -67,15 +67,14 @@ if args.budget:
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-envFunc = Environment.MockALGame
-dataset = [None]*4
-classifier = None
+# envFunc = Environment.MockALGame
+# dataset = [None]*4
+# classifier = None
 
-# envFunc = Environment.ALGame
-# dataset = load_data(return_tensors=True)
-# dataset = [d.to(device) for d in dataset]
-# classifier = Classifier.Cifar10ClassifierFactory()
-# classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+envFunc = Environment.ALGame
+dataset = load_data(return_tensors=True)
+dataset = [d.to(device) for d in dataset]
+classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 
 
 print('#########################################################')

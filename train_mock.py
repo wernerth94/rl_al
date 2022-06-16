@@ -19,6 +19,7 @@ import argparse
 import Environment
 import Agent
 from Misc import *
+import util
 from env_logger import RLEnvLogger
 from agent_logger import RLAgentLogger
 from datetime import datetime
@@ -44,6 +45,10 @@ def run(log_dir):
     if args.interactions:
         c.MIN_INTERACTIONS = args.interactions
         c.MAX_EPOCHS = int(args.interactions / args.budget)
+        c.CONVERSION_GREED = int(c.MIN_INTERACTIONS * 0.2 / c.BUDGET)
+        c.CONVERSION_LR = int(c.MIN_INTERACTIONS * 0.5 / c.BUDGET)
+        c.GREED = util.parameterPlan(0.9, 0.05, warmup=c.WARMUP_EPOCHS, conversion=c.CONVERSION_GREED)
+        c.LR = util.parameterPlan(0.01, 0.01, warmup=c.WARMUP_EPOCHS, conversion=c.CONVERSION_LR)
     if args.c: c.AGENT_C = args.c
     if args.nsteps: c.N_STEPS = args.nsteps
     if args.alpha: c.MEMORY_ALPHA = args.alpha
