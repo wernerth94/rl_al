@@ -68,7 +68,7 @@ class MockALGame:
 
 class ALGame:
 
-    def __init__(self, dataset, modelFunction, config, verbose):
+    def __init__(self, dataset, modelFunction, config, sample_size_in_state=False):
         assert all([isinstance(d, torch.Tensor) for d in dataset])
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.x_test = dataset[2]
@@ -83,10 +83,8 @@ class ALGame:
         self.rewardScaling = config.REWARD_SCALE
         self.rewardShaping = config.REWARD_SHAPING
         self.from_scratch = config.CLASS_FROM_SCRATCH
-        self.verbose = verbose
 
         self.modelFunction = modelFunction
-        #self.es = keras.callbacks.EarlyStopping(monitor='val_loss', mode='min', patience=1)
         self.classifier = modelFunction(inputShape=self.x_test.shape[1:],
                                         numClasses=self.y_test.shape[1])
         self.classifier = self.classifier.to(self.device)
@@ -95,12 +93,16 @@ class ALGame:
 
         self.currentTestF1 = 0
         self.reset()
-        self._set_state_shape()
+        self._set_state_shape(sample_size_in_state)
 
 
-    def _set_state_shape(self):
+    def _set_state_shape(self, sample_size_in_state):
         state = self.createState()
-        self.stateSpace = state.shape[1]
+        if sample_size_in_state:
+            self.stateSpace = np.multiply(state.shape)
+        else:
+            self.stateSpace = state.shape[1]
+
 
 
     def _sampleIDs(self, num):
@@ -233,8 +235,8 @@ class ALGame:
 
 
 class DuelingALGame(ALGame):
-    def __init__(self, dataset, modelFunction, config, verbose):
-        super().__init__(dataset, modelFunction, config, verbose)
+    def __init__(self, dataset, modelFunction, config):
+        super().__init__(dataset, modelFunction, config)
 
 
     def _set_state_shape(self):
@@ -253,8 +255,8 @@ class DuelingALGame(ALGame):
 
 class PALGame(ALGame):
 
-    def __init__(self, dataset, modelFunction, config, verbose):
-        super().__init__(dataset, modelFunction, config, verbose)
+    def __init__(self, dataset, modelFunction, config):
+        super().__init__(dataset, modelFunction, config)
         self.actionSpace = 2
 
 

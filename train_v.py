@@ -24,8 +24,6 @@ from ReplayBuffer import PrioritizedReplayMemory
 import config.cifarConfig as c
 from Data import load_cifar10_custom
 
-# from memory_profiler import profile
-# @profile
 def run():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -34,14 +32,14 @@ def run():
     classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
     dataset = [d.to(device) for d in dataset]
 
-    env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+    env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c)
     agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                        weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
 
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
 
     current_time = datetime.now().strftime('%m-%d_%H:%M:%S')
-    log_dir = os.path.join('runs', current_time)
+    log_dir = os.path.join('runs', f"v_{current_time}")
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:
         f.write(c.get_description())
