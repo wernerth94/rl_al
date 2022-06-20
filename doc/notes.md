@@ -24,6 +24,10 @@
 | Author Profiling | CNN        | 100    | 5           |
 | Sentiment Class. | CNN        | 100    | 5           |
 
+## TODO
+- Turn off reward noise in MockEnv + do non-linear agent and re-run gridsearch
+- 
+
 ## Further Ideas
 ### Reducing noise in the Environment
 For each added image, we generate augmentations and also add them to the pool <br>

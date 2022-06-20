@@ -29,15 +29,17 @@ from ReplayBuffer import PrioritizedReplayMemory
 import config.mockConfig as c
 
 arg_parse = argparse.ArgumentParser()
-arg_parse.add_argument("--noise",  "-n", type=float, default=0.0)
-arg_parse.add_argument("--runs",  "-r", type=int, default=3)
-arg_parse.add_argument("--alpha",  "-a", type=float)
-arg_parse.add_argument("--budget", "-b", type=int)
-arg_parse.add_argument("--c",      "-c", type=int)
-arg_parse.add_argument("--nsteps", "-s", type=int)
-arg_parse.add_argument("--interactions", "-i", type=int)
-arg_parse.add_argument("--nhidden", "-x", type=int)
-arg_parse.add_argument("--regularization", "-z", type=float)
+arg_parse.add_argument("--noise", type=float, default=0.0)
+arg_parse.add_argument("--reward-noise", type=int, default=1)
+arg_parse.add_argument("--runs", type=int, default=3)
+arg_parse.add_argument("--alpha", type=float)
+arg_parse.add_argument("--budget", type=int)
+arg_parse.add_argument("--c", type=int)
+arg_parse.add_argument("--nsteps", type=int)
+arg_parse.add_argument("--interactions", type=int)
+arg_parse.add_argument("--nhidden", type=int)
+arg_parse.add_argument("--linear", type=int, default=0)
+arg_parse.add_argument("--regularization", type=float)
 args = arg_parse.parse_args()
 
 def run(log_dir):
@@ -64,10 +66,12 @@ def run(log_dir):
     early_stop_patience = int(0.1 * c.MAX_EPOCHS)
     early_stop_counter = 0
 
-    env = Environment.MockALGame(config=c, noise_level=args.noise)
-    # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-    #                    weight_copy_interval=c.AGENT_C)
-    agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=24,
+    env = Environment.MockALGame(config=c, noise_level=args.noise, reward_noise=args.reward_noise)
+    if args.linear:
+        agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
+                               weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
+    else:
+        agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                            weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
                                             alpha=c.MEMORY_ALPHA)
@@ -143,6 +147,7 @@ if __name__ == '__main__':
         current_log_dir = os.path.join(log_dir, str(r))
         regrets.append(run(current_log_dir))
     with open(os.path.join(log_dir, "result.txt"), "w") as f:
+        f.write(f"Reward-Noise: {args.reward_noise}\n")
         f.write(f"Budget: {c.BUDGET}\n")
         f.write(f"Noise: {args.noise}\n")
         f.write(f"Alpha: {c.MEMORY_ALPHA}\n")
@@ -152,6 +157,7 @@ if __name__ == '__main__':
         f.write(f"Interactions: {c.MIN_INTERACTIONS}\n")
         f.write(f"Gamma: {c.AGENT_GAMMA}\n")
         f.write(f"N-Hidden: {c.AGENT_NHIDDEN}\n")
+        f.write(f"Linear: {args.linear}\n")
         f.write("Regularization: %1.6f\n"%(c.AGENT_REG))
         f.write("Regret: %1.4f +- %1.4f\n\n"%( float(np.mean(regrets)), float(np.std(regrets))) )
         f.write(f"Values: \n{regrets}")

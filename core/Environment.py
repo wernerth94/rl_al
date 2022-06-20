@@ -7,9 +7,10 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 
 class MockALGame:
-    def __init__(self, config, noise_level=1, *args, **kwargs):
+    def __init__(self, config, noise_level=1, reward_noise=1, *args, **kwargs):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.noise_level = noise_level
+        self.reward_noise = reward_noise
         self.config = config
         self.budget = config.BUDGET
         self.sample_size = config.SAMPLE_SIZE
@@ -53,8 +54,9 @@ class MockALGame:
     def step(self, action):
         self.added_images += 1
         reward = self.current_qualities[action] * self.max_reward
-        noise = np.random.normal(0, 0.5 * self.max_reward)
-        reward += noise
+        if self.reward_noise:
+            noise = np.random.normal(0, 0.5 * self.max_reward)
+            reward += noise
         self.currentTestF1 += reward
         done = self.added_images >= self.budget
         return self.create_state(), reward, done, {}
