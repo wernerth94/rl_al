@@ -36,7 +36,7 @@ def run():
 
     env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
     agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-                       weight_copy_interval=c.AGENT_C)
+                       weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
 
     replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
 

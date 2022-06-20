@@ -298,6 +298,29 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+\begin{frame}[fragile]{Mock Environment (Formulas)}
+	Internal state
+	\begin{align*}
+		\theta &= 0 \hspace{5mm}// \text{current F1 score} \\
+		\mu &= \operatorname{Uniform}(0, 0.9)^k \hspace{5mm}// \text{current qualities}
+	\end{align*}
+	State space
+	\begin{align*}
+		\text{BvsSB} &= \mu + \mathcal{N}(0, 0.2) \\
+		\text{entropy} &= 2 + (\mu - 0.6)*2 + \mathcal{N}(0, 1) \\
+		s &= [\theta, \text{entropy}, \text{BvsSB}]
+	\end{align*}
+	Step function
+	\begin{align*}
+		\theta &= \theta + \mu_a + \mathcal{N}(0, 0.5) \\
+		\mu &= \operatorname{Uniform}(0, 0.9)^k
+	\end{align*}
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 \begin{frame}[fragile]{Grid Search}
 	Hand-picked combinations of "Budget", "Interactions", "LR", etc. \\ [1mm]
 	3-fold cross validation \\ [1mm]
