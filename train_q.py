@@ -33,8 +33,8 @@ def run():
     classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
     dataset = [d.to(device) for d in dataset]
 
-    env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c)
-    agent = TimeDistributedAgent(env.stateSpace, action_space=c.SAMPLE_SIZE,
+    env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, sample_size_in_state=True)
+    agent = TimeDistributedAgent(int(env.stateSpace/c.SAMPLE_SIZE), action_space=c.SAMPLE_SIZE,
                                  gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                                  weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG,
                                  clipped=True)

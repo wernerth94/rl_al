@@ -99,7 +99,7 @@ class ALGame:
     def _set_state_shape(self, sample_size_in_state):
         state = self.createState()
         if sample_size_in_state:
-            self.stateSpace = np.multiply(state.shape)
+            self.stateSpace = np.multiply(*state.shape)
         else:
             self.stateSpace = state.shape[1]
 
