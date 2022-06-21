@@ -26,6 +26,9 @@ import config.cifarConfig as c
 from Data import load_cifar10_custom
 
 def run():
+    # Cap the replay buffer capacity to stay below 10GB RAM usage
+    c.MEMORY_CAP = min(c.MEMORY_CAP, 7e+4)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # dataset = load_cifar10_mobilenet()
