@@ -33,7 +33,7 @@ WARMUP_EPOCHS = 5
 CONVERSION_GREED = int(MIN_INTERACTIONS*0.2 / BUDGET)
 CONVERSION_LR = int(MIN_INTERACTIONS*0.5 / BUDGET)
 GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
-LR = util.parameterPlan(0.004, 0.0001, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+LR = util.parameterPlan(0.01, 0.004, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths
