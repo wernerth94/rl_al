@@ -1,8 +1,6 @@
 
 def scoreAgent(agent, env, printInterval=1000, greed=0):
 
-    #memory = Memory.NStepVMemory(env.stateSpace, nSteps=1)
-
     state = env.reset()
     f1Prog = []
     i = 0

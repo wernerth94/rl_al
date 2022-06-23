@@ -8,7 +8,7 @@ class TimeDistributedAgent(DDQN):
 
     def network(self, state_space, action_space, n_hidden):
         # Weights are shared between timesteps (see Keras TimeDistributed)
-        # Pytorch broadcasting takes care of the time distribution
+        # Pytorch broadcasting takes care of the time distribution as long as the input is 3D [batch, sample, features]
         # https://stackoverflow.com/questions/61372645/how-to-implement-time-distributed-dense-tdd-layer-in-pytorch
         return nn.Sequential(nn.Linear(state_space, n_hidden),
                              nn.LeakyReLU(),

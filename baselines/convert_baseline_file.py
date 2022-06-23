@@ -1,8 +1,8 @@
 import os
 import numpy as np
 
-in_folder = "cifar10_custom/ens_c3_b2"
-out_file = "cifar10_custom/ensemble_b2.npy"
+in_folder = "pan17/random"
+out_file = "pan17/random.npy"
 repeats = 2
 
 experiments = []
@@ -16,18 +16,11 @@ for in_file in os.listdir(in_folder):
             scores.append( float(contents[i].strip()) )
     experiments.append(scores)
 
-if len(experiments) > 1:
-    experiments = np.array(experiments)
-    experiments = np.array([
-        np.mean(experiments, axis=0),
-        np.std(experiments, axis=0)
-    ])
-elif len(experiments) == 1:
-    experiments = list(zip(experiments, [0.0]*len(experiments)))
-    experiments = np.array(experiments).T
-else:
-    raise ValueError("List of Experiments is empty")
-
+experiments = np.array(experiments)
+experiments = np.array([
+    np.mean(experiments, axis=0),
+    np.std(experiments, axis=0)
+])
 
 if os.path.exists(out_file):
     os.remove(out_file)

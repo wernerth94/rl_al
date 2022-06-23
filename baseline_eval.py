@@ -90,7 +90,7 @@ for run in range(args.iterations):
     print('run %d/%d seed %d' % (run, args.iterations, seed))
     np.random.seed(int(seed))
 
-    env = envFunc(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+    env = envFunc(dataset=dataset, modelFunction=classifier, config=c)
     if baselineName == 'bvssb':
         agent = Agent.Baseline_BvsSB()
     elif baselineName == 'entropy':
