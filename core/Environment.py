@@ -139,9 +139,9 @@ class ALGame:
 
     def _get_internal_features(self, x):
         f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
-        f1.to(self.device)
+        f1 = f1.unsqueeze(1).to(self.device)
         progress = torch.repeat_interleave(torch.Tensor([self.added_images / float(self.budget)]), len(x))
-        progress = progress.to(self.device)
+        progress = progress.unsqueeze(1).to(self.device)
 
         mean_labeled = torch.mean(self.xLabeled, dim=0)
         mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
@@ -154,7 +154,7 @@ class ALGame:
         # diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
         # state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
 
-        return torch.cat([f1.unsqueeze(1), progress.unsqueeze(1), mean_labeled, mean_unlabeled], dim=1)
+        return torch.cat([f1, progress, mean_labeled, mean_unlabeled], dim=1)
 
 
     def _get_sample_features(self, x):
