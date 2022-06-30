@@ -104,7 +104,6 @@ class ALGame:
             self.stateSpace = state.shape[1]
 
 
-
     def _sampleIDs(self, num):
         return np.random.choice(len(self.xUnlabeled), num)
 
@@ -132,44 +131,50 @@ class ALGame:
 
     def createState(self):
         sample_x = self.xUnlabeled[self.stateIds]
-        alFeatures = self.getClassifierFeatures(sample_x)
-        mean_labeled = torch.mean(self.xLabeled, dim=0)
-        mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
-        mean_labeled = mean_labeled.unsqueeze(0).repeat(len(alFeatures), 1)
-        mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(alFeatures), 1)
-        # Last working version:
-        # no data normalization
-        state = torch.cat([alFeatures, mean_labeled, mean_unlabeled], dim=1)
-
-        # compute difference of the labeled pool and the sample
-        # diff_labeled = torch.abs(sample_x - mean_labeled)
-        # diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
-        # state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
+        interal_features = self._get_internal_features(sample_x)
+        sample_features = self._get_sample_features(sample_x)
+        state = torch.cat([sample_features, interal_features], dim=1)
         return state
 
 
-    def getClassifierFeatures(self, x):
+    def _get_internal_features(self, x):
+        f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
+        f1.to(self.device)
+        progress = torch.repeat_interleave(torch.Tensor([self.added_images / float(self.budget)]), len(x))
+        progress = progress.to(self.device)
+
+        mean_labeled = torch.mean(self.xLabeled, dim=0)
+        mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
+        mean_labeled = mean_labeled.unsqueeze(0).repeat(len(x), 1)
+        mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(x), 1)
+
+        # compute difference of the labeled pool and the sample
+        # didn't work last time
+        # diff_labeled = torch.abs(sample_x - mean_labeled)
+        # diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
+        # state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
+
+        return torch.cat([f1.unsqueeze(1), progress.unsqueeze(1), mean_labeled, mean_unlabeled], dim=1)
+
+
+    def _get_sample_features(self, x):
         eps = 1e-7
         # prediction metrics
         with torch.no_grad():
             pred = self.classifier(x).detach()
             two_highest, _ = pred.topk(2, dim=1)
 
-            f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
             entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
             bVsSB = 1 - (two_highest[:, -2] - two_highest[:, -1])
             hist_list = [torch.histc(p, bins=10, min=0, max=1) for p in pred]
             hist = torch.stack(hist_list, dim=0) / self.nClasses
 
-            f1 = f1.to(self.device)
             state = torch.cat([
-                f1.unsqueeze(1),
                 bVsSB.unsqueeze(1),
                 entropy.unsqueeze(1),
                 hist
             ], dim=1)
         return state
-
 
 
     def step(self, action):
@@ -244,7 +249,7 @@ class DuelingALGame(ALGame):
         self.stateSpace = (cntx.shape[1], state.shape[1])
 
     def createState(self):
-        classFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds])
+        classFeatures = self._get_sample_features(self.xUnlabeled[self.stateIds])
         f1 = classFeatures[0, 0]
         alFeatures = classFeatures[:, 1:]
         cntxFeatures = self.getPoolInfo()
@@ -265,7 +270,7 @@ class PALGame(ALGame):
 
 
     def createState(self):
-        alFeatures = self.getClassifierFeatures(self.xUnlabeled[self.stateIds].unsqueeze(0))
+        alFeatures = self._get_sample_features(self.xUnlabeled[self.stateIds].unsqueeze(0))
         return alFeatures
         # alFeatures = torch.from_numpy(alFeatures).float()
         # poolFeatures = self.getPoolInfo()

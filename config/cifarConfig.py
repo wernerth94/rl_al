@@ -10,7 +10,7 @@ PRINT_FREQ = 1
 
 # RL training
 BATCH_SIZE = 32
-MEMORY_CAP = 200000
+MEMORY_CAP = int(7e+4) # 200000 lower memory cap works in Q experiment, maybe its better?
 AGENT_C = 500
 AGENT_GAMMA = 0.0 # TODO
 AGENT_NHIDDEN = 200
