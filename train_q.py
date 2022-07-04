@@ -25,7 +25,7 @@ from ReplayBuffer import PrioritizedQReplay
 import config.cifarConfig as c
 from Data import load_cifar10_custom
 
-def run():
+def run(log_dir):
     # Cap the replay buffer capacity to stay below 10GB RAM usage
     c.MEMORY_CAP = min(c.MEMORY_CAP, int(7e+4))
 
@@ -44,8 +44,6 @@ def run():
 
     replay_buffer = PrioritizedQReplay(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
 
-    current_time = datetime.now().strftime('%m-%d_%H:%M:%S')
-    log_dir = os.path.join('runs', f"q_{current_time}")
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:
         f.write(c.get_description())
@@ -104,9 +102,16 @@ def run():
     if c.RECORD_AL_PERFORMANCE:
         baseline_perf = np.load(c.BASELINE_FILE)[0, c.BUDGET-1]
         regret = baseline_perf - moving_reward
-        with open(os.path.join(log_dir, "regret.txt"), "w") as f:
-            f.write(f"Regret: {regret}\n=========================\n")
-            f.write(f"{c.get_description()}")
+        return regret
 
 if __name__ == '__main__':
-    run()
+    current_time = datetime.now().strftime('%m-%d_%H:%M:%S')
+    log_dir = os.path.join('runs', f"v_{current_time}")
+    values = list()
+    for r in range(3):
+        current_log_dir = os.path.join(log_dir, str(r))
+        values.append(run(current_log_dir))
+    with open(os.path.join(log_dir, "regret.txt"), "w") as f:
+        f.write(f"Values: {values}\n")
+        f.write(f"Regret: {np.mean(values)}+-{np.std(values)}\n=========================\n")
+        f.write(f"{c.get_description()}")

@@ -63,9 +63,6 @@ class MockALGame:
 
 
 
-
-
-
 class ALGame:
 
     def __init__(self, dataset, modelFunction, config, sample_size_in_state=False):
