@@ -93,7 +93,7 @@ class ALGame(gym.Env):
         self.reset()
         self.action_space = gym.spaces.Discrete(config.SAMPLE_SIZE)
         self._set_state_shape(sample_size_in_state)
-        self.spec = gym.envs.registration.EnvSpec("rl_al", reward_threshold=10)
+        self.spec = gym.envs.registration.EnvSpec("RlAl-v0", reward_threshold=10)
 
 
     def _set_state_shape(self, sample_size_in_state):
