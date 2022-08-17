@@ -137,7 +137,7 @@ class ALGame(gym.Env):
             interal_features = self._get_internal_features(sample_x)
             sample_features = self._get_sample_features(sample_x)
             state = torch.cat([sample_features, interal_features], dim=1)
-        return state
+        return state.cpu()
 
 
     def _get_internal_features(self, x):
