@@ -3,6 +3,17 @@ import torch
 import numpy as np
 from Agent import DDQN
 
+class TimeDistributedNet(torch.nn.Module):
+    def __init__(self, state_space, n_hidden):
+        super().__init__()
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.net = nn.Sequential(nn.Linear(state_space, n_hidden),
+                             nn.LeakyReLU(),
+                             nn.Linear(n_hidden, 1),)
+    def forward(self, input, *args, **kwargs):
+        input = torch.as_tensor(input, device=self.device, dtype=torch.float32)
+        return self.net(input)
+
 
 class TimeDistributedAgent(DDQN):
 
@@ -10,10 +21,7 @@ class TimeDistributedAgent(DDQN):
         # Weights are shared between timesteps (see Keras TimeDistributed)
         # Pytorch broadcasting takes care of the time distribution as long as the input is 3D [batch, sample, features]
         # https://stackoverflow.com/questions/61372645/how-to-implement-time-distributed-dense-tdd-layer-in-pytorch
-        return nn.Sequential(nn.Linear(state_space, n_hidden),
-                             nn.LeakyReLU(),
-                             nn.Linear(n_hidden, 1),
-                             )
+        return TimeDistributedNet(state_space, n_hidden)
 
     def predict(self, inputs, greed=1, model='main'):
         q = self._forward(inputs, model)

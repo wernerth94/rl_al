@@ -1,3 +1,4 @@
+import gym
 import torch
 import numpy as np
 from PoolManagement import resetALPool, addDatapointToPool
@@ -63,7 +64,7 @@ class MockALGame:
 
 
 
-class ALGame:
+class ALGame(gym.Env):
 
     def __init__(self, dataset, modelFunction, config, sample_size_in_state=False):
         assert all([isinstance(d, torch.Tensor) for d in dataset])
@@ -90,7 +91,9 @@ class ALGame:
 
         self.currentTestF1 = 0
         self.reset()
+        self.action_space = gym.spaces.Discrete(config.SAMPLE_SIZE)
         self._set_state_shape(sample_size_in_state)
+        self.spec = gym.envs.registration.EnvSpec("rl_al", reward_threshold=10)
 
 
     def _set_state_shape(self, sample_size_in_state):
@@ -99,6 +102,7 @@ class ALGame:
             self.stateSpace = np.multiply(*state.shape)
         else:
             self.stateSpace = state.shape[1]
+            self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(state.shape[1],))
 
 
     def _sampleIDs(self, num):
@@ -106,19 +110,20 @@ class ALGame:
 
 
     def reset(self):
-        self.nInteractions = 0
-        self.added_images = 0
+        with torch.no_grad():
+            self.nInteractions = 0
+            self.added_images = 0
 
-        del self.classifier
-        self.classifier = self.modelFunction(inputShape=self.x_test.shape[1:],
-                                             numClasses=self.y_test.shape[1])
-        self.classifier.to(self.device)
-        self.initialWeights = self.classifier.state_dict()
-        self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
+            del self.classifier
+            self.classifier = self.modelFunction(inputShape=self.x_test.shape[1:],
+                                                 numClasses=self.y_test.shape[1])
+            self.classifier.to(self.device)
+            self.initialWeights = self.classifier.state_dict()
+            self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
 
-        self.xLabeled, self.yLabeled, \
-        self.xUnlabeled, self.yUnlabeled, self.perClassIntances = resetALPool(self.dataset,
-                                                                              self.config.INIT_POINTS_PER_CLASS)
+            self.xLabeled, self.yLabeled, \
+            self.xUnlabeled, self.yUnlabeled, self.perClassIntances = resetALPool(self.dataset,
+                                                                                  self.config.INIT_POINTS_PER_CLASS)
         self.fitClassifier() # sets self.currentTestF1
         self.initialF1 = self.currentTestF1
 
@@ -127,29 +132,31 @@ class ALGame:
 
 
     def createState(self):
-        sample_x = self.xUnlabeled[self.stateIds]
-        interal_features = self._get_internal_features(sample_x)
-        sample_features = self._get_sample_features(sample_x)
-        state = torch.cat([sample_features, interal_features], dim=1)
+        with torch.no_grad():
+            sample_x = self.xUnlabeled[self.stateIds]
+            interal_features = self._get_internal_features(sample_x)
+            sample_features = self._get_sample_features(sample_x)
+            state = torch.cat([sample_features, interal_features], dim=1)
         return state
 
 
     def _get_internal_features(self, x):
-        f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
-        f1 = f1.unsqueeze(1).to(self.device)
-        progress = torch.repeat_interleave(torch.Tensor([self.added_images / float(self.budget)]), len(x))
-        progress = progress.unsqueeze(1).to(self.device)
+        with torch.no_grad():
+            f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
+            f1 = f1.unsqueeze(1).to(self.device)
+            progress = torch.repeat_interleave(torch.Tensor([self.added_images / float(self.budget)]), len(x))
+            progress = progress.unsqueeze(1).to(self.device)
 
-        mean_labeled = torch.mean(self.xLabeled, dim=0)
-        mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
-        mean_labeled = mean_labeled.unsqueeze(0).repeat(len(x), 1)
-        mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(x), 1)
+            mean_labeled = torch.mean(self.xLabeled, dim=0)
+            mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
+            mean_labeled = mean_labeled.unsqueeze(0).repeat(len(x), 1)
+            mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(x), 1)
 
-        # compute difference of the labeled pool and the sample
-        # didn't work last time
-        # diff_labeled = torch.abs(sample_x - mean_labeled)
-        # diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
-        # state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
+            # compute difference of the labeled pool and the sample
+            # didn't work last time
+            # diff_labeled = torch.abs(sample_x - mean_labeled)
+            # diff_unlabeled = torch.abs(sample_x - mean_unlabeled)
+            # state = torch.cat([alFeatures, diff_labeled, diff_unlabeled], dim=1)
 
         return torch.cat([f1, progress, mean_labeled, mean_unlabeled], dim=1)
 
@@ -175,12 +182,13 @@ class ALGame:
 
 
     def step(self, action):
-        self.nInteractions += 1
-        self.added_images += 1
-        datapointId = self.stateIds[action]
-        self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, perClassIntances = addDatapointToPool(self.xLabeled, self.yLabeled,
-                                                                                                              self.xUnlabeled, self.yUnlabeled,
-                                                                                                              self.perClassIntances, datapointId)
+        with torch.no_grad():
+            self.nInteractions += 1
+            self.added_images += 1
+            datapointId = self.stateIds[action]
+            self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, perClassIntances = addDatapointToPool(self.xLabeled, self.yLabeled,
+                                                                                                                  self.xUnlabeled, self.yUnlabeled,
+                                                                                                                  self.perClassIntances, datapointId)
         reward = self.fitClassifier()
         self.stateIds = self._sampleIDs(self.config.SAMPLE_SIZE)
         statePrime = self.createState()
@@ -233,6 +241,7 @@ class ALGame:
         if self.added_images >= self.budget:
             done = True # budget exhausted
         return done
+
 
 
 

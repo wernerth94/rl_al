@@ -63,18 +63,18 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
-# plot('../baselines/cifar10_custom/random.npy', 'gray', displayName='random', weight=0.8)
-# plot('../baselines/cifar10_custom/bvssb.npy', 'navy', displayName='BvsSB', weight=0.8)
-# plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='Agent', weight=0.8, alpha=1.0)
+plot('../baselines/cifar10_custom/random.npy', 'gray', displayName='random', weight=0.8)
+plot('../baselines/cifar10_custom/bvssb.npy', 'navy', displayName='BvsSB', weight=0.8)
+plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='Agent', weight=0.8, alpha=1.0)
 
 # plot('../baselines/cifar10_custom/ensemble_b1.npy', 'red', displayName='Ensemble B1', weight=0.95)
 # plot('../baselines/cifar10_custom/ensemble_b2.npy', 'purple', displayName='Ensemble B2', weight=0.95)
 # plot('../baselines/cifar10_custom/ensemble_b4.npy', 'green', displayName='Ensemble B4', weight=0.95)
 
-plot('../baselines/pan17/random.npy', 'black', displayName='random', weight=0.5)
+# plot('../baselines/pan17/random.npy', 'black', displayName='random', weight=0.5)
 # plot('../baselines/pan17/entropy.npy', 'green', displayName='entropy', weight=0.5)
-plot('../baselines/pan17/shannon.npy', 'green', displayName='entropy', weight=0.5)
-plot('../baselines/pan17/bvssb.npy', 'blue', displayName='bvssb', weight=0.5)
+# plot('../baselines/pan17/shannon.npy', 'green', displayName='entropy', weight=0.5)
+# plot('../baselines/pan17/bvssb.npy', 'blue', displayName='bvssb', weight=0.5)
 
 # plot('../baselines/mock/random.npy', 'gray', displayName='random', weight=0.0)
 # plot('../baselines/mock/entropy.npy', 'green', displayName='Entropy', weight=0.0)

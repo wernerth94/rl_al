@@ -77,7 +77,7 @@ def run(log_dir):
                     epoch_reward += reward
 
                     if len(reward_buffer) >= c.N_STEPS:
-                        replay_buffer.push( (state_buffer.pop(0).squeeze(0), action_buffer, reward_buffer,
+                        replay_buffer.push( (state_buffer.pop(0).squeeze(0), action_buffer.pop(0), reward_buffer,
                                              state_buffer[-1].squeeze(0), done) )
                         reward_buffer.pop(0)
 

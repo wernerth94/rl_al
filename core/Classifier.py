@@ -34,11 +34,15 @@ class EmbeddingClassifierFactory:
     def __init__(self, embeddingSize):
         self.embeddingSize = embeddingSize
 
+
+
     def __call__(self, numClasses=10, *args, **kwargs):
         model = nn.Sequential(nn.Linear(self.embeddingSize, 50),
                               nn.LeakyReLU(),
                               nn.Linear(50, numClasses),
                               nn.Softmax(dim=1))
+        example_forward_input = torch.rand(1, self.embeddingSize)
+        model = torch.jit.trace_module(model, { 'forward' : example_forward_input} )
         return model
 
 
