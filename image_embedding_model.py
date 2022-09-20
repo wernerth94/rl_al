@@ -270,7 +270,7 @@ def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
         pass
 
     global MODEL_FILE
-    MODEL_FILE = "%1.3f_"%(val_accs[-1]) + MODEL_FILE
+    MODEL_FILE = MODEL_FILE + "%1.3f_"%(val_accs[-1])
     MODEL_FILE = MODEL_FILE + ".pt"
     if os.path.exists(MODEL_FILE):
         os.remove(MODEL_FILE)
