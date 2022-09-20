@@ -2,7 +2,6 @@ import os
 import sys
 import getpass
 
-import numpy as np
 
 print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
@@ -14,14 +13,16 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
+import numpy as np
+from datetime import datetime
+import torch
+from torch.utils.tensorboard import SummaryWriter
+
 import Classifier
 import Environment
 import Agent
-from Misc import *
 from env_logger import RLEnvLogger
 from agent_logger import RLAgentLogger
-from datetime import datetime
-from torch.utils.tensorboard import SummaryWriter
 from ReplayBuffer import PrioritizedReplayMemory
 
 import config.cifarConfig as c

@@ -42,7 +42,7 @@ LR = util.parameterPlan(0.01, 0.004, warmup=WARMUP_EPOCHS, conversion=CONVERSION
 RECORD_AL_PERFORMANCE = True
 BASELINE_FILE = f'baselines/cifar10_custom/bvssb.npy'
 LOWER_BOUND_FILE = f'baselines/cifar10_custom/random.npy'
-if not os.path.exists(BASELINE_FILE) and not os.path.exists(LOWER_BOUND_FILE):
+if not os.path.exists(BASELINE_FILE) or not os.path.exists(LOWER_BOUND_FILE):
     RECORD_AL_PERFORMANCE = False
     print("Baseline files not found, disabling AL performance")
 

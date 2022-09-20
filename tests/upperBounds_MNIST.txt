@@ -1,6 +1,0 @@
-[Conv numNeurons, kernelSize, stride]
-[Dense size]
-
-[Conv 32, 3, [3,3]] [Dense 24]              val_loss: 0.3462 - val_categorical_accuracy: 0.9334
-[Conv 32, 3, [3,3]][Conv 64, 3] [Dense 24]  val_loss: 0.4340 - val_categorical_accuracy: 0.9390
-[Dense 48][Dense 24]                        val_loss: 0.1466 - val_categorical_accuracy: 0.9542

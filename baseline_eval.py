@@ -10,7 +10,6 @@ sys.path.append("config")
 print(F"updated path is {sys.path}")
 
 from core.Evaluation import scoreAgent
-from core.Misc import saveNumpyFile
 import numpy as np
 import os, time
 import argparse
@@ -123,8 +122,10 @@ f1 = np.array([np.mean(result, axis=0),
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, f"{baselineName}_b{c.BUDGET}_s{c.SAMPLE_SIZE}")
-saveNumpyFile(file, f1)
+file = os.path.join(folder, f"{baselineName}_b{c.BUDGET}_s{c.SAMPLE_SIZE}.npy")
+if os.path.exists(file):
+    os.remove(file)
+np.save(file, f1)
 
 print('time needed', int(time.time() - startTime), 'seconds')
 print(f"average improvement {avrgImprov}")

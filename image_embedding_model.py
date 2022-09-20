@@ -9,23 +9,33 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
+CLUSTER = False
+if sys.prefix.startswith('/home/werner/miniconda3'):
+    CLUSTER = True
 
 import torchvision.transforms
 
 from Data import load_cifar10_pytorch
 import numpy as np
+from tqdm import tqdm
+from time import sleep
 import random, os
 import torch
 import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from torchvision.transforms import *
-from Misc import accuracy
 import argparse
 
+def accuracy(y_hat, y_true):
+    pred_class = torch.argmax(y_hat, dim=-1)
+    true_class = torch.argmax(y_true, dim=-1)
+    acc = sum(pred_class == true_class) / len(y_true)
+    return acc
+
 arg_parse = argparse.ArgumentParser()
-arg_parse.add_argument("--reconmult", "-r", type=float, default=0.0)
-arg_parse.add_argument("--triplet", "-t", type=bool, default=False)
+arg_parse.add_argument("--reconmult", "-r", type=float, default=0.0001)
+arg_parse.add_argument("--triplet", "-t", type=bool, default=True)
 args = arg_parse.parse_args()
 
 print(f"--triplet training: {args.triplet}")
@@ -33,23 +43,14 @@ print(f"--reconmult: {args.reconmult}")
 
 FOLDER = "encoder_gs"
 os.makedirs(FOLDER, exist_ok=True)
-MODEL_FILE = f"{FOLDER}/encoder_{args.triplet}_{args.reconmult}.pt"
+MODEL_FILE = f"{FOLDER}/encoder_{args.triplet}_{args.reconmult}"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 encoder = nn.Sequential(
-    nn.Conv2d(3, 32, (3,3), stride=2),
-    nn.BatchNorm2d(32),
-    nn.LeakyReLU(),
-    nn.Conv2d(32, 64, (3,3)),
-    nn.BatchNorm2d(64),
-    nn.Dropout2d(p=0.05),
-    nn.LeakyReLU(),
-    nn.Conv2d(64, 128, (3,3)),
-    nn.LeakyReLU(),
-    nn.Conv2d(128, 64, (3,3)),
-    nn.BatchNorm2d(64),
-    nn.Dropout2d(p=0.05),
-    nn.LeakyReLU(),
+    nn.Conv2d(3, 32, (3,3), stride=2), nn.BatchNorm2d(32), nn.LeakyReLU(),
+    nn.Conv2d(32, 64, (3,3)), nn.BatchNorm2d(64), nn.Dropout2d(p=0.05), nn.LeakyReLU(),
+    nn.Conv2d(64, 128, (3,3)), nn.LeakyReLU(),
+    nn.Conv2d(128, 64, (3,3)), nn.BatchNorm2d(64), nn.Dropout2d(p=0.05), nn.LeakyReLU(),
     nn.Conv2d(64, 12, (2,2)),
     nn.MaxPool2d(3, stride=2),
     nn.Flatten()
@@ -61,10 +62,8 @@ class_head = nn.Sequential(
 ).to(device)
 recon_head = nn.Sequential(
     nn.Unflatten(1, (12, 3, 3)),
-    nn.ConvTranspose2d(12, 24, (3,3)),
-    nn.BatchNorm2d(24),
-    nn.ConvTranspose2d(24, 32, (2,2)),
-    nn.BatchNorm2d(32),
+    nn.ConvTranspose2d(12, 24, (3,3)), nn.BatchNorm2d(24),
+    nn.ConvTranspose2d(24, 32, (2,2)), nn.BatchNorm2d(32),
     nn.ConvTranspose2d(32, 64, (3,3), stride=2),
     nn.ConvTranspose2d(64, 64, (3,3)),
     nn.ConvTranspose2d(64, 32, (3,3), stride=2),
@@ -72,11 +71,6 @@ recon_head = nn.Sequential(
     torchvision.transforms.Resize((32, 32))
 ).to(device)
 
-x_train, y_train, x_test, y_test = load_cifar10_pytorch(return_tensors=True)
-x_train = x_train.to(device)
-y_train = y_train.to(device)
-x_test = x_test.to(device)
-y_test = y_test.to(device)
 
 class AugDataset(TensorDataset):
     transform = Compose([
@@ -143,6 +137,7 @@ def train_new_triplet(x_train, y_train, x_test, y_test, train_epochs=100):
     class_loaders = {}
     class_ids = {}
     class_datasets = {}
+    # sort data by class
     for i, label in enumerate(y_train):
         label = int(torch.argmax(label))
         if label not in class_ids:
@@ -152,6 +147,7 @@ def train_new_triplet(x_train, y_train, x_test, y_test, train_epochs=100):
         class_datasets[label] = TensorDataset(x_train[ids], y_train[ids])
         class_loaders[label] = RandomSampler(class_datasets[label])
 
+    # create one sampler per class
     samplers = {}
     for k, l in class_loaders.items():
         samplers[k] = iter(l)
@@ -206,17 +202,18 @@ def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
     loss_ce = nn.CrossEntropyLoss()
     loss_recon = nn.MSELoss()
 
-    VAL_SIZE = int(len(x_train) * 0.2)
-    val_ids = np.random.choice(len(x_train), size=VAL_SIZE, replace=False)
-    val_mask = [ v not in val_ids for v in np.arange(len(x_train)) ]
-    x_val = x_train[val_ids]
-    y_val = y_train[val_ids]
-    x_train = x_train[val_mask]
-    y_train = y_train[val_mask]
+    # VAL_SIZE = int(len(x_train) * 0.2)
+    # val_ids = np.random.choice(len(x_train), size=VAL_SIZE, replace=False)
+    # val_mask = [ v not in val_ids for v in np.arange(len(x_train)) ]
+    # x_val = x_train[val_ids]
+    # y_val = y_train[val_ids]
+    # x_train = x_train[val_mask]
+    # y_train = y_train[val_mask]
+    # val_dataloader = DataLoader(AugDataset(x_val, y_val), batch_size=BATCH_SIZE, shuffle=True)
 
     BATCH_SIZE = 128
     train_dataloader = DataLoader(AugDataset(x_train, y_train), batch_size=BATCH_SIZE, shuffle=True)
-    val_dataloader = DataLoader(AugDataset(x_val, y_val), batch_size=BATCH_SIZE, shuffle=True)
+    val_dataloader = DataLoader(AugDataset(x_test, y_test), batch_size=BATCH_SIZE, shuffle=True)
 
     early_stop = EarlyStop()
     class_errors = []
@@ -235,9 +232,10 @@ def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
                 for param_group in optimizer_class.param_groups:
                     param_group['lr'] = lr / 4.0
 
-            for batch_x, batch_y in train_dataloader:
+            for batch_x, batch_y in tqdm(train_dataloader, disable=CLUSTER):
                 z = encoder(batch_x)
                 yHat = class_head(z)
+                accuracy(yHat.detach(), batch_y)
                 recon = recon_head(z)
                 loss_val = loss_ce(yHat, batch_y) + args.reconmult * loss_recon(recon, batch_x)
                 optimizer_class.zero_grad()
@@ -263,13 +261,17 @@ def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
             sum_class /= counter; class_errors.append(sum_class)
             sum_recon /= counter; recon_errors.append(sum_recon)
             acc /= counter; val_accs.append(acc)
-            print("%d: class %1.4f recon %1.4f - Acc %1.3f"%(epoch, sum_class, sum_recon, acc))
+            print("%d: classification loss %1.3f reconstruction loss %1.1f - Acc %1.3f"%(epoch, sum_class, sum_recon, acc))
+            sleep(0.1) # to fix some printing ugliness with tqdm
             if early_stop.check_stop(sum_class):
                 print("early stop")
                 break
     except KeyboardInterrupt as ex:
         pass
 
+    global MODEL_FILE
+    MODEL_FILE = MODEL_FILE + "_%1.2f"%(val_accs[-1])
+    MODEL_FILE = MODEL_FILE + ".pt"
     if os.path.exists(MODEL_FILE):
         os.remove(MODEL_FILE)
     torch.save(encoder, MODEL_FILE)
@@ -283,9 +285,17 @@ def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
 
 
 if __name__ == '__main__':
-    #convert_dataset()
+    x_train, y_train, x_test, y_test = load_cifar10_pytorch(return_tensors=True)
+    x_train = x_train.to(device)
+    y_train = y_train.to(device)
+    x_test = x_test.to(device)
+    y_test = y_test.to(device)
+
     if args.triplet:
         train_new_triplet(x_train, y_train, x_test, y_test)
-        encoder.requires_grad_(False)
+        # encoder.requires_grad_(False)
     train_new_model(x_train, y_train, x_test, y_test)
+
+    ###########################################
+    #convert_dataset()
     pass

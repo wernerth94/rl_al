@@ -9,6 +9,7 @@ memoryBacklog
 /runs/
 evaluation/*.png
 tests
+encoder_gs/*
 
 __pycache__
 core/__pycache__
