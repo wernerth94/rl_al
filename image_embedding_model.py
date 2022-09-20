@@ -263,14 +263,14 @@ def train_new_model(x_train, y_train, x_test, y_test, train_epochs=100):
             acc /= counter; val_accs.append(acc)
             print("%d: classification loss %1.3f reconstruction loss %1.1f - Acc %1.3f"%(epoch, sum_class, sum_recon, acc))
             sleep(0.1) # to fix some printing ugliness with tqdm
-            if early_stop.check_stop(sum_class):
+            if early_stop.check_stop(sum_class + args.reconmult * sum_recon):
                 print("early stop")
                 break
     except KeyboardInterrupt as ex:
         pass
 
     global MODEL_FILE
-    MODEL_FILE = MODEL_FILE + "_%1.2f"%(val_accs[-1])
+    MODEL_FILE = "%1.3f_"%(val_accs[-1]) + MODEL_FILE
     MODEL_FILE = MODEL_FILE + ".pt"
     if os.path.exists(MODEL_FILE):
         os.remove(MODEL_FILE)
