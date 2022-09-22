@@ -63,9 +63,9 @@ def collect(folder, maskingThreshold=0.0, curvesFolder='curves'):
 folder = '..'
 sns.set()
 
-plot('../baselines/cifar10_custom/random.npy', 'gray', displayName='random', weight=0.8)
-plot('../baselines/cifar10_custom/bvssb.npy', 'navy', displayName='BvsSB', weight=0.8)
-plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='Agent', weight=0.8, alpha=1.0)
+# plot('../baselines/cifar10_custom/random.npy', 'gray', displayName='random', weight=0.8)
+# plot('../baselines/cifar10_custom/bvssb.npy', 'navy', displayName='BvsSB', weight=0.8)
+# plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='Agent', weight=0.8, alpha=1.0)
 
 # plot('../baselines/cifar10_custom/ensemble_b1.npy', 'red', displayName='Ensemble B1', weight=0.95)
 # plot('../baselines/cifar10_custom/ensemble_b2.npy', 'purple', displayName='Ensemble B2', weight=0.95)
@@ -76,14 +76,15 @@ plot('../baselines/cifar10_custom/agent_b2000_s20.npy', 'orange', displayName='A
 # plot('../baselines/pan17/shannon.npy', 'green', displayName='entropy', weight=0.5)
 # plot('../baselines/pan17/bvssb.npy', 'blue', displayName='bvssb', weight=0.5)
 
-# plot('../baselines/mock/random.npy', 'gray', displayName='random', weight=0.0)
+plot('../baselines/mock/random.npy', 'gray', displayName='random', weight=0.0)
 # plot('../baselines/mock/entropy.npy', 'green', displayName='Entropy', weight=0.0)
-# plot('../baselines/mock/bvssb.npy', 'navy', displayName='BvsSB', weight=0.0)
-# plot('../baselines/mock/truth.npy', 'red', displayName='GroundTruth', weight=0.0)
-# plot('../baselines/mock/linear.npy', 'orange', displayName='linear', weight=0.0)
+plot('../baselines/mock/bvssb.npy', 'navy', displayName='BvsSB', weight=0.0)
+plot('../baselines/mock/truth.npy', 'red', displayName='GroundTruth', weight=0.0)
+plot('../baselines/mock/linear.npy', 'orange', displayName='linear', weight=0.0)
+plot('../baselines/mock/agent_time_dist.npy', 'black', displayName='agent', weight=0.0)
 # plot('../baselines/mock/eval.npy', 'blue', displayName='Rainbow', weight=0.0)
 
 plt.legend(fontsize='x-small')
 # plt.ylim(0.6, 0.8)
-plt.savefig('plot_'+c.MODEL_NAME+'.png')
+plt.savefig('eval_plot.png')
 plt.show()

@@ -18,8 +18,8 @@ print(F"updated path is {sys.path}")
 import argparse
 import Environment
 import Agent
-from Misc import *
 import util
+import torch
 from env_logger import RLEnvLogger
 from agent_logger import RLAgentLogger
 from datetime import datetime

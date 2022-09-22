@@ -1,5 +1,8 @@
 import sys
 import getpass
+
+import Evaluation
+
 print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
 
@@ -7,40 +10,20 @@ print(F"The virtualenv is: {sys.prefix}")
 sys.path.append("core")
 sys.path.append("evaluation")
 sys.path.append("config")
+sys.path.append("rl_core")
+sys.path.append("reimplementations")
 print(F"updated path is {sys.path}")
 
-from core.Evaluation import scoreAgent
-import numpy as np
+from core.Evaluation import score_agent
 import os, time
 import argparse
-import Classifier, Agent, Environment
-import torch
+from helper_functions import *
 
-def get_linear_agent(conf):
-    env = Environment.MockALGame(conf)
-    X = np.zeros(shape=(0, 2))
-    Y = np.zeros(shape=(0, 1))
-    for _ in range(100):
-        state = env.reset()
-        X = np.concatenate([X, state[:, 1:3]])
-        Y = np.concatenate([Y, state[:, 3:4]])
-    from sklearn.linear_model import LinearRegression
-    model = LinearRegression()
-    model.fit(X, Y)
-
-    class LinearAgent():
-        def __init__(self, model:LinearRegression):
-            self.model = model
-        def predict(self, inputs, *args, **kwargs):
-            y_hat = self.model.predict(inputs[:, 1:3])
-            action = np.argmax(y_hat)
-            return y_hat[action], torch.Tensor([int(action)]).int()
-
-    return LinearAgent(model)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', '-n', default='bvssb', type=str)
-parser.add_argument('--chkpt', '-c', default='', type=str)
+parser.add_argument('--name', '-n', default='agent', type=str)
+parser.add_argument('--chkpt', '-c', default='mock/dqn/0922-102829_seed_0/', type=str)
 parser.add_argument('--iterations', '-i', type=int, default=10)
 parser.add_argument('--samplesize', '-s', type=int)
 parser.add_argument('--budget', '-b', type=int)
@@ -48,15 +31,15 @@ args = parser.parse_args()
 
 ##################################
 ### MAIN
-baselineName = str(args.name)
+baseline_name = str(args.name)
 
-# from config import mockConfig as c
-from config import cifarConfig as c
+from config import mockConfig as c
+# from config import cifarConfig as c
 from Data import load_cifar10_custom as load_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# overwrite usual config
+# config overwrites from cmd arguments
 if args.samplesize:
     print(f"overwrite sample size to {args.samplesize}")
     c.SAMPLE_SIZE = args.samplesize
@@ -64,20 +47,14 @@ if args.budget:
     print(f"overwrite budget to {args.budget}")
     c.BUDGET = args.budget
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-# envFunc = Environment.MockALGame
-# dataset = [None]*4
-# classifier = None
-
-envFunc = Environment.ALGame
+env_function = Environment.MockALGame
+# envFunc = Environment.ALGame
 dataset = load_data(return_tensors=True)
 dataset = [d.to(device) for d in dataset]
 classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 
-
 print('#########################################################')
-print('testing', baselineName, 'with budget', c.BUDGET)
+print('testing', baseline_name, 'with budget', c.BUDGET)
 print('#########################################################')
 
 startTime = time.time()
@@ -89,43 +66,57 @@ for run in range(args.iterations):
     print('run %d/%d seed %d' % (run, args.iterations, seed))
     np.random.seed(int(seed))
 
-    env = envFunc(dataset=dataset, modelFunction=classifier, config=c)
-    if baselineName == 'bvssb':
+    env = env_function(dataset=dataset, modelFunction=classifier, config=c)
+    eval_function = Evaluation.score_agent
+
+    if baseline_name == 'bvssb':
         agent = Agent.Baseline_BvsSB()
-    elif baselineName == 'entropy':
+    elif baseline_name == 'entropy':
         agent = Agent.Baseline_Entropy()
-    elif baselineName == 'random':
+    elif baseline_name == 'random':
         agent = Agent.Baseline_Random()
-    elif baselineName == 'truth':
+    elif baseline_name == 'truth':
         agent = Agent.Baseline_Heuristic(m=3)
-    elif baselineName == 'linear':
+    elif baseline_name == 'linear':
         agent = get_linear_agent(c)
-    elif baselineName == 'agent':
+    elif baseline_name == 'agent':
         assert args.chkpt != ''
-        # agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
-        #                    weight_copy_interval=c.AGENT_C)
-        path = os.path.join("runs", args.chkpt, "best_agent.pt")
-        agent = torch.load(path, map_location=device)
-        agent.device = device
+        path = os.path.join("runs", args.chkpt)
+        if os.path.exists(os.path.join(path, "best_agent.pt")):
+            # own implementation
+            path = os.path.join(path, "best_agent.pt")
+            agent = torch.load(path, map_location=device)
+            agent.device = device
+        elif os.path.exists(os.path.join(path, "best_policy.pth")):
+            # Tianshou
+            path = os.path.join(path, "best_policy.pth")
+            agent = load_tianshou_agent_for_eval(path, env)
+            eval_function = Evaluation.score_tianshou_agent
+        else:
+            raise ValueError("Agent checkpoint not found")
         agent.to(device)
     else:
-        raise ValueError('baseline not in all_baselines;  given: ' + baselineName)
+        raise ValueError('baseline not in all_baselines;  given: ' + baseline_name)
 
-    f1, improvement = scoreAgent(agent, env)
+    f1_curve, improvement = eval_function(agent, env)
     avrgImprov += improvement
-    result.append(f1)
+    result.append(f1_curve)
 
 avrgImprov /= args.iterations
 result = np.array(result)
-f1 = np.array([np.mean(result, axis=0),
-               np.std(result, axis=0)])
+# convert into mean and std vectors
+f1_curve = np.array([np.mean(result, axis=0),
+                     np.std(result, axis=0)])
 
 folder = 'baselines'
 os.makedirs(folder, exist_ok=True)
-file = os.path.join(folder, f"{baselineName}_b{c.BUDGET}_s{c.SAMPLE_SIZE}.npy")
+if baseline_name == 'agent':
+    file = os.path.join(folder, f"{baseline_name}_{args.chkpt.replace('/', '_')}.npy")
+else:
+    file = os.path.join(folder, f"{baseline_name}.npy")
 if os.path.exists(file):
     os.remove(file)
-np.save(file, f1)
+np.save(file, f1_curve)
 
 print('time needed', int(time.time() - startTime), 'seconds')
 print(f"average improvement {avrgImprov}")

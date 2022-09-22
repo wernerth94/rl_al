@@ -7,7 +7,8 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 
-class MockALGame:
+class MockALGame(gym.Env):
+
     def __init__(self, config, noise_level=1, reward_noise=1, *args, **kwargs):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.noise_level = noise_level
@@ -18,11 +19,14 @@ class MockALGame:
         self.max_reward = config.MAX_REWARD
         self.reset()
         self._set_state_shape()
+        self.action_space = gym.spaces.Discrete(config.SAMPLE_SIZE)
+        self.spec = gym.envs.registration.EnvSpec("MockAl-v0", reward_threshold=10)
 
 
     def _set_state_shape(self):
         state = self.create_state()
         self.stateSpace = state.shape[1]
+        self.observation_space = gym.spaces.Box(0, np.inf, shape=(state.shape[1],))
 
 
     def reset(self):
@@ -63,7 +67,12 @@ class MockALGame:
         return self.create_state(), reward, done, {}
 
 
+    def render(self, mode="human"):
+        pass
 
+
+######################################################
+######################################################
 class ALGame(gym.Env):
 
     def __init__(self, dataset, modelFunction, config, sample_size_in_state=False):
@@ -102,7 +111,7 @@ class ALGame(gym.Env):
             self.stateSpace = np.multiply(*state.shape)
         else:
             self.stateSpace = state.shape[1]
-            self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=(state.shape[1],))
+            self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=[state.shape[1],])
 
 
     def _sampleIDs(self, num):
@@ -245,6 +254,8 @@ class ALGame(gym.Env):
 
 
 
+######################################################
+######################################################
 class DuelingALGame(ALGame):
     def __init__(self, dataset, modelFunction, config):
         super().__init__(dataset, modelFunction, config)
@@ -264,6 +275,8 @@ class DuelingALGame(ALGame):
 
 
 
+######################################################
+######################################################
 class PALGame(ALGame):
 
     def __init__(self, dataset, modelFunction, config):
