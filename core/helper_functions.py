@@ -32,7 +32,7 @@ def get_linear_agent(conf):
 
 def load_tianshou_agent_for_eval(path, env):
     # TODO: dont hardcode the hidden sizes and testing epsilon
-    net = TianTimeDistributedNet(env.observation_space.shape[0], n_hidden=128).to(device)
+    net = TianTimeDistributedNet(env.observation_space.shape[0], n_hidden=64).to(device)
     _ = torch.optim.Adam(net.parameters(), lr=0.0)
     agent = DQNPolicy(net, _, target_update_freq=1)
     agent.load_state_dict(torch.load(path, map_location=device))

@@ -23,7 +23,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', '-n', default='agent', type=str)
-parser.add_argument('--chkpt', '-c', default='mock/dqn/0922-102829_seed_0/', type=str)
+parser.add_argument('--chkpt', '-c', default='mock/dqn/0922-120157_seed_0/', type=str)
 parser.add_argument('--iterations', '-i', type=int, default=10)
 parser.add_argument('--samplesize', '-s', type=int)
 parser.add_argument('--budget', '-b', type=int)

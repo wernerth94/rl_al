@@ -34,9 +34,9 @@ from reimplementations.tian_extends import TianTimeDistributedNet
 def get_args():
     parser = argparse.ArgumentParser()
     # the parameters are found by Optuna
-    parser.add_argument('--task', type=str, default="mock") # mock, rl_al
+    parser.add_argument('--task', type=str, default="rl_al") # mock,
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--epoch', type=int, default=100)
+    parser.add_argument('--epoch', type=int, default=1000)
     parser.add_argument('--gamma', type=float, default=0.0)
     parser.add_argument('--n-step', type=int, default=1)
     parser.add_argument('--eps-test', type=float, default=0.01)
@@ -50,13 +50,13 @@ def get_args():
     parser.add_argument('--beta-anneal-step', type=int, default=5000000) # 5M
     parser.add_argument('--lr', type=float, default=0.001) # Lander: 0.013
     parser.add_argument('--target-update-freq', type=int, default=500)
-    parser.add_argument('--step-per-epoch', type=int, default=80000)
-    parser.add_argument('--step-per-collect', type=int, default=1)
+    parser.add_argument('--step-per-epoch', type=int, default=10000)
+    parser.add_argument('--step-per-collect', type=int, default=10)
     parser.add_argument('--update-per-step', type=float, default=0.1)
     parser.add_argument('--batch-size', type=int, default=32)
-    parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[128,])
-    parser.add_argument('--training-num', type=int, default=10)
-    parser.add_argument('--test-num', type=int, default=5)
+    parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[64,]) # [128,]
+    parser.add_argument('--training-num', type=int, default=1)
+    parser.add_argument('--test-num', type=int, default=1)
     # Env Config
     parser.add_argument('--BUDGET', type=int, default=2000)
     parser.add_argument('--REWARD_SCALE', type=float, default=1.0)
