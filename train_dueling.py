@@ -35,7 +35,7 @@ def run():
     classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
     dataset = [d.to(device) for d in dataset]
 
-    env = Environment.DuelingALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+    env = Environment.DuelingALGame(dataset=dataset, classifier_function=classifier, config=c, verbose=0)
     agent = Agent.DuelingAgent(state_space=2, context_space=769, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
 
     replay_buffer = DuelingPrioritizedReplay(c.MEMORY_CAP, env.stateSpace[0], env.stateSpace[1])

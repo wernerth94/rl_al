@@ -1,7 +1,7 @@
 import gym
 import torch
 import numpy as np
-from PoolManagement import resetALPool, addDatapointToPool
+from PoolManagement import reset_al_pool, add_datapoint_to_pool
 from sklearn.metrics import f1_score
 import torch.optim as optim
 import torch.nn as nn
@@ -25,13 +25,13 @@ class MockALGame(gym.Env):
 
     def _set_state_shape(self):
         state = self.create_state()
-        self.stateSpace = state.shape[1]
+        self.state_space = state.shape[1]
         self.observation_space = gym.spaces.Box(0, np.inf, shape=(state.shape[1],))
 
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         self.added_images = 0
-        self.currentTestF1 = 0.4
+        self.current_test_f1 = 0.4
         return self.create_state()
 
 
@@ -41,7 +41,7 @@ class MockALGame(gym.Env):
         entr_noise = np.random.normal(0, 1.0, size=self.sample_size)
         sample = []
         for i in range(len(qualities)):
-            dp = [self.currentTestF1]
+            dp = [self.current_test_f1]
             dp.append(qualities[i] +
                       self.noise_level * bvssb_noise[i]) # BvsSB
             dp.append(2 + (qualities[i] - 0.6)*2 +
@@ -62,7 +62,7 @@ class MockALGame(gym.Env):
         if self.reward_noise:
             noise = np.random.normal(0, 0.5 * self.max_reward)
             reward += noise
-        self.currentTestF1 += reward
+        self.current_test_f1 += reward
         done = self.added_images >= self.budget
         return self.create_state(), reward, done, {}
 
@@ -75,30 +75,30 @@ class MockALGame(gym.Env):
 ######################################################
 class ALGame(gym.Env):
 
-    def __init__(self, dataset, modelFunction, config, sample_size_in_state=False):
+    def __init__(self, dataset, classifier_function, config, sample_size_in_state=False):
         assert all([isinstance(d, torch.Tensor) for d in dataset])
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.x_test = dataset[2]
         self.y_test = dataset[3]
         self.y_test_cpu = self.y_test.clone().cpu()
         self.dataset = dataset
-        self.nClasses = self.y_test.shape[1]
+        self.n_classes = self.y_test.shape[1]
 
         self.config = config
         self.budget = config.BUDGET
-        self.gameLength = config.BUDGET
-        self.rewardScaling = config.REWARD_SCALE
+        self.game_length = config.BUDGET
+        self.reward_scaling = config.REWARD_SCALE
         self.rewardShaping = config.REWARD_SHAPING
         self.from_scratch = config.CLASS_FROM_SCRATCH
 
-        self.modelFunction = modelFunction
-        self.classifier = modelFunction(inputShape=self.x_test.shape[1:],
-                                        numClasses=self.y_test.shape[1])
+        self.classifier_function = classifier_function
+        self.classifier = classifier_function(inputShape=self.x_test.shape[1:],
+                                              numClasses=self.y_test.shape[1])
         self.classifier = self.classifier.to(self.device)
         self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
         self.loss = nn.CrossEntropyLoss()
 
-        self.currentTestF1 = 0
+        self.current_test_f1 = 0
         self.reset()
         self.action_space = gym.spaces.Discrete(config.SAMPLE_SIZE)
         self._set_state_shape(sample_size_in_state)
@@ -106,43 +106,43 @@ class ALGame(gym.Env):
 
 
     def _set_state_shape(self, sample_size_in_state):
-        state = self.createState()
+        state = self.create_state()
         if sample_size_in_state:
-            self.stateSpace = np.multiply(*state.shape)
+            self.state_space = np.multiply(*state.shape)
         else:
-            self.stateSpace = state.shape[1]
+            self.state_space = state.shape[1]
             self.observation_space = gym.spaces.Box(-np.inf, np.inf, shape=[state.shape[1],])
 
 
-    def _sampleIDs(self, num):
-        return np.random.choice(len(self.xUnlabeled), num)
+    def _sample_ids(self, num):
+        return np.random.choice(len(self.x_unlabeled), num)
 
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         with torch.no_grad():
-            self.nInteractions = 0
+            self.n_interactions = 0
             self.added_images = 0
 
             del self.classifier
-            self.classifier = self.modelFunction(inputShape=self.x_test.shape[1:],
-                                                 numClasses=self.y_test.shape[1])
+            self.classifier = self.classifier_function(inputShape=self.x_test.shape[1:],
+                                                       numClasses=self.y_test.shape[1])
             self.classifier.to(self.device)
-            self.initialWeights = self.classifier.state_dict()
+            self.initial_weights = self.classifier.state_dict()
             self.optimizer = optim.Adam(self.classifier.parameters(), lr=0.001)
 
-            self.xLabeled, self.yLabeled, \
-            self.xUnlabeled, self.yUnlabeled, self.perClassIntances = resetALPool(self.dataset,
-                                                                                  self.config.INIT_POINTS_PER_CLASS)
-        self.fitClassifier() # sets self.currentTestF1
-        self.initialF1 = self.currentTestF1
+            self.x_labeled, self.y_labeled, \
+            self.x_unlabeled, self.y_unlabeled, self.per_class_intances = reset_al_pool(self.dataset,
+                                                                                        self.config.INIT_POINTS_PER_CLASS)
+        self.fit_classifier() # sets self.currentTestF1
+        self.initial_f1 = self.current_test_f1
 
-        self.stateIds = self._sampleIDs(self.config.SAMPLE_SIZE)
-        return self.createState()
+        self.state_ids = self._sample_ids(self.config.SAMPLE_SIZE)
+        return self.create_state()
 
 
-    def createState(self):
+    def create_state(self):
         with torch.no_grad():
-            sample_x = self.xUnlabeled[self.stateIds]
+            sample_x = self.x_unlabeled[self.state_ids]
             interal_features = self._get_internal_features(sample_x)
             sample_features = self._get_sample_features(sample_x)
             state = torch.cat([sample_features, interal_features], dim=1)
@@ -151,13 +151,13 @@ class ALGame(gym.Env):
 
     def _get_internal_features(self, x):
         with torch.no_grad():
-            f1 = torch.repeat_interleave(torch.Tensor([self.currentTestF1]), len(x))
+            f1 = torch.repeat_interleave(torch.Tensor([self.current_test_f1]), len(x))
             f1 = f1.unsqueeze(1).to(self.device)
             progress = torch.repeat_interleave(torch.Tensor([self.added_images / float(self.budget)]), len(x))
             progress = progress.unsqueeze(1).to(self.device)
 
-            mean_labeled = torch.mean(self.xLabeled, dim=0)
-            mean_unlabeled = torch.mean(self.xUnlabeled, dim=0)
+            mean_labeled = torch.mean(self.x_labeled, dim=0)
+            mean_unlabeled = torch.mean(self.x_unlabeled, dim=0)
             mean_labeled = mean_labeled.unsqueeze(0).repeat(len(x), 1)
             mean_unlabeled = mean_unlabeled.unsqueeze(0).repeat(len(x), 1)
 
@@ -180,7 +180,7 @@ class ALGame(gym.Env):
             entropy = -torch.mean(pred * torch.log(eps + pred) + (1+eps-pred) * torch.log(1+eps-pred), dim=1)
             bVsSB = 1 - (two_highest[:, -2] - two_highest[:, -1])
             hist_list = [torch.histc(p, bins=10, min=0, max=1) for p in pred]
-            hist = torch.stack(hist_list, dim=0) / self.nClasses
+            hist = torch.stack(hist_list, dim=0) / self.n_classes
 
             state = torch.cat([
                 bVsSB.unsqueeze(1),
@@ -192,26 +192,27 @@ class ALGame(gym.Env):
 
     def step(self, action):
         with torch.no_grad():
-            self.nInteractions += 1
+            self.n_interactions += 1
             self.added_images += 1
-            datapointId = self.stateIds[action]
-            self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, perClassIntances = addDatapointToPool(self.xLabeled, self.yLabeled,
-                                                                                                                  self.xUnlabeled, self.yUnlabeled,
-                                                                                                                  self.perClassIntances, datapointId)
-        reward = self.fitClassifier()
-        self.stateIds = self._sampleIDs(self.config.SAMPLE_SIZE)
-        statePrime = self.createState()
+            datapoint_id = self.state_ids[action]
+            self.x_labeled, self.y_labeled, \
+            self.x_unlabeled, self.y_unlabeled, perClassIntances = add_datapoint_to_pool(self.x_labeled, self.y_labeled,
+                                                                                         self.x_unlabeled, self.y_unlabeled,
+                                                                                         self.per_class_intances, datapoint_id)
+        reward = self.fit_classifier()
+        self.state_ids = self._sample_ids(self.config.SAMPLE_SIZE)
+        statePrime = self.create_state()
 
         done = self.checkDone()
         return statePrime, reward, done, {}
 
 
-    def fitClassifier(self, epochs=50, batch_size=128):
+    def fit_classifier(self, epochs=50, batch_size=128):
         if self.from_scratch:
-            self.classifier.load_state_dict(self.initialWeights)
+            self.classifier.load_state_dict(self.initial_weights)
 
         #batch_size = min(batch_size, int(len(self.xLabeled)/5))
-        train_dataloader = DataLoader(TensorDataset(self.xLabeled, self.yLabeled), batch_size=batch_size)
+        train_dataloader = DataLoader(TensorDataset(self.x_labeled, self.y_labeled), batch_size=batch_size)
         # test_dataloader = DataLoader(TensorDataset(self.x_test, self.y_test), batch_size=batch_size)
 
         # run_test(train_dataloader, test_dataloader, self.classifier, self.loss, self.optimizer)
@@ -234,19 +235,19 @@ class ALGame(gym.Env):
                 lastLoss = test_loss
 
         one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1).cpu()]
-        newTestF1 = f1_score(self.y_test_cpu, one_hot_y_hat, average="samples")
-        self.currentTestLoss = test_loss
+        new_test_f1 = f1_score(self.y_test_cpu, one_hot_y_hat, average="samples")
+        self.current_test_loss = test_loss
 
         if self.rewardShaping:
-            reward = (newTestF1 - self.currentTestF1) * self.rewardScaling
+            reward = (new_test_f1 - self.current_test_f1) * self.reward_scaling
         else:
             raise NotImplementedError()
-        self.currentTestF1 = newTestF1
+        self.current_test_f1 = new_test_f1
         return reward
 
 
     def checkDone(self):
-        done = self.nInteractions >= self.gameLength # max interactions
+        done = self.n_interactions >= self.game_length # max interactions
         if self.added_images >= self.budget:
             done = True # budget exhausted
         return done
@@ -257,16 +258,16 @@ class ALGame(gym.Env):
 ######################################################
 ######################################################
 class DuelingALGame(ALGame):
-    def __init__(self, dataset, modelFunction, config):
-        super().__init__(dataset, modelFunction, config)
+    def __init__(self, dataset, classifier_function, config):
+        super().__init__(dataset, classifier_function, config)
 
 
     def _set_state_shape(self):
-        cntx, state = self.createState()
+        cntx, state = self.create_state()
         self.stateSpace = (cntx.shape[1], state.shape[1])
 
-    def createState(self):
-        classFeatures = self._get_sample_features(self.xUnlabeled[self.stateIds])
+    def create_state(self):
+        classFeatures = self._get_sample_features(self.x_unlabeled[self.state_ids])
         f1 = classFeatures[0, 0]
         alFeatures = classFeatures[:, 1:]
         cntxFeatures = self.getPoolInfo()
@@ -279,16 +280,16 @@ class DuelingALGame(ALGame):
 ######################################################
 class PALGame(ALGame):
 
-    def __init__(self, dataset, modelFunction, config):
-        super().__init__(dataset, modelFunction, config)
+    def __init__(self, dataset, classifier_function, config):
+        super().__init__(dataset, classifier_function, config)
         self.actionSpace = 2
 
 
-    def _sampleIDs(self, num=1):
+    def _sample_ids(self, num=1):
         return np.random.randint(len(self.xUnlabeled))
 
 
-    def createState(self):
+    def create_state(self):
         alFeatures = self._get_sample_features(self.xUnlabeled[self.stateIds].unsqueeze(0))
         return alFeatures
         # alFeatures = torch.from_numpy(alFeatures).float()
@@ -299,19 +300,19 @@ class PALGame(ALGame):
 
 
     def step(self, action):
-        self.nInteractions += 1
+        self.n_interactions += 1
         if action == 1:
             self.added_images += 1
-            ret = addDatapointToPool(self.xLabeled, self.yLabeled,
-                                     self.xUnlabeled, self.yUnlabeled,
-                                     self.perClassIntances, self.stateIds)
+            ret = add_datapoint_to_pool(self.x_labeled, self.y_labeled,
+                                        self.x_unlabeled, self.y_unlabeled,
+                                        self.per_class_intances, self.state_ids)
             self.xLabeled, self.yLabeled, self.xUnlabeled, self.yUnlabeled, perClassIntances = ret
-            reward = self.fitClassifier()
+            reward = self.fit_classifier()
         else:
             reward = 0
 
-        self.stateIds = self._sampleIDs()
-        statePrime = self.createState()
+        self.stateIds = self._sample_ids()
+        statePrime = self.create_state()
 
         done = self.checkDone()
         return statePrime, reward, done, {}

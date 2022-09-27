@@ -3,7 +3,7 @@ import gc
 import torch
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def resetALPool(dataset, init_points_per_class=5):
+def reset_al_pool(dataset, init_points_per_class=5):
     x_train, y_train, x_test, y_test = dataset
     nClasses = y_train.shape[1]
     xLabeled, yLabeled = [], []
@@ -37,8 +37,8 @@ def resetALPool(dataset, init_points_per_class=5):
     return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
 
 
-def addDatapointToPool(xLabeled:torch.Tensor, yLabeled:torch.Tensor,
-                       xUnlabeled:torch.Tensor, yUnlabeled:torch.Tensor, perClassIntances:dict, dpId:int):
+def add_datapoint_to_pool(xLabeled:torch.Tensor, yLabeled:torch.Tensor,
+                          xUnlabeled:torch.Tensor, yUnlabeled:torch.Tensor, perClassIntances:dict, dpId:int):
     # add images
     perClassIntances[int(torch.argmax(yUnlabeled[dpId]).cpu())] += 1  # keep track of the added images
     xLabeled = torch.cat([ xLabeled, xUnlabeled[dpId:dpId + 1] ], dim=0)
@@ -48,13 +48,13 @@ def addDatapointToPool(xLabeled:torch.Tensor, yLabeled:torch.Tensor,
     return xLabeled, yLabeled, xUnlabeled, yUnlabeled, perClassIntances
 
 
-def addPoolInformation(xUnlabeled:torch.Tensor, xLabeled:torch.Tensor, stateIds, alFeatures):
+def add_pool_information(xUnlabeled:torch.Tensor, xLabeled:torch.Tensor, stateIds, alFeatures):
     presentedImg = xUnlabeled[stateIds]
     labeledPool = torch.mean(xLabeled, dim=0)
     poolFeat = torch.tile(labeledPool, (len(alFeatures), 1))
     return torch.cat([alFeatures, presentedImg, poolFeat], dim=1)
 
 
-def sampleNewBatch(xUnlabeled, sampleSize):
+def sample_new_batch(xUnlabeled, sampleSize):
     return np.random.choice(len(xUnlabeled), sampleSize)
 

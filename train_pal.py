@@ -29,9 +29,9 @@ dataset = load_cifar10_custom(return_tensors=True)
 classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
 dataset = [d.to(device) for d in dataset]
 
-env = Environment.PALGame(dataset=dataset, modelFunction=classifier, config=c, verbose=0)
+env = Environment.PALGame(dataset=dataset, classifier_function=classifier, config=c, verbose=0)
 replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP)
-agent = Agent.DDQN(env.stateSpace, env.actionSpace,
+agent = Agent.DDQN(env.state_space, env.actionSpace,
                    gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN)
 
 current_time = datetime.now().strftime('%b%d_%H-%M-%S')

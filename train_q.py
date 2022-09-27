@@ -38,13 +38,13 @@ def run(log_dir):
     classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
     dataset = [d.to(device) for d in dataset]
 
-    env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c, sample_size_in_state=True)
-    agent = TimeDistributedAgent(int(env.stateSpace/c.SAMPLE_SIZE), action_space=c.SAMPLE_SIZE,
+    env = Environment.ALGame(dataset=dataset, classifier_function=classifier, config=c, sample_size_in_state=True)
+    agent = TimeDistributedAgent(int(env.state_space / c.SAMPLE_SIZE), action_space=c.SAMPLE_SIZE,
                                  gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                                  weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG,
                                  clipped=True)
 
-    replay_buffer = PrioritizedQReplay(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
+    replay_buffer = PrioritizedQReplay(c.MEMORY_CAP, env.state_space, c.N_STEPS)
 
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:

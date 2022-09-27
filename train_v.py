@@ -36,11 +36,11 @@ def run(log_dir):
     classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
     dataset = [d.to(device) for d in dataset]
 
-    env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=c)
-    agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
+    env = Environment.ALGame(dataset=dataset, classifier_function=classifier, config=c)
+    agent = Agent.DDVN(env.state_space, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                        weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
 
-    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS)
+    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.state_space, c.N_STEPS)
 
     summary_writer = SummaryWriter(log_dir=log_dir)
     with open(os.path.join(log_dir, "config.txt"), "w") as f:

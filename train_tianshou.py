@@ -78,7 +78,7 @@ def make_env(args):
         dataset = load_cifar10_custom(return_tensors=True)
         classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
         dataset = [d.to(args.device) for d in dataset]
-        env = Environment.ALGame(dataset=dataset, modelFunction=classifier, config=args)
+        env = Environment.ALGame(dataset=dataset, classifier_function=classifier, config=args)
         return env
     elif args.task == "mock":
         return Environment.MockALGame(args)

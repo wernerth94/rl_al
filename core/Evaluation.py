@@ -13,7 +13,7 @@ def score_tianshou_agent(agent, env, print_interval=100):
         result = agent(data)
         a = int(result.act[0])
         state_prime, reward, done, _ = env.step(a)
-        f1_prog.append(env.currentTestF1)
+        f1_prog.append(env.current_test_f1)
         data.obs = torch.unsqueeze(state_prime, dim=0)
         if i % print_interval == 0 and len(f1_prog) > 0:
             print('%d | %1.3f'%(i, f1_prog[-1]))
@@ -34,7 +34,7 @@ def score_agent(agent, env, print_interval=1000, greed=0):
         V, a = agent(state, greed=greed)
         a = a[0].item()
         state_prime, reward, done, _ = env.step(a)
-        f1_prog.append(env.currentTestF1)
+        f1_prog.append(env.current_test_f1)
         #memory.addMemory(state[a].cpu().numpy(), [reward], np.mean(statePrime.cpu().numpy(), axis=0), done)
         state = state_prime
         if i % print_interval == 0 and len(f1_prog) > 0:

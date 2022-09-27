@@ -68,12 +68,12 @@ def run(log_dir):
 
     env = Environment.MockALGame(config=c, noise_level=args.noise, reward_noise=args.reward_noise)
     if args.linear:
-        agent = Agent.LinearVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
+        agent = Agent.LinearVN(env.state_space, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                                weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
     else:
-        agent = Agent.DDVN(env.stateSpace, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
+        agent = Agent.DDVN(env.state_space, gamma=c.AGENT_GAMMA, n_hidden=c.AGENT_NHIDDEN,
                            weight_copy_interval=c.AGENT_C, weight_decay=c.AGENT_REG)
-    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.stateSpace, c.N_STEPS,
+    replay_buffer = PrioritizedReplayMemory(c.MEMORY_CAP, env.state_space, c.N_STEPS,
                                             alpha=c.MEMORY_ALPHA)
 
     summary_writer = SummaryWriter(log_dir=log_dir)
@@ -117,8 +117,8 @@ def run(log_dir):
                     state = new_state
 
                 if total_epochs == 0:
-                    moving_performance = env.env.currentTestF1
-                moving_performance = weight * moving_performance + (1 - weight) * env.env.currentTestF1
+                    moving_performance = env.env.current_test_f1
+                moving_performance = weight * moving_performance + (1 - weight) * env.env.current_test_f1
                 if total_epochs > c.CONVERSION_GREED:
                     # only save best agents / early stop after the greed is reduced
                     early_stop_counter += 1
