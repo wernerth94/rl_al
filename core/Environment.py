@@ -46,7 +46,7 @@ class MockALGame(gym.Env):
                       self.noise_level * bvssb_noise[i]) # BvsSB
             dp.append(2 + (qualities[i] - 0.6)*2 +
                       self.noise_level * entr_noise[i])  # entropy
-            dp.append(qualities[i])
+            # dp.append(qualities[i])
             # Hist of class outputs
             # internal state
             sample.append(dp)

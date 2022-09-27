@@ -11,6 +11,7 @@ sys.path.append("evaluation")
 sys.path.append("config")
 print(F"updated path is {sys.path}")
 
+import numpy as np
 from datetime import datetime
 import torch
 from torch.utils.tensorboard import SummaryWriter

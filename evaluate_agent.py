@@ -22,11 +22,12 @@ from helper_functions import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', '-n', default='agent', type=str)
-parser.add_argument('--chkpt', '-c', default='mock/dqn/0922-120157_seed_0/', type=str)
-parser.add_argument('--iterations', '-i', type=int, default=10)
-parser.add_argument('--samplesize', '-s', type=int)
-parser.add_argument('--budget', '-b', type=int)
+parser.add_argument('--name', default='agent', type=str)
+parser.add_argument('--chkpt', default='mock/dqn/0923-100146_seed_0/', type=str)
+parser.add_argument('--n-hidden', type=int, default=32)
+parser.add_argument('--iterations', type=int, default=10)
+parser.add_argument('--samplesize', type=int)
+parser.add_argument('--budget', type=int)
 args = parser.parse_args()
 
 ##################################
@@ -90,7 +91,7 @@ for run in range(args.iterations):
         elif os.path.exists(os.path.join(path, "best_policy.pth")):
             # Tianshou
             path = os.path.join(path, "best_policy.pth")
-            agent = load_tianshou_agent_for_eval(path, env)
+            agent = load_tianshou_agent_for_eval(path, env, n_hidden=args.n_hidden)
             eval_function = Evaluation.score_tianshou_agent
         else:
             raise ValueError("Agent checkpoint not found")
