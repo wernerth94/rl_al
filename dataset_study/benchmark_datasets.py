@@ -1,9 +1,6 @@
 import sys
 import getpass
 
-import tqdm
-
-import Evaluation
 
 print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
@@ -25,23 +22,22 @@ import pandas as pd
 from helper_functions import *
 from data_loader import load_dataset
 from classifier_factory import create_classifier
+import Evaluation
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--heuristic', default='agent', type=str)
+parser.add_argument('--heuristic', default='entropy', type=str)
 parser.add_argument('--iterations', type=int, default=10)
 parser.add_argument('--samplesize', type=int)
-parser.add_argument('--budget', type=int)
 args = parser.parse_args()
 
 ##################################
 ### MAIN
 heuristic = str(args.heuristic)
 
+# loaded config
 from config import mockConfig as c
-# from config import cifarConfig as c
-from Data import load_cifar10_custom as load_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 CLUSTER = False
@@ -52,13 +48,10 @@ if sys.prefix.startswith('/home/werner/miniconda3'):
 if args.samplesize:
     print(f"overwrite sample size to {args.samplesize}")
     c.SAMPLE_SIZE = args.samplesize
-if args.budget:
-    print(f"overwrite budget to {args.budget}")
-    c.BUDGET = args.budget
 
 # Environment class - gets created withing the eval loop
-env_function = Environment.MockALGame
-# env_function = Environment.ALGame
+# env_function = Environment.MockALGame
+env_function = Environment.ALGame
 
 def test_dataset(dataset, classifier, upper_bound_performance):
     dataset = [d.to(device) for d in dataset]
@@ -117,11 +110,13 @@ if __name__ == '__main__':
     list_of_datasets = ["some", "dataset"]
     for id, dataset_name in enumerate(list_of_datasets):
         dataset = load_dataset(dataset_name)
-        classifier = create_classifier(dataset[0])
+        x_train = dataset[0]
+        c.BUDGET = len(x_train) # override AL budget to be the entire dataset
+        classifier = create_classifier(x_train)
         upper_bound = get_upper_bound_performance(dataset, classifier)
         threshold = test_dataset(dataset, classifier, upper_bound)
         # compute percentage of used data
-        fraction = float(threshold) / len(dataset[0])
+        fraction = float(threshold) / len(x_train)
         print(f"{dataset_name} \t upper %1.3f threshold %1.3f fraction %1.3f"%(upper_bound, threshold, fraction))
         dataframe.loc[id] = [dataset_name, upper_bound, threshold, fraction]
     dataframe.to_csv("result.csv")
