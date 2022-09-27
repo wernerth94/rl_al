@@ -28,6 +28,8 @@ parser.add_argument('--n-hidden', type=int, default=32)
 parser.add_argument('--iterations', type=int, default=10)
 parser.add_argument('--samplesize', type=int)
 parser.add_argument('--budget', type=int)
+parser.add_argument('--dataset', type=str) # only use when you want to override the config with a different dataset
+parser.add_argument('--custom-classifier', type=int) # only use when you want to use a custom classifier
 args = parser.parse_args()
 
 ##################################
@@ -48,11 +50,24 @@ if args.budget:
     print(f"overwrite budget to {args.budget}")
     c.BUDGET = args.budget
 
+# Environment class - gets created withing the eval loop
 env_function = Environment.MockALGame
-# envFunc = Environment.ALGame
-dataset = load_data(return_tensors=True)
-dataset = [d.to(device) for d in dataset]
-classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+# env_function = Environment.ALGame
+
+# dataset overwrites
+if args.dataset:
+    dataset = None
+    dataset = [d.to(device) for d in dataset]
+else:
+    dataset = load_data(return_tensors=True)
+    dataset = [d.to(device) for d in dataset]
+
+# classifier overwrites
+if args.custom_classifier:
+    classifier = None
+else:
+    classifier = Classifier.EmbeddingClassifierFactory(dataset[0].size(1))
+
 
 print('#########################################################')
 print('testing', baseline_name, 'with budget', c.BUDGET)

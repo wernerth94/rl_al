@@ -76,7 +76,7 @@ class AugDataset(TensorDataset):
     transform = Compose([
         RandomHorizontalFlip(p=0.3),
         RandomVerticalFlip(p=0.3),
-        #RandomCrop(25, padding=0),
+        # RandomCrop(25, padding=0),
         RandomRotation(20)
     ])
     def __getitem__(self, idx):
