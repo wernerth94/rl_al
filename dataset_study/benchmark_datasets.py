@@ -108,7 +108,7 @@ def get_upper_bound_performance(dataset, classifier)->float:
 
 if __name__ == '__main__':
     dataframe = pd.DataFrame(columns=["dataset", "upper_bound", "threshold", "fraction"])
-    list_of_datasets = ["some", "dataset"]
+    list_of_datasets = ["splice", "dataset"]
     for id, dataset_name in enumerate(list_of_datasets):
         dataset = load_dataset(dataset_name)
         x_train = dataset[0]
