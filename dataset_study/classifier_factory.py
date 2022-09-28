@@ -9,8 +9,9 @@ import torch.nn as nn
 class Net(nn.Module):
     def __init__(self, input_features, classes):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(input_features, 5*input_features)  # 5*5 from image dimension
-        self.fc2 = nn.Linear(5*input_features, classes)
+        self.expansion = 2
+        self.fc1 = nn.Linear(input_features, self.expansion*input_features)  # 5*5 from image dimension
+        self.fc2 = nn.Linear(self.expansion*input_features, classes)
         self.relu = nn.ReLU(inplace=True)
         self.net = nn.Sequential(self.fc1,self.relu,self.fc2)
     def forward(self,x):
