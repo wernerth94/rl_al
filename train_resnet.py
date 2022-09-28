@@ -95,18 +95,11 @@ try:
         acc = 0.0
         counter = 0
         for batch_x, batch_y in val_dataloader:
-            z = encoder(batch_x)
-            yHat = class_head(z)
-            recon = recon_head(z)
-            acc += accuracy(yHat.detach(), batch_y)
+            yHat = model(batch_x)
             class_loss = loss_ce(yHat, batch_y)
-            recon_loss = loss_recon(recon, batch_x)
             sum_class += class_loss.detach().cpu().numpy()
-            sum_recon += recon_loss.detach().cpu().numpy()
             counter += 1
         sum_class /= counter; class_errors.append(sum_class)
-        sum_recon /= counter; recon_errors.append(sum_recon)
-        acc /= counter; val_accs.append(acc)
         print("%d: classification loss %1.3f reconstruction loss %1.1f - Acc %1.3f"%(epoch, sum_class, sum_recon, acc))
         sleep(0.1) # to fix some printing ugliness with tqdm
         if early_stop.check_stop(sum_class + args.reconmult * sum_recon):
