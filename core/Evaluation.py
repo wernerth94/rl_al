@@ -45,7 +45,7 @@ def score_agent(agent, env, print_interval=20, greed=0, f1_threshold=np.inf):
         i += 1
 
     improvement = f1_prog[-1] - f1_prog[0]
-    print('start %1.3f end %1.3f improvement %1.3f'%(f1_prog[0], f1_prog[-1], improvement))
+    print('start %1.3f end %1.3f improvement %1.3f'%(f1_prog[0], f1_prog[-1], improvement), flush=True)
     print("-------------------------------------------------------")
     return f1_prog, improvement
     # return memory, f1Prog

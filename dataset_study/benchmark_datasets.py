@@ -176,6 +176,6 @@ if __name__ == '__main__':
         threshold = test_dataset(dataset, classifier, upper_bound)
         # compute percentage of used data
         fraction = float(threshold) / len(x_train)
-        print(f"{dataset_name} \t upper %1.3f threshold %1.3f fraction %1.3f"%(upper_bound, threshold, fraction))
+        print(f"{dataset_name} \t upper %1.3f threshold %1.3f fraction %1.3f"%(upper_bound, threshold, fraction), flush=True)
         dataframe.loc[id] = [dataset_name, upper_bound, threshold, fraction]
     dataframe.to_csv("result.csv")
