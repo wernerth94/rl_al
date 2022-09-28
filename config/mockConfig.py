@@ -1,5 +1,5 @@
 import os
-import util
+
 
 # general
 N_STEPS = 1
@@ -30,9 +30,9 @@ WARMUP_EPOCHS = 5
 
 CONVERSION_GREED = int(MIN_INTERACTIONS*0.2 / BUDGET)
 CONVERSION_LR = int(MIN_INTERACTIONS*0.5 / BUDGET)
-GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
+# GREED = util.parameterPlan(0.9, 0.05, warmup=WARMUP_EPOCHS, conversion=CONVERSION_GREED)
                             # TODO
-LR = util.parameterPlan(0.01, 0.01, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
+# LR = util.parameterPlan(0.01, 0.01, warmup=WARMUP_EPOCHS, conversion=CONVERSION_LR)
 
 
 # File Paths
@@ -51,8 +51,8 @@ def get_description():
     desc += f'AGENT: batch size={BATCH_SIZE}, C={AGENT_C}\n'
     desc += f'TRAINING: interactions={MIN_INTERACTIONS}, max epochs={MAX_EPOCHS}\n'
     desc += f'TRAINING: warmup={WARMUP_EPOCHS}\n'
-    desc += f'TRAINING: learningRate {LR[0]} - {LR[-1]} in {CONVERSION_LR} epochs\n'
-    desc += f'TRAINING: greed {GREED[0]} - {GREED[-1]} in {CONVERSION_GREED} epochs\n'
+    # desc += f'TRAINING: learningRate {LR[0]} - {LR[-1]} in {CONVERSION_LR} epochs\n'
+    # desc += f'TRAINING: greed {GREED[0]} - {GREED[-1]} in {CONVERSION_GREED} epochs\n'
     desc += f'TRAINING: n-steps={N_STEPS}\n'
     desc += f'ENV: budget={BUDGET}, sample size={SAMPLE_SIZE}\n'
     return desc
