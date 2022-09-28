@@ -29,8 +29,4 @@ def create_classifier(x_train, y_train)->nn.Module:
     instances, features, classes = get_dataset_info(x_train, y_train)
 
     model = Net(features,classes)
-    x_tensor = torch.Tensor(x_train)
-    output = model(x_tensor)
-
-    print(output.size())
-    pass
+    return model
