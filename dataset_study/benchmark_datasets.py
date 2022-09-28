@@ -23,6 +23,7 @@ from helper_functions import *
 from data_loader import load_dataset
 from classifier_factory import create_classifier
 import Evaluation
+import core.Agent
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
