@@ -5,6 +5,8 @@ venv/
 config/stopSwitch
 memoryBacklog
 
+dataset_study/Datasets/*
+
 /archive
 /runs/
 evaluation/*.png
