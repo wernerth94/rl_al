@@ -38,3 +38,9 @@ def load_tianshou_agent_for_eval(path, env, n_hidden=64, test_eps=0.0):
     agent.load_state_dict(torch.load(path, map_location=device))
     agent.set_eps(test_eps)
     return agent
+
+def accuracy(y_hat, y_true):
+    pred_class = torch.argmax(y_hat, dim=-1)
+    true_class = torch.argmax(y_true, dim=-1)
+    acc = sum(pred_class == true_class) / len(y_true)
+    return acc

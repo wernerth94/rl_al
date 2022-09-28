@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from tianshou.data import Batch
 
@@ -25,7 +26,7 @@ def score_tianshou_agent(agent, env, print_interval=100):
     return f1_prog, improvement
 
 
-def score_agent(agent, env, print_interval=1000, greed=0):
+def score_agent(agent, env, print_interval=1000, greed=0, f1_threshold=np.inf):
     state = env.reset()
     f1_prog = []
     i = 0
@@ -39,6 +40,8 @@ def score_agent(agent, env, print_interval=1000, greed=0):
         state = state_prime
         if i % print_interval == 0 and len(f1_prog) > 0:
             print('%d | %1.3f'%(i, f1_prog[-1]))
+        if env.current_test_f1 >= f1_threshold:
+            break
         i += 1
 
     improvement = f1_prog[-1] - f1_prog[0]
