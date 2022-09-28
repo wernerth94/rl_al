@@ -82,7 +82,7 @@ class ALGame(gym.Env):
         self.y_test = dataset[3]
         self.y_test_cpu = self.y_test.clone().cpu()
         self.dataset = dataset
-        self.n_classes = 2 if len(self.y_test.shape) == 1 else self.y_test.shape[1]
+        self.n_classes = self.y_test.shape[1]
 
         self.config = config
         self.budget = config.BUDGET
@@ -213,7 +213,7 @@ class ALGame(gym.Env):
 
         #batch_size = min(batch_size, int(len(self.xLabeled)/5))
         train_dataloader = DataLoader(TensorDataset(self.x_labeled, self.y_labeled), batch_size=batch_size)
-        # test_dataloader = DataLoader(TensorDataset(self.x_test, self.y_test), batch_size=batch_size)
+        test_dataloader = DataLoader(TensorDataset(self.x_test, self.y_test), batch_size=100)
 
         # run_test(train_dataloader, test_dataloader, self.classifier, self.loss, self.optimizer)
 
@@ -227,22 +227,31 @@ class ALGame(gym.Env):
                 self.optimizer.step()
             # early stopping on test
             with torch.no_grad():
-                yHat_test = self.classifier(self.x_test)
-                test_loss = self.loss(yHat_test, self.y_test)
-                if test_loss >= lastLoss:
+                loss_sum = 0.0
+                total = 0.0
+                correct = 0.0
+                for batch_x, batch_y in test_dataloader:
+                    yHat = self.classifier(batch_x)
+                    predicted = torch.argmax(yHat, dim=1)
+                    # _, predicted = torch.max(yHat.data, 1)
+                    total += batch_y.size(0)
+                    correct += (predicted == torch.argmax(batch_y, dim=1)).sum().item()
+                    class_loss = self.loss(yHat, torch.argmax(batch_y.long(), dim=1))
+                    loss_sum += class_loss.detach().cpu().numpy()
+                if loss_sum >= lastLoss:
                     #print(f"labeled {len(self.xLabeled)}: stopped after {e} epochs")
                     break
-                lastLoss = test_loss
-
-        one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat_test, dim=1).cpu()]
-        new_test_f1 = f1_score(self.y_test_cpu, one_hot_y_hat, average="samples")
-        self.current_test_loss = test_loss
+                lastLoss = loss_sum
+        accuracy = correct / total
+        # one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(self.classifier(self.x_test), dim=1).cpu()]
+        # new_test_f1 = f1_score(self.y_test_cpu, one_hot_y_hat, average="samples")
+        self.current_test_loss = loss_sum
 
         if self.rewardShaping:
-            reward = (new_test_f1 - self.current_test_f1) * self.reward_scaling
+            reward = (accuracy - self.current_test_f1) * self.reward_scaling
         else:
             raise NotImplementedError()
-        self.current_test_f1 = new_test_f1
+        self.current_test_f1 = accuracy
         return reward
 
 

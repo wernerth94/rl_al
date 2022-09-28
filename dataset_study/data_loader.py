@@ -28,15 +28,10 @@ def load_dataset(name)->tuple:
         train = load_svmlight_file("Datasets/usps_train.bz2", n_features=256)
         test = load_svmlight_file("Datasets/usps_test.bz2", n_features=256)
 
-
-
-
-
-
     x_train = train[0]
-    y_train = train[1]
+    y_train = train[1].astype(int)
     x_test = test[0]
-    y_test = test[1]
+    y_test = test[1].astype(int)
 
     x_train = x_train.toarray()
     x_test = x_test.toarray()
@@ -51,9 +46,10 @@ def load_dataset(name)->tuple:
     mask = y_test == -1
     y_test[mask] += 1
 
-    if len(y_train.shape) < 2:
-        y_train = np.expand_dims(y_train, 1)
-    if len(y_test.shape) < 2:
-        y_test = np.expand_dims(y_test, 1)
+    one_hot_train = np.zeros((len(y_train), y_train.max()+1))
+    one_hot_train[np.arange(len(y_train)), y_train] = 1
 
-    return (x_train, y_train, x_test, y_test)
+    one_hot_test = np.zeros((len(y_test), y_test.max()+1))
+    one_hot_test[np.arange(len(y_test)), y_test] = 1
+
+    return (x_train, one_hot_train, x_test, one_hot_test)

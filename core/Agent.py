@@ -345,6 +345,9 @@ class Baseline_Heuristic:
             i = np.random.randint(len(scores))
             return scores, np.array(i).reshape(-1)
 
+    def __call__(self, state, greed=0, *args, **kwargs):
+        return self.predict(state, greed)
+
 
 class Baseline_Entropy(Baseline_Heuristic):
     def __init__(self, m=2, *args, **kwargs):

@@ -58,7 +58,7 @@ if args.samplesize:
 env_function = Environment.ALGame
 
 def test_dataset(dataset, classifier, upper_bound_performance):
-    classifier = classifier.to(device)
+    # classifier = classifier.to(device)
 
     startTime = time()
 
@@ -81,7 +81,7 @@ def test_dataset(dataset, classifier, upper_bound_performance):
         else:
             raise ValueError('baseline not in all_baselines;  given: ' + heuristic)
 
-        f1_curve, improvement = eval_function(agent, env)
+        f1_curve, improvement = eval_function(agent, env, f1_threshold=upper_bound_performance)
         avrg_improv += improvement
         result.append(f1_curve)
         sleep(0.1)  # prevent tqdm printing uglyness
@@ -124,38 +124,41 @@ def get_upper_bound_performance(dataset, classifier)->float:
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, milestones=[10, 25], gamma=0.1)
     loss_ce = nn.CrossEntropyLoss()
 
-    early_stop = EarlyStop(patience=2)
-    for epoch in range(50):
+    early_stop = EarlyStop(patience=1) # TODO
+    for epoch in range(1):
         for batch_x, batch_y in tqdm(train_dataloader, disable=CLUSTER):
             yHat = classifier(batch_x)
-            loss_val = loss_ce(yHat, batch_y.long())
+            loss_val = loss_ce(yHat, torch.argmax(batch_y.long(), dim=1))
             optim.zero_grad()
             loss_val.backward()
             optim.step()
         lr_scheduler.step()
 
         sum_class = 0.0
-        f1 = 0.0
         counter = 0
+        total = 0.0
+        correct = 0.0
         for batch_x, batch_y in test_dataloader:
             yHat = classifier(batch_x)
-            one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat, dim=1).cpu().detach()]
-            one_hot_y_batch = np.eye(10, dtype='uint8')[batch_y.int().cpu().detach()]
-            f1 += f1_score(one_hot_y_hat, one_hot_y_batch, average="samples")
-            class_loss = loss_ce(yHat, batch_y.long())
+            # one_hot_y_hat = np.eye(10, dtype='uint8')[torch.argmax(yHat, dim=1).cpu().detach()]
+            #one_hot_y_batch = np.eye(10, dtype='uint8')[batch_y.int().cpu().detach()]
+            predicted = torch.argmax(yHat, dim=1)
+            # _, predicted = torch.max(yHat.data, 1)
+            total += batch_y.size(0)
+            correct += (predicted == torch.argmax(batch_y, dim=1)).sum().item()
+            class_loss = loss_ce(yHat, torch.argmax(batch_y.long(), dim=1))
             sum_class += class_loss.detach().cpu().numpy()
             counter += 1
         sum_class /= counter
-        f1 /= counter
-        print("%d: classification loss %1.3f - Test F1 %1.3f" % (epoch, sum_class, f1))
+        print("%d: classification loss %1.3f - Test F1 %1.3f" % (epoch, sum_class, 100 * correct / total))
         sleep(0.1)  # fix some printing ugliness with tqdm
         if early_stop.check_stop(sum_class):
             print("early stop")
             break
     print("####################################")
-    print("final upper bound F1 score %1.3f"%(f1))
+    print("final upper bound F1 score %1.3f"%(correct / total))
     print("####################################")
-    return f1
+    return correct / total
 
 
 if __name__ == '__main__':
@@ -169,7 +172,7 @@ if __name__ == '__main__':
         y_train = dataset[1]
         c.BUDGET = len(x_train) # override AL budget to be the entire dataset
         classifier = create_classifier(x_train, y_train)
-        upper_bound = get_upper_bound_performance(dataset, classifier)
+        upper_bound = get_upper_bound_performance(dataset, classifier())
         threshold = test_dataset(dataset, classifier, upper_bound)
         # compute percentage of used data
         fraction = float(threshold) / len(x_train)
