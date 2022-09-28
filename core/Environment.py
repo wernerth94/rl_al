@@ -82,7 +82,7 @@ class ALGame(gym.Env):
         self.y_test = dataset[3]
         self.y_test_cpu = self.y_test.clone().cpu()
         self.dataset = dataset
-        self.n_classes = self.y_test.shape[1]
+        self.n_classes = 2 if len(self.y_test.shape) == 1 else self.y_test.shape[1]
 
         self.config = config
         self.budget = config.BUDGET

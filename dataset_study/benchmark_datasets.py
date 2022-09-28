@@ -124,7 +124,7 @@ def get_upper_bound_performance(dataset, classifier)->float:
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, milestones=[10, 25], gamma=0.1)
     loss_ce = nn.CrossEntropyLoss()
 
-    early_stop = EarlyStop()
+    early_stop = EarlyStop(patience=2)
     for epoch in range(50):
         for batch_x, batch_y in tqdm(train_dataloader, disable=CLUSTER):
             yHat = classifier(batch_x)

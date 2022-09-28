@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.datasets import load_svmlight_file
 from sklearn.preprocessing import MinMaxScaler
 
@@ -50,6 +51,9 @@ def load_dataset(name)->tuple:
     mask = y_test == -1
     y_test[mask] += 1
 
+    if len(y_train.shape) < 2:
+        y_train = np.expand_dims(y_train, 1)
+    if len(y_test.shape) < 2:
+        y_test = np.expand_dims(y_test, 1)
 
-
-    return (x_test,x_train,y_test,y_train)
+    return (x_train, y_train, x_test, y_test)
