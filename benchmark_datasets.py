@@ -88,7 +88,7 @@ def test_dataset(dataset, classifier, upper_bound_performance):
 
     avrg_improv /= args.iterations
     result = [len(i) for i in result]
-    result = np.mean(result)
+    result = np.mean(result)[0]
     print('time needed', int(time() - startTime), 'seconds')
 
     return result
@@ -115,6 +115,7 @@ def get_upper_bound_performance(dataset, classifier)->float:
                 self.counter += 1
             return False
 
+    classifier = classifier.to(device)
     x_train, y_train, x_test, y_test = dataset
     BATCH_SIZE = 128
     train_dataloader = DataLoader(TensorDataset(x_train, y_train), batch_size=BATCH_SIZE, shuffle=True)
@@ -124,8 +125,8 @@ def get_upper_bound_performance(dataset, classifier)->float:
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, milestones=[10, 25], gamma=0.1)
     loss_ce = nn.CrossEntropyLoss()
 
-    early_stop = EarlyStop(patience=1) # TODO
-    for epoch in range(1):
+    early_stop = EarlyStop(patience=3) # TODO
+    for epoch in range(50):
         for batch_x, batch_y in tqdm(train_dataloader, disable=CLUSTER):
             yHat = classifier(batch_x)
             loss_val = loss_ce(yHat, torch.argmax(batch_y.long(), dim=1))
@@ -163,7 +164,7 @@ def get_upper_bound_performance(dataset, classifier)->float:
 
 if __name__ == '__main__':
     dataframe = pd.DataFrame(columns=["dataset", "upper_bound", "threshold", "fraction"])
-    list_of_datasets = ["mnist",]
+    list_of_datasets = ["dna", "usps"]
     for id, dataset_name in enumerate(list_of_datasets):
         dataset = load_dataset(dataset_name)
         dataset = [torch.Tensor(d).float() for d in dataset]

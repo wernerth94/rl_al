@@ -1,11 +1,3 @@
-import sys
-# path additions for the cluster
-sys.path.append("evaluation")
-sys.path.append("config")
-sys.path.append("rl_core")
-sys.path.append("../reimplementations")
-sys.path.append("dataset_study")
-
 import torch
 import numpy as np
 from reimplementations.tian_extends import *
