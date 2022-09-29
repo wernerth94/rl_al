@@ -88,7 +88,7 @@ def test_dataset(dataset, classifier, upper_bound_performance):
 
     avrg_improv /= args.iterations
     result = [len(i) for i in result]
-    result = np.mean(result)[0]
+    result = np.mean(result)
     print('time needed', int(time() - startTime), 'seconds')
 
     return result
