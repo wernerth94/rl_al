@@ -7,13 +7,13 @@ print(F"The user is: {getpass.getuser()}")
 print(F"The virtualenv is: {sys.prefix}")
 
 # path additions for the cluster
-# sys.path.append("core")
-# sys.path.append("evaluation")
-# sys.path.append("config")
-# sys.path.append("rl_core")
-# sys.path.append("reimplementations")
-# sys.path.append("dataset_study")
-# print(F"updated path is {sys.path}")
+sys.path.append("core")
+sys.path.append("evaluation")
+sys.path.append("config")
+sys.path.append("rl_core")
+sys.path.append("reimplementations")
+sys.path.append("dataset_study")
+print(F"updated path is {sys.path}")
 
 import os
 from time import time, sleep
